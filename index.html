@@ -120,24 +120,39 @@ header::after { content:''; position:absolute; bottom:0; left:0; right:0; height
 /* ── COMPARE PANEL ── */
 #compare-panel { border-top:0.5px solid var(--border); padding:2rem 2.5rem; display:none; }
 #compare-panel.open { display:block; }
-.cp-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
+.cp-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.8rem; flex-wrap:wrap; gap:1rem; }
 .cp-title { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--amber); }
-.cp-legend { display:flex; gap:14px; flex-wrap:wrap; }
-.legend-item { display:flex; align-items:center; gap:6px; font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); }
-.legend-dot  { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
-.section-lbl { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--amber); margin:1.5rem 0 0.8rem; }
-.comp-table { width:100%; border-collapse:collapse; font-size:0.8rem; margin-bottom:1rem; }
-.comp-table th { padding:0 12px 10px; text-align:left; font-family:'DM Mono',monospace; font-size:0.56rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--peat-light); font-weight:400; border-bottom:0.5px solid var(--border); }
-.comp-table td { padding:10px 12px; border-bottom:0.5px solid rgba(200,130,42,0.07); vertical-align:top; color:var(--cream-dark); font-size:0.82rem; }
-.comp-table tr:hover td { background:rgba(200,130,42,0.03); }
-.comp-row-label { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--peat-light); white-space:nowrap; }
-.profile-grid { display:grid; gap:0.9rem; }
-.profile-attr .attr-lbl { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--peat-light); margin-bottom:5px; display:block; }
-.bar-row-c { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
-.bar-lbl-c { font-family:'DM Mono',monospace; font-size:0.58rem; color:var(--peat-light); width:140px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
-.bar-track-c { flex:1; height:4px; background:rgba(250,245,236,0.07); border-radius:2px; }
-.bar-fill-c  { height:100%; border-radius:2px; transition:width 0.5s cubic-bezier(.23,1,.32,1); }
-.bar-val-c   { font-family:'DM Mono',monospace; font-size:0.58rem; color:var(--peat-light); width:22px; text-align:right; flex-shrink:0; }
+.section-lbl { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--amber); margin:2rem 0 1rem; }
+
+/* Matrix table — rows = whiskies, cols = fields */
+.comp-matrix { width:100%; border-collapse:collapse; }
+.comp-matrix thead th { font-family:'DM Mono',monospace; font-size:0.56rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--peat-light); font-weight:400; padding:0 16px 10px; text-align:left; border-bottom:0.5px solid var(--border); white-space:nowrap; }
+.comp-matrix thead th:first-child { min-width:180px; }
+.comp-matrix tbody tr { border-bottom:0.5px solid rgba(200,130,42,0.07); }
+.comp-matrix tbody tr:hover td { background:rgba(200,130,42,0.03); }
+.comp-matrix tbody td { padding:14px 16px; vertical-align:top; font-size:0.82rem; color:var(--cream-dark); line-height:1.5; }
+.comp-matrix tbody td:first-child { padding:14px 16px; }
+
+/* Whisky name cell */
+.cm-name-cell { display:flex; flex-direction:column; gap:3px; }
+.cm-whisky-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--cream); line-height:1.2; }
+.cm-whisky-origin { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); }
+
+/* Type badge in matrix */
+.cm-badge { display:inline-block; font-family:'DM Mono',monospace; font-size:0.6rem; padding:3px 9px; border-radius:20px; text-align:center; line-height:1.4; }
+
+/* Flavour profile grid — one column per whisky */
+.flavor-grid { display:grid; gap:1px; border:0.5px solid var(--border); border-radius:10px; overflow:hidden; }
+.flavor-col { padding:1.2rem 1rem; background:rgba(250,245,236,0.02); }
+.flavor-col-name { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--peat-light); margin-bottom:1rem; padding-bottom:0.7rem; border-bottom:0.5px solid var(--border); }
+.flavor-attr { margin-bottom:0.8rem; }
+.flavor-attr-lbl { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); margin-bottom:4px; }
+.flavor-bar-row { display:flex; align-items:center; gap:8px; }
+.flavor-track { flex:1; height:4px; background:rgba(250,245,236,0.08); border-radius:2px; }
+.flavor-fill { height:100%; border-radius:2px; transition:width 0.6s cubic-bezier(.23,1,.32,1); }
+.flavor-val { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); width:24px; text-align:right; flex-shrink:0; }
+
+/* Notes */
 .notes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
 .note-card { background:rgba(250,245,236,0.03); border:0.5px solid var(--border); border-radius:8px; padding:14px; }
 .note-name { font-family:'Playfair Display',serif; font-size:0.85rem; margin-bottom:8px; padding-bottom:8px; border-bottom:0.5px solid rgba(200,130,42,0.12); }
@@ -298,7 +313,6 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
   <div id="compare-panel">
     <div class="cp-header">
       <span class="cp-title">— Comparison</span>
-      <div class="cp-legend" id="cp-legend"></div>
     </div>
     <div id="compare-content"></div>
   </div>
@@ -678,32 +692,69 @@ function toggleComparePanel(){
 
 function renderCompare(){
   const content=document.getElementById('compare-content');
-  const legendEl=document.getElementById('cp-legend');
   const ws=selected.map(id=>whiskies.find(w=>w.id===id)).filter(Boolean);
-  if(!ws.length){content.innerHTML='';legendEl.innerHTML='';return;}
+  if(!ws.length){content.innerHTML='';return;}
 
-  legendEl.innerHTML=ws.map((w,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${COLOR_HEX[i]}"></div><span>${w.name}</span></div>`).join('');
+  // ── Matrix table: each row = one whisky, cols = fields ──
+  const typeBadgeStyle = {
+    scotch:  'background:rgba(200,130,42,0.15);color:var(--amber-light)',
+    irish:   'background:rgba(50,170,100,0.15);color:#6ecb93',
+    bourbon: 'background:rgba(180,80,80,0.15);color:#e08888',
+    japanese:'background:rgba(180,150,230,0.15);color:#c4aff0',
+    other:   'background:rgba(150,150,150,0.15);color:#aaa',
+  };
 
-  const fields=[
-    {label:'Distillery',key:'distillery'},{label:'Region / Origin',key:'origin'},
-    {label:'Style',key:'type',render:typeLabel},{label:'Age / Maturation',key:'age'},
-    {label:'Price',key:'price'},{label:'Nose',key:'nose'},{label:'Palate',key:'palate'},
+  const matrixCols = [
+    { label:'Distillery',    key:'distillery' },
+    { label:'Tipo',          key:'type', render: w => `<span class="cm-badge" style="${typeBadgeStyle[w.type]||typeBadgeStyle.other}">${typeLabel(w.type)}</span>` },
+    { label:'Edad / Maduración', key:'age' },
+    { label:'Nariz',         key:'nose' },
+    { label:'Paladar',       key:'palate' },
+    { label:'Precio Aprox.', key:'price' },
   ];
-  const thRow=`<th></th>${ws.map((w,i)=>`<th><span style="color:${COLOR_HEX[i]}">●</span> ${w.name}</th>`).join('')}`;
-  const tdRows=fields.map(f=>`<tr><td class="comp-row-label">${f.label}</td>${ws.map(w=>`<td>${(f.render?f.render(w[f.key]):w[f.key])||'<span style="opacity:.3">—</span>'}</td>`).join('')}</tr>`).join('');
 
-  const profBars=ATTRS.map(a=>`
-    <div class="profile-attr">
-      <span class="attr-lbl">${ATTR_LABELS[a]}</span>
-      ${ws.map((w,i)=>`<div class="bar-row-c"><div class="bar-lbl-c">${w.name}</div><div class="bar-track-c"><div class="bar-fill-c" style="width:${(w[a]||0)*20}%;background:${COLOR_HEX[i]}"></div></div><div class="bar-val-c">${w[a]||0}</div></div>`).join('')}
+  const thead = `<tr>
+    <th>Whisky</th>
+    ${matrixCols.map(c=>`<th>${c.label}</th>`).join('')}
+  </tr>`;
+
+  const tbody = ws.map((w,i) => `
+    <tr>
+      <td>
+        <div class="cm-name-cell">
+          <div class="cm-whisky-name" style="color:${COLOR_HEX[i]}">${w.name}</div>
+          <div class="cm-whisky-origin">${w.origin||'—'}</div>
+        </div>
+      </td>
+      ${matrixCols.map(c=>`<td>${c.render ? c.render(w) : (w[c.key]||'<span style="opacity:.3">—</span>')}</td>`).join('')}
+    </tr>`).join('');
+
+  // ── Flavour profile: one column per whisky ──
+  const maxVal = 5;
+  const flavorCols = ws.map((w,i) => `
+    <div class="flavor-col">
+      <div class="flavor-col-name" style="color:${COLOR_HEX[i]}">${w.name.toUpperCase()}</div>
+      ${ATTRS.map(a=>`
+        <div class="flavor-attr">
+          <div class="flavor-attr-lbl">${ATTR_LABELS[a]}</div>
+          <div class="flavor-bar-row">
+            <div class="flavor-track"><div class="flavor-fill" style="width:${(w[a]||0)/maxVal*100}%;background:${COLOR_HEX[i]}"></div></div>
+            <div class="flavor-val">${w[a]||0}</div>
+          </div>
+        </div>`).join('')}
     </div>`).join('');
 
-  const noteCards=ws.map((w,i)=>`<div class="note-card"><div class="note-name" style="color:${COLOR_HEX[i]}">${w.name}</div><div class="note-body">${w.notes||'<span style="opacity:.4;font-style:normal;">No notes</span>'}</div></div>`).join('');
+  // ── Notes ──
+  const noteCards = ws.map((w,i)=>`
+    <div class="note-card">
+      <div class="note-name" style="color:${COLOR_HEX[i]}">${w.name}</div>
+      <div class="note-body">${w.notes||'<span style="opacity:.4;font-style:normal;">No notes</span>'}</div>
+    </div>`).join('');
 
   content.innerHTML=`
-    <table class="comp-table"><thead><tr>${thRow}</tr></thead><tbody>${tdRows}</tbody></table>
+    <table class="comp-matrix"><thead>${thead}</thead><tbody>${tbody}</tbody></table>
     <div class="section-lbl">— Flavour profile</div>
-    <div class="profile-grid">${profBars}</div>
+    <div class="flavor-grid" style="grid-template-columns:repeat(${ws.length},1fr)">${flavorCols}</div>
     <div class="section-lbl">— Personal notes</div>
     <div class="notes-grid">${noteCards}</div>`;
 }
