@@ -179,6 +179,19 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 .toast { position:fixed; bottom:2rem; right:2rem; background:var(--peat-mid); border:0.5px solid var(--amber); color:var(--cream); padding:10px 18px; border-radius:8px; font-family:'DM Mono',monospace; font-size:0.68rem; transform:translateY(20px); opacity:0; transition:all 0.3s; z-index:999; pointer-events:none; }
 .toast.show { transform:translateY(0); opacity:1; }
 
+/* ── AUTOCOMPLETE ── */
+.ac-wrap { position:relative; }
+.ac-input-row { display:flex; gap:0; }
+.ac-input-row input { border-radius:6px; }
+.ac-dropdown { position:absolute; top:calc(100% + 3px); left:0; right:0; background:var(--peat-mid); border:0.5px solid var(--border-hi); border-radius:8px; z-index:400; max-height:220px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,0.4); display:none; }
+.ac-dropdown.open { display:block; }
+.ac-item { padding:8px 12px; font-family:'DM Sans',sans-serif; font-size:0.84rem; color:var(--cream-dark); cursor:pointer; transition:background 0.12s; display:flex; align-items:center; justify-content:space-between; }
+.ac-item:hover, .ac-item.focused { background:rgba(200,130,42,0.12); }
+.ac-item-match { color:var(--amber-light); }
+.ac-item-add { color:var(--amber); font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.06em; gap:8px; }
+.ac-item-add span { opacity:0.6; font-size:0.65rem; }
+.ac-empty { padding:10px 12px; font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--peat-light); letter-spacing:0.08em; }
+
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(200,130,42,0.2); border-radius:2px; }
@@ -217,6 +230,25 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
     </div>
     <button class="btn-auth" id="auth-btn" onclick="authSubmit()">Sign in</button>
     <div class="forgot-link" id="forgot-link" onclick="forgotPassword()">Forgot your password?</div>
+  </div>
+</div>
+
+<!-- ── RESET PASSWORD SCREEN ── -->
+<div id="reset-screen" class="hidden" style="position:fixed;inset:0;z-index:500;background:var(--peat);display:flex;align-items:center;justify-content:center;">
+  <div class="auth-box">
+    <div class="auth-logo">The <span>Dram</span> Journal</div>
+    <div class="auth-tagline">Set your new password</div>
+    <div id="reset-error" class="auth-msg auth-error"></div>
+    <div id="reset-success" class="auth-msg auth-success"></div>
+    <div class="form-row">
+      <label>New password</label>
+      <input type="password" id="reset-password" placeholder="········" onkeydown="if(event.key==='Enter')submitReset()">
+    </div>
+    <div class="form-row">
+      <label>Confirm new password</label>
+      <input type="password" id="reset-password2" placeholder="········" onkeydown="if(event.key==='Enter')submitReset()">
+    </div>
+    <button class="btn-auth" id="reset-btn" onclick="submitReset()">Save new password</button>
   </div>
 </div>
 
@@ -282,8 +314,22 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
     <input type="hidden" id="m-id">
     <div class="form-row"><label>Name</label><input type="text" id="m-name" placeholder="Arran 10 Years Old"></div>
     <div class="form-grid-2">
-      <div class="form-row"><label>Distillery</label><input type="text" id="m-distillery" placeholder="Arran"></div>
-      <div class="form-row"><label>Region / Origin</label><input type="text" id="m-origin" placeholder="Isle of Arran, Scotland"></div>
+      <div class="form-row">
+        <label>Distillery</label>
+        <div class="ac-wrap">
+          <input type="text" id="m-distillery" placeholder="Arran" autocomplete="off"
+            oninput="acFilter('distillery')" onfocus="acFilter('distillery')" onblur="acBlur('distillery')" onkeydown="acKey(event,'distillery')">
+          <div class="ac-dropdown" id="ac-distillery"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Region / Origin</label>
+        <div class="ac-wrap">
+          <input type="text" id="m-origin" placeholder="Isle of Arran, Scotland" autocomplete="off"
+            oninput="acFilter('origin')" onfocus="acFilter('origin')" onblur="acBlur('origin')" onkeydown="acKey(event,'origin')">
+          <div class="ac-dropdown" id="ac-origin"></div>
+        </div>
+      </div>
     </div>
     <div class="form-grid-2">
       <div class="form-row">
@@ -352,6 +398,107 @@ let currentUser = null;
 let editingId   = null;
 let cpOpen      = false; // compare panel open
 
+// ── Autocomplete lookup tables ──
+// Expected Supabase table: lookup_options(id serial, category text, value text unique per category)
+// Categories: 'distillery', 'origin'
+let acOptions = { distillery: [], origin: [] };
+let acFocusIdx = { distillery: -1, origin: -1 };
+let acBlurTimer = { distillery: null, origin: null };
+
+async function loadLookups() {
+  const { data, error } = await sb.from('lookup_options').select('category,value').order('value');
+  if (error) { console.warn('lookup_options load error:', error.message); return; }
+  acOptions.distillery = data.filter(r=>r.category==='distillery').map(r=>r.value);
+  acOptions.origin     = data.filter(r=>r.category==='origin').map(r=>r.value);
+}
+
+async function acAddOption(category, value) {
+  const { error } = await sb.from('lookup_options').insert({ category, value });
+  if (error && !error.message.includes('duplicate')) { toast('⚠ Could not save option'); return false; }
+  if (!acOptions[category].includes(value)) {
+    acOptions[category].push(value);
+    acOptions[category].sort((a,b)=>a.localeCompare(b));
+  }
+  return true;
+}
+
+function acFilter(cat) {
+  const input = document.getElementById('m-'+cat);
+  const drop  = document.getElementById('ac-'+cat);
+  const q     = input.value.trim().toLowerCase();
+  acFocusIdx[cat] = -1;
+
+  const matches = q
+    ? acOptions[cat].filter(v => v.toLowerCase().includes(q))
+    : acOptions[cat].slice();
+
+  let html = '';
+  if (matches.length) {
+    html = matches.map((v,i) => {
+      const hi = q ? v.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<span class="ac-item-match">$1</span>') : v;
+      return `<div class="ac-item" data-val="${v.replace(/"/g,'&quot;')}" onmousedown="acPick('${cat}',this)" data-idx="${i}">${hi}</div>`;
+    }).join('');
+  } else {
+    html = `<div class="ac-empty">No matches</div>`;
+  }
+
+  // "Add new" row if typed text isn't already an exact match
+  const exact = acOptions[cat].some(v => v.toLowerCase() === q);
+  if (q && !exact) {
+    html += `<div class="ac-item ac-item-add" onmousedown="acAddPick('${cat}')">＋ Add "<strong>${input.value.trim()}</strong>" <span>as new option</span></div>`;
+  }
+
+  drop.innerHTML = html;
+  drop.classList.toggle('open', !!(html));
+}
+
+function acBlur(cat) {
+  acBlurTimer[cat] = setTimeout(() => {
+    document.getElementById('ac-'+cat).classList.remove('open');
+    acFocusIdx[cat] = -1;
+  }, 180);
+}
+
+function acPick(cat, el) {
+  clearTimeout(acBlurTimer[cat]);
+  document.getElementById('m-'+cat).value = el.dataset.val;
+  document.getElementById('ac-'+cat).classList.remove('open');
+}
+
+async function acAddPick(cat) {
+  clearTimeout(acBlurTimer[cat]);
+  const val = document.getElementById('m-'+cat).value.trim();
+  if (!val) return;
+  const ok = await acAddOption(cat, val);
+  if (ok) {
+    document.getElementById('ac-'+cat).classList.remove('open');
+    toast('✓ "'+val+'" added to options');
+  }
+}
+
+function acKey(e, cat) {
+  const drop = document.getElementById('ac-'+cat);
+  const items = drop.querySelectorAll('.ac-item');
+  if (!drop.classList.contains('open') || !items.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acFocusIdx[cat] = Math.min(acFocusIdx[cat]+1, items.length-1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acFocusIdx[cat] = Math.max(acFocusIdx[cat]-1, 0);
+  } else if (e.key === 'Enter' && acFocusIdx[cat] >= 0) {
+    e.preventDefault();
+    const item = items[acFocusIdx[cat]];
+    if (item.classList.contains('ac-item-add')) { acAddPick(cat); }
+    else { acPick(cat, item); }
+    return;
+  } else if (e.key === 'Escape') {
+    drop.classList.remove('open'); return;
+  } else { return; }
+  items.forEach((it,i) => it.classList.toggle('focused', i===acFocusIdx[cat]));
+  items[acFocusIdx[cat]]?.scrollIntoView({block:'nearest'});
+}
+
 // ── Sync ──
 function syncStatus(s) {
   const m = {loading:{c:'#7A6255',t:'loading...'},saving:{c:'#E8A84C',t:'saving...'},ok:{c:'#1D9E75',t:'synced'},error:{c:'#E24B4A',t:'error'}}[s]||{c:'#1D9E75',t:'ok'};
@@ -372,6 +519,7 @@ function showApp(user) {
   document.getElementById('app-screen').classList.remove('hidden');
   document.getElementById('header-email').textContent=user.email;
   document.getElementById('m-date').value=new Date().toISOString().split('T')[0];
+  loadLookups();
   loadData();
 }
 function showAuth() {
@@ -587,7 +735,12 @@ function openEditModal(id){
   document.getElementById('entry-modal').classList.add('open');
 }
 
-function closeEntryModal(){document.getElementById('entry-modal').classList.remove('open');editingId=null;}
+function closeEntryModal(){
+  document.getElementById('entry-modal').classList.remove('open');
+  document.getElementById('ac-distillery').classList.remove('open');
+  document.getElementById('ac-origin').classList.remove('open');
+  editingId=null;
+}
 function closeMBackdrop(e){if(e.target===document.getElementById('entry-modal'))closeEntryModal();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEntryModal();});
 
@@ -649,11 +802,74 @@ function exportCSV(){
   URL.revokeObjectURL(url); toast('✓ CSV exported');
 }
 
+// ── Reset password ──
+function showResetScreen() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('reset-screen').classList.remove('hidden');
+  document.getElementById('reset-screen').style.display='flex';
+}
+
+async function submitReset() {
+  const pass  = document.getElementById('reset-password').value;
+  const pass2 = document.getElementById('reset-password2').value;
+  const btn   = document.getElementById('reset-btn');
+  const errEl = document.getElementById('reset-error');
+  const okEl  = document.getElementById('reset-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!pass || pass.length < 6) { errEl.textContent='Password must be at least 6 characters'; errEl.classList.add('show'); return; }
+  if (pass !== pass2) { errEl.textContent='Passwords do not match'; errEl.classList.add('show'); return; }
+  btn.disabled=true; btn.textContent='Saving...';
+  const { error } = await sb.auth.updateUser({ password: pass });
+  if (error) {
+    errEl.textContent=error.message; errEl.classList.add('show');
+    btn.disabled=false; btn.textContent='Save new password'; return;
+  }
+  // Clear the recovery token from the URL so refresh doesn't re-trigger
+  window.history.replaceState({}, document.title, window.location.pathname);
+  okEl.textContent='Password updated! Signing you in...'; okEl.classList.add('show');
+  setTimeout(async () => {
+    document.getElementById('reset-screen').classList.add('hidden');
+    document.getElementById('reset-screen').style.display='none';
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) showApp(session.user); else showAuth();
+  }, 1500);
+}
+
 // ── Init ──
 (async()=>{
-  const{data:{session}}=await sb.auth.getSession();
-  if(session)showApp(session.user); else showAuth();
-  sb.auth.onAuthStateChange((_,session)=>{if(session)showApp(session.user);else showAuth();});
+  // Debug: log full URL so we can see what Supabase sends
+  console.log('URL hash:', window.location.hash);
+  console.log('URL search:', window.location.search);
+
+  // Supabase puts the token in the hash as: #access_token=...&type=recovery
+  const hashStr = window.location.hash.slice(1); // remove leading #
+  const hashParams = new URLSearchParams(hashStr);
+  const tokenType = hashParams.get('type');
+
+  console.log('token type detected:', tokenType);
+
+  if (tokenType === 'recovery') {
+    showResetScreen();
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) showApp(session.user); else showAuth();
+
+  sb.auth.onAuthStateChange((event, session) => {
+    console.log('auth event:', event);
+    if (event === 'PASSWORD_RECOVERY') {
+      showResetScreen();
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      const onReset = !document.getElementById('reset-screen').classList.contains('hidden');
+      if (!onReset) showApp(session.user);
+    } else if (event === 'SIGNED_OUT') {
+      showAuth();
+    }
+  });
 })();
 </script>
 </body>
