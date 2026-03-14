@@ -732,9 +732,135 @@
   }
   .whisky-card:hover .card-edit { opacity: 0.5; }
   .card-edit:hover { opacity: 1 !important; color: var(--amber-light); }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    position: fixed; inset: 0; z-index: 500;
+    background: var(--peat);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #auth-screen.hidden { display: none; }
+  #app-screen.hidden  { display: none; }
+
+  .auth-box {
+    width: min(400px, 92vw);
+    background: rgba(200,130,42,0.05);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+  }
+  .auth-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; font-weight: 400;
+    color: var(--cream); text-align: center;
+    margin-bottom: 4px;
+  }
+  .auth-logo span { color: var(--amber-light); font-style: italic; }
+  .auth-tagline {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--peat-light); text-align: center;
+    margin-bottom: 2rem;
+  }
+  .auth-tabs {
+    display: flex; gap: 0; margin-bottom: 1.5rem;
+    border: 0.5px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .auth-tab {
+    flex: 1; padding: 8px;
+    background: transparent; border: none; color: var(--peat-light);
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .auth-tab.active {
+    background: rgba(200,130,42,0.15); color: var(--amber-light);
+  }
+  .auth-error {
+    background: rgba(226,75,74,0.1); border: 0.5px solid rgba(226,75,74,0.3);
+    border-radius: 6px; padding: 8px 12px;
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    color: #e08888; margin-bottom: 1rem; display: none;
+  }
+  .auth-error.show { display: block; }
+  .auth-success {
+    background: rgba(29,158,117,0.1); border: 0.5px solid rgba(29,158,117,0.3);
+    border-radius: 6px; padding: 8px 12px;
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    color: #6ecb9a; margin-bottom: 1rem; display: none;
+  }
+  .auth-success.show { display: block; }
+  .btn-auth {
+    width: 100%; padding: 11px;
+    background: var(--amber); color: var(--peat);
+    border: none; border-radius: 7px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .btn-auth:hover { background: var(--amber-light); transform: translateY(-1px); }
+  .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .auth-user {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    color: var(--peat-light);
+  }
+  .auth-user-email { color: var(--amber-light); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn-signout {
+    background: none; border: 0.5px solid rgba(200,130,42,0.2);
+    border-radius: 5px; color: var(--peat-light);
+    font-family: 'DM Mono', monospace; font-size: 0.55rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 8px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-signout:hover { border-color: var(--amber); color: var(--amber-light); }
+  .forgot-link {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    color: var(--peat-light); text-align: center;
+    margin-top: 0.8rem; cursor: pointer;
+    transition: color 0.2s;
+  }
+  .forgot-link:hover { color: var(--amber-light); }
 </style>
 </head>
 <body>
+
+<!-- ── AUTH SCREEN ── -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">The <span>Dram</span> Journal</div>
+    <div class="auth-tagline">Whisky tasting & comparison log</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Iniciar sesión</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Registrarse</button>
+    </div>
+
+    <div id="auth-error" class="auth-error"></div>
+    <div id="auth-success" class="auth-success"></div>
+
+    <div class="form-row">
+      <label>Correo electrónico</label>
+      <input type="email" id="auth-email" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')authSubmit()">
+    </div>
+    <div class="form-row" id="auth-pass-row">
+      <label>Contraseña</label>
+      <input type="password" id="auth-password" placeholder="········" onkeydown="if(event.key==='Enter')authSubmit()">
+    </div>
+    <div class="form-row" id="auth-pass2-row" style="display:none;">
+      <label>Confirmar contraseña</label>
+      <input type="password" id="auth-password2" placeholder="········" onkeydown="if(event.key==='Enter')authSubmit()">
+    </div>
+
+    <button class="btn-auth" id="auth-btn" onclick="authSubmit()">Entrar</button>
+    <div class="forgot-link" id="forgot-link" onclick="forgotPassword()">¿Olvidaste tu contraseña?</div>
+  </div>
+</div>
+
+<!-- ── APP SCREEN ── -->
+<div id="app-screen" class="hidden">
 
 <header>
   <div class="brand">
@@ -746,9 +872,15 @@
       <div class="stat-count" id="total-count">0</div>
       <div class="stat-label">drams recorded</div>
     </div>
-    <div id="sync-status" style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--peat-light);">
-      <span id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:var(--peat-light);display:inline-block;transition:background 0.3s;"></span>
-      <span id="sync-text">conectando...</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="sync-status" style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--peat-light);">
+        <span id="sync-dot" style="width:6px;height:6px;border-radius:50%;background:var(--peat-light);display:inline-block;transition:background 0.3s;"></span>
+        <span id="sync-text">conectando...</span>
+      </div>
+      <div class="auth-user">
+        <span class="auth-user-email" id="header-email"></span>
+        <button class="btn-signout" onclick="signOut()">Salir</button>
+      </div>
     </div>
   </div>
 </header>
@@ -886,6 +1018,8 @@
 
 </div>
 
+</div> <!-- /#app-screen -->
+
 <div class="toast" id="toast"></div>
 
 <!-- EDIT MODAL -->
@@ -983,101 +1117,174 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ── Supabase config ─────────────────────────────────────────────
-const SB_URL  = 'https://cjoqrhiqveythplughqx.supabase.co';
-const SB_KEY  = 'sb_publishable_Udq4vXAPmVuu3jeTRdC4VA_ulfxYqKx';
-const SB_HDRS = {
-  'apikey':        SB_KEY,
-  'Authorization': `Bearer ${SB_KEY}`,
-  'Content-Type':  'application/json',
-  'Prefer':        'return=representation'
-};
-const TABLE = `${SB_URL}/rest/v1/whiskies`;
+const SB_URL = 'https://cjoqrhiqveythplughqx.supabase.co';
+const SB_KEY = 'sb_publishable_Udq4vXAPmVuu3jeTRdC4VA_ulfxYqKx';
+const sb     = supabase.createClient(SB_URL, SB_KEY);
 // ───────────────────────────────────────────────────────────────
 
 const COLORS    = ['c0','c1','c2','c3','c4'];
 const COLOR_HEX = ['#C8822A','#3B8BD4','#1D9E75','#7F77DD','#D4537E'];
 
-let whiskies = [];
-let selected = [];
+let whiskies    = [];
+let selected    = [];
+let currentUser = null;
+
+// ── Auth UI helpers ──
+function showApp(user) {
+  currentUser = user;
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  document.getElementById('header-email').textContent = user.email;
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  loadFromSupabase();
+}
+
+function showAuth() {
+  currentUser = null;
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('app-screen').classList.add('hidden');
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-pass2-row').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('auth-btn').textContent = tab === 'login' ? 'Entrar' : 'Crear cuenta';
+  document.getElementById('forgot-link').style.display = tab === 'login' ? '' : 'none';
+  clearAuthMsg();
+}
+
+function setAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('auth-success').classList.remove('show');
+}
+
+function setAuthSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('auth-error').classList.remove('show');
+}
+
+function clearAuthMsg() {
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-success').classList.remove('show');
+}
+
+// ── Auth actions ──
+async function authSubmit() {
+  const isLogin = document.getElementById('tab-login').classList.contains('active');
+  const email   = document.getElementById('auth-email').value.trim();
+  const pass    = document.getElementById('auth-password').value;
+  const pass2   = document.getElementById('auth-password2').value;
+  const btn     = document.getElementById('auth-btn');
+
+  if (!email || !pass) { setAuthError('Completa todos los campos'); return; }
+  if (!isLogin && pass !== pass2) { setAuthError('Las contraseñas no coinciden'); return; }
+  if (!isLogin && pass.length < 6) { setAuthError('La contraseña debe tener al menos 6 caracteres'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  if (isLogin) {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { setAuthError(error.message); btn.disabled = false; btn.textContent = 'Entrar'; return; }
+    showApp(data.user);
+  } else {
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
+    if (error) { setAuthError(error.message); btn.disabled = false; btn.textContent = 'Crear cuenta'; return; }
+    if (data.user && data.session) {
+      showApp(data.user);
+    } else {
+      setAuthSuccess('¡Cuenta creada! Revisa tu correo para confirmar tu dirección.');
+      btn.disabled = false; btn.textContent = 'Crear cuenta';
+    }
+  }
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('auth-email').value.trim();
+  if (!email) { setAuthError('Introduce tu correo primero'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+  if (error) { setAuthError(error.message); return; }
+  setAuthSuccess('Te hemos enviado un correo para restablecer tu contraseña.');
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  whiskies = []; selected = [];
+  showAuth();
+}
 
 // ── Sync status indicator ──
 function syncStatus(state) {
   const dot  = document.getElementById('sync-dot');
   const text = document.getElementById('sync-text');
-  const states = {
+  const map  = {
     loading: { color: '#7A6255', label: 'cargando...' },
     saving:  { color: '#E8A84C', label: 'guardando...' },
     ok:      { color: '#1D9E75', label: 'sincronizado' },
     error:   { color: '#E24B4A', label: 'error de sync' },
   };
-  const s = states[state] || states.ok;
+  const s = map[state] || map.ok;
   dot.style.background = s.color;
   text.textContent     = s.label;
 }
 
-// ── Load all rows from Supabase ──
+// ── Load whiskies (only this user's) ──
 async function loadFromSupabase() {
   syncStatus('loading');
   try {
-    const res = await fetch(`${TABLE}?order=created_at.asc`, { headers: SB_HDRS });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    whiskies = await res.json();
+    const { data, error } = await sb.from('whiskies').select('*').order('created_at', { ascending: true });
+    if (error) throw error;
+    whiskies = data;
     syncStatus('ok');
   } catch (e) {
-    console.error('Supabase load error:', e);
+    console.error('Load error:', e);
     syncStatus('error');
-    toast('⚠ No se pudo conectar con Supabase');
+    toast('⚠ No se pudo cargar desde Supabase');
   }
   document.getElementById('total-count').textContent = whiskies.length;
   renderList();
   renderCompare();
 }
 
-// ── Insert new whisky ──
+// ── Insert ──
 async function insertWhisky(w) {
   syncStatus('saving');
-  try {
-    const res = await fetch(TABLE, {
-      method:  'POST',
-      headers: SB_HDRS,
-      body:    JSON.stringify(w)
-    });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.message || res.status); }
-    const rows = await res.json();
-    syncStatus('ok');
-    return rows[0];
-  } catch (e) {
-    console.error('Supabase insert error:', e);
-    syncStatus('error');
-    toast('⚠ Error al guardar: ' + e.message);
-    return null;
-  }
+  const payload = { ...w, user_id: currentUser.id };
+  const { data, error } = await sb.from('whiskies').insert(payload).select().single();
+  if (error) { console.error(error); syncStatus('error'); toast('⚠ Error al guardar: ' + error.message); return null; }
+  syncStatus('ok');
+  return data;
 }
 
-// ── Delete a whisky by id ──
+// ── Update ──
+async function updateWhisky(id, changes) {
+  syncStatus('saving');
+  const { data, error } = await sb.from('whiskies').update(changes).eq('id', id).select().single();
+  if (error) { console.error(error); syncStatus('error'); toast('⚠ Error al actualizar: ' + error.message); return null; }
+  syncStatus('ok');
+  return data;
+}
+
+// ── Delete ──
 async function deleteFromSupabase(id) {
   syncStatus('saving');
-  try {
-    const res = await fetch(`${TABLE}?id=eq.${id}`, {
-      method:  'DELETE',
-      headers: SB_HDRS
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    syncStatus('ok');
-  } catch (e) {
-    console.error('Supabase delete error:', e);
-    syncStatus('error');
-    toast('⚠ Error al eliminar');
-  }
+  const { error } = await sb.from('whiskies').delete().eq('id', id);
+  if (error) { console.error(error); syncStatus('error'); toast('⚠ Error al eliminar'); return; }
+  syncStatus('ok');
 }
 
 // ── Toast ──
 function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
@@ -1110,8 +1317,7 @@ async function addWhisky() {
 
   whiskies.push(saved);
   document.getElementById('total-count').textContent = whiskies.length;
-  renderList();
-  renderCompare();
+  renderList(); renderCompare();
   toast('✓ ' + name + ' añadido');
 
   ['f-name','f-distillery','f-origin','f-age','f-price','f-nose','f-palate','f-notes'].forEach(id => document.getElementById(id).value = '');
@@ -1122,7 +1328,7 @@ async function addWhisky() {
   });
 }
 
-// ── Select / delete ──
+// ── Select ──
 function toggleSelect(id) {
   const idx = selected.indexOf(id);
   if (idx >= 0) { selected.splice(idx, 1); }
@@ -1130,42 +1336,37 @@ function toggleSelect(id) {
     if (selected.length >= 4) { toast('Máximo 4 whiskies para comparar'); return; }
     selected.push(id);
   }
-  renderList();
-  renderCompare();
+  renderList(); renderCompare();
 }
 
+// ── Delete ──
 async function deleteWhisky(id) {
   await deleteFromSupabase(id);
   whiskies = whiskies.filter(w => w.id !== id);
   selected = selected.filter(s => s !== id);
   document.getElementById('total-count').textContent = whiskies.length;
-  renderList();
-  renderCompare();
+  renderList(); renderCompare();
   toast('Eliminado');
 }
 
 function typeLabel(t) {
-  const map = { scotch:'Scotch', irish:'Irish', bourbon:'Bourbon', japanese:'Japanese', other:'Otro' };
-  return map[t] || t;
+  return { scotch:'Scotch', irish:'Irish', bourbon:'Bourbon', japanese:'Japanese', other:'Otro' }[t] || t;
 }
 
 // ── Render list ──
 function renderList() {
-  const el = document.getElementById('whisky-list');
+  const el        = document.getElementById('whisky-list');
   const exportBtn = document.getElementById('btn-export');
   if (whiskies.length === 0) {
     el.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:0.65rem;color:var(--peat-light);text-align:center;padding:1rem 0;letter-spacing:0.1em;">Sin whiskies aún</div>';
-    exportBtn.style.display = 'none';
-    return;
+    exportBtn.style.display = 'none'; return;
   }
   exportBtn.style.display = 'block';
   el.innerHTML = whiskies.map(w => {
     const isSel  = selected.includes(w.id);
     const selIdx = selected.indexOf(w.id);
     return `<div class="whisky-card ${isSel ? 'selected' : ''}" onclick="toggleSelect(${w.id})">
-      <div class="card-sel" style="${isSel ? `background:${COLOR_HEX[selIdx]};border-color:${COLOR_HEX[selIdx]};` : ''}">
-        ${isSel ? '✓' : ''}
-      </div>
+      <div class="card-sel" style="${isSel ? `background:${COLOR_HEX[selIdx]};border-color:${COLOR_HEX[selIdx]};` : ''}">${isSel ? '✓' : ''}</div>
       <div class="card-info">
         <div class="card-name">${w.name}</div>
         <div class="card-meta">${w.origin || w.distillery || '—'}</div>
@@ -1181,61 +1382,35 @@ function renderList() {
 function renderCompare() {
   const panel = document.getElementById('compare-content');
   const empty = document.getElementById('empty-state');
+  if (selected.length === 0) { panel.style.display = 'none'; empty.style.display = 'flex'; return; }
+  empty.style.display = 'none'; panel.style.display = 'block';
 
-  if (selected.length === 0) {
-    panel.style.display = 'none';
-    empty.style.display = 'flex';
-    return;
-  }
-
-  empty.style.display = 'none';
-  panel.style.display = 'block';
-
-  const ws = selected.map(id => whiskies.find(w => w.id === id)).filter(Boolean);
-
-  const legend = ws.map((w, i) => `
-    <div class="legend-item">
-      <div class="legend-dot ${COLORS[i]}"></div>
-      <span>${w.name}</span>
-    </div>`).join('');
-
-  const fields = [
-    { label: 'Destilería', key: 'distillery' },
-    { label: 'Origen',     key: 'origin' },
-    { label: 'Tipo',       key: 'type', render: typeLabel },
-    { label: 'Maduración', key: 'age' },
-    { label: 'Precio',     key: 'price' },
-    { label: 'Nariz',      key: 'nose' },
-    { label: 'Paladar',    key: 'palate' },
+  const ws      = selected.map(id => whiskies.find(w => w.id === id)).filter(Boolean);
+  const legend  = ws.map((w,i) => `<div class="legend-item"><div class="legend-dot ${COLORS[i]}"></div><span>${w.name}</span></div>`).join('');
+  const fields  = [
+    { label:'Destilería', key:'distillery' }, { label:'Origen', key:'origin' },
+    { label:'Tipo', key:'type', render:typeLabel }, { label:'Maduración', key:'age' },
+    { label:'Precio', key:'price' }, { label:'Nariz', key:'nose' }, { label:'Paladar', key:'palate' },
   ];
-
-  const tableRows    = fields.map(f => `
-    <tr>
-      <td class="comp-row-label">${f.label}</td>
-      ${ws.map(w => `<td>${(f.render ? f.render(w[f.key]) : w[f.key]) || '<span style="color:var(--peat-light);opacity:.4">—</span>'}</td>`).join('')}
-    </tr>`).join('');
+  const tableRows    = fields.map(f => `<tr><td class="comp-row-label">${f.label}</td>${ws.map(w => `<td>${(f.render?f.render(w[f.key]):w[f.key])||'<span style="color:var(--peat-light);opacity:.4">—</span>'}</td>`).join('')}</tr>`).join('');
   const tableHeaders = `<th></th>${ws.map((w,i) => `<th><span style="color:${COLOR_HEX[i]}">●</span> ${w.name}</th>`).join('')}`;
-
-  const attrs      = ['dulzor','ahumado','cuerpo','frutado','especiado'];
-  const attrLabels = { dulzor:'Dulzor', ahumado:'Ahumado', cuerpo:'Cuerpo', frutado:'Frutado', especiado:'Especiado' };
-
-  const profileBars = attrs.map(attr => `
+  const attrs        = ['dulzor','ahumado','cuerpo','frutado','especiado'];
+  const attrLabels   = { dulzor:'Dulzor', ahumado:'Ahumado', cuerpo:'Cuerpo', frutado:'Frutado', especiado:'Especiado' };
+  const profileBars  = attrs.map(attr => `
     <div class="profile-attr">
       <div class="attr-header"><span class="attr-label">${attrLabels[attr]}</span></div>
-      <div class="attr-bars">
-        ${ws.map((w,i) => `
-          <div class="bar-row">
-            <div class="bar-label">${w.name}</div>
-            <div class="bar-track"><div class="bar-fill ${COLORS[i]}" style="width:${w[attr]*10}%"></div></div>
-            <div class="bar-num">${w[attr]}</div>
-          </div>`).join('')}
+      <div class="attr-bars">${ws.map((w,i) => `
+        <div class="bar-row">
+          <div class="bar-label">${w.name}</div>
+          <div class="bar-track"><div class="bar-fill ${COLORS[i]}" style="width:${w[attr]*10}%"></div></div>
+          <div class="bar-num">${w[attr]}</div>
+        </div>`).join('')}
       </div>
     </div>`).join('');
-
   const notesCards = ws.map((w,i) => `
     <div class="note-card">
       <div class="note-card-name" style="color:${COLOR_HEX[i]}">${w.name}</div>
-      <div class="note-text ${w.notes ? '' : 'no-notes'}">${w.notes || 'Sin notas personales'}</div>
+      <div class="note-text ${w.notes?'':'no-notes'}">${w.notes||'Sin notas personales'}</div>
     </div>`).join('');
 
   panel.innerHTML = `
@@ -1243,131 +1418,88 @@ function renderCompare() {
       <div class="legend">${legend}</div>
       <div class="compare-info">Comparando <span>${ws.length}</span> de 4 seleccionados</div>
     </div>
-    <table class="comp-table">
-      <thead><tr>${tableHeaders}</tr></thead>
-      <tbody>${tableRows}</tbody>
-    </table>
-    <div class="profile-section">
-      <div class="profile-title">— Perfil de sabor</div>
-      <div class="profile-grid">${profileBars}</div>
-    </div>
-    <div class="notes-section">
-      <div class="notes-title">— Notas personales</div>
-      <div class="notes-grid">${notesCards}</div>
-    </div>`;
+    <table class="comp-table"><thead><tr>${tableHeaders}</tr></thead><tbody>${tableRows}</tbody></table>
+    <div class="profile-section"><div class="profile-title">— Perfil de sabor</div><div class="profile-grid">${profileBars}</div></div>
+    <div class="notes-section"><div class="notes-title">— Notas personales</div><div class="notes-grid">${notesCards}</div></div>`;
 }
 
-// ── Update whisky in Supabase ──
-async function updateWhisky(id, changes) {
-  syncStatus('saving');
-  try {
-    const res = await fetch(`${TABLE}?id=eq.${id}`, {
-      method:  'PATCH',
-      headers: SB_HDRS,
-      body:    JSON.stringify(changes)
-    });
-    if (!res.ok) { const err = await res.json(); throw new Error(err.message || res.status); }
-    const rows = await res.json();
-    syncStatus('ok');
-    return rows[0];
-  } catch (e) {
-    console.error('Supabase update error:', e);
-    syncStatus('error');
-    toast('⚠ Error al actualizar: ' + e.message);
-    return null;
-  }
-}
-
-// ── Modal: open ──
+// ── Edit modal ──
 function openEditModal(id) {
-  const w = whiskies.find(w => w.id === id);
-  if (!w) return;
-
-  document.getElementById('e-id').value          = w.id;
-  document.getElementById('e-name').value        = w.name        || '';
-  document.getElementById('e-distillery').value  = w.distillery  || '';
-  document.getElementById('e-origin').value      = w.origin      || '';
-  document.getElementById('e-type').value        = w.type        || 'scotch';
-  document.getElementById('e-age').value         = w.age         || '';
-  document.getElementById('e-price').value       = w.price       || '';
-  document.getElementById('e-date').value        = w.date        || '';
-  document.getElementById('e-nose').value        = w.nose        || '';
-  document.getElementById('e-palate').value      = w.palate      || '';
-  document.getElementById('e-notes').value       = w.notes       || '';
-
-  ['dulzor','ahumado','cuerpo','frutado','especiado'].forEach(attr => {
-    document.getElementById('esl-'+attr).value          = w[attr] ?? 5;
-    document.getElementById('esv-'+attr).textContent    = w[attr] ?? 5;
+  const w = whiskies.find(w => w.id === id); if (!w) return;
+  document.getElementById('e-id').value         = w.id;
+  document.getElementById('e-name').value       = w.name        || '';
+  document.getElementById('e-distillery').value = w.distillery  || '';
+  document.getElementById('e-origin').value     = w.origin      || '';
+  document.getElementById('e-type').value       = w.type        || 'scotch';
+  document.getElementById('e-age').value        = w.age         || '';
+  document.getElementById('e-price').value      = w.price       || '';
+  document.getElementById('e-date').value       = w.date        || '';
+  document.getElementById('e-nose').value       = w.nose        || '';
+  document.getElementById('e-palate').value     = w.palate      || '';
+  document.getElementById('e-notes').value      = w.notes       || '';
+  ['dulzor','ahumado','cuerpo','frutado','especiado'].forEach(a => {
+    document.getElementById('esl-'+a).value       = w[a] ?? 5;
+    document.getElementById('esv-'+a).textContent = w[a] ?? 5;
   });
-
   document.getElementById('modal-name-title').textContent = w.name;
   document.getElementById('edit-modal').classList.add('open');
 }
 
-// ── Modal: close ──
-function closeEditModal() {
-  document.getElementById('edit-modal').classList.remove('open');
-}
+function closeEditModal() { document.getElementById('edit-modal').classList.remove('open'); }
+function closeModal(e)    { if (e.target === document.getElementById('edit-modal')) closeEditModal(); }
 
-function closeModal(e) {
-  if (e.target === document.getElementById('edit-modal')) closeEditModal();
-}
-
-// ── Modal: save ──
 async function saveEdit() {
-  const id = parseInt(document.getElementById('e-id').value);
+  const id   = parseInt(document.getElementById('e-id').value);
   const name = document.getElementById('e-name').value.trim();
   if (!name) { toast('El nombre es obligatorio'); return; }
-
   const changes = {
-    name,
-    distillery: document.getElementById('e-distillery').value.trim(),
-    origin:     document.getElementById('e-origin').value.trim(),
-    type:       document.getElementById('e-type').value,
-    age:        document.getElementById('e-age').value.trim(),
-    price:      document.getElementById('e-price').value.trim(),
-    date:       document.getElementById('e-date').value,
-    nose:       document.getElementById('e-nose').value.trim(),
-    palate:     document.getElementById('e-palate').value.trim(),
-    notes:      document.getElementById('e-notes').value.trim(),
-    dulzor:     parseFloat(document.getElementById('esl-dulzor').value),
-    ahumado:    parseFloat(document.getElementById('esl-ahumado').value),
-    cuerpo:     parseFloat(document.getElementById('esl-cuerpo').value),
-    frutado:    parseFloat(document.getElementById('esl-frutado').value),
-    especiado:  parseFloat(document.getElementById('esl-especiado').value),
+    name, distillery: document.getElementById('e-distillery').value.trim(),
+    origin: document.getElementById('e-origin').value.trim(), type: document.getElementById('e-type').value,
+    age: document.getElementById('e-age').value.trim(), price: document.getElementById('e-price').value.trim(),
+    date: document.getElementById('e-date').value, nose: document.getElementById('e-nose').value.trim(),
+    palate: document.getElementById('e-palate').value.trim(), notes: document.getElementById('e-notes').value.trim(),
+    dulzor: parseFloat(document.getElementById('esl-dulzor').value),
+    ahumado: parseFloat(document.getElementById('esl-ahumado').value),
+    cuerpo: parseFloat(document.getElementById('esl-cuerpo').value),
+    frutado: parseFloat(document.getElementById('esl-frutado').value),
+    especiado: parseFloat(document.getElementById('esl-especiado').value),
   };
-
   const updated = await updateWhisky(id, changes);
   if (!updated) return;
-
   const idx = whiskies.findIndex(w => w.id === id);
   if (idx >= 0) whiskies[idx] = { ...whiskies[idx], ...updated };
-
-  closeEditModal();
-  renderList();
-  renderCompare();
+  closeEditModal(); renderList(); renderCompare();
   toast('✓ ' + name + ' actualizado');
 }
 
-// ── Close modal with Escape ──
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditModal(); });
+
+// ── Export CSV ──
 function exportCSV() {
   if (whiskies.length === 0) { toast('No hay whiskies para exportar'); return; }
   const headers = ['Nombre','Destilería','Origen','Tipo','Maduración','Precio','Fecha','Nariz','Paladar','Notas','Dulzor','Ahumado','Cuerpo','Frutado','Especiado'];
-  const escape  = v => { const s = (v==null)?'':String(v); return (s.includes(',')||s.includes('"')||s.includes('\n')) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  const escape  = v => { const s=(v==null)?'':String(v); return (s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s; };
   const rows    = whiskies.map(w => [w.name,w.distillery,w.origin,w.type,w.age,w.price,w.date,w.nose,w.palate,w.notes,w.dulzor,w.ahumado,w.cuerpo,w.frutado,w.especiado].map(escape).join(','));
   const csv     = [headers.join(','),...rows].join('\r\n');
   const blob    = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
   const url     = URL.createObjectURL(blob);
-  const a       = document.createElement('a');
-  a.href = url; a.download = 'dram-journal-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  const a       = document.createElement('a'); a.href=url; a.download='dram-journal-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
   URL.revokeObjectURL(url);
   toast('✓ CSV exportado — '+whiskies.length+' whiskies');
 }
 
-// ── Init ──
-document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-loadFromSupabase();
+// ── Init: check existing session ──
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { showApp(session.user); }
+  else         { showAuth(); }
+
+  // Listen for auth changes (e.g. email confirmation redirect)
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) showApp(session.user);
+    else         showAuth();
+  });
+})();
 </script>
 </body>
 </html>
