@@ -190,7 +190,19 @@ input[type=range] { -webkit-appearance:none; width:100%; height:3px; border-radi
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--amber); cursor:pointer; border:2px solid var(--peat); transition:transform 0.15s; }
 input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 
-/* ── TOAST ── */
+/* ── PHOTO ── */
+.wcard-photo { width:100%; height:130px; border-radius:8px; object-fit:cover; display:block; margin-bottom:2px; border:0.5px solid var(--border); }
+.wcard-photo-placeholder { width:100%; height:80px; border-radius:8px; background:rgba(250,245,236,0.03); border:0.5px dashed rgba(200,130,42,0.15); display:none; }
+
+.photo-upload-area { border:0.5px dashed rgba(200,130,42,0.35); border-radius:8px; padding:1rem; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; background:rgba(250,245,236,0.02); }
+.photo-upload-area:hover { border-color:var(--amber); background:rgba(200,130,42,0.05); }
+.photo-upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.photo-preview-wrap { position:relative; display:inline-block; }
+.photo-preview { width:100%; max-height:160px; object-fit:cover; border-radius:6px; display:block; }
+.photo-remove { position:absolute; top:6px; right:6px; background:rgba(20,14,8,0.7); border:none; color:var(--cream); border-radius:50%; width:22px; height:22px; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
+.photo-remove:hover { background:rgba(226,75,74,0.8); }
+.photo-upload-hint { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); letter-spacing:0.08em; margin-top:6px; }
+.photo-uploading { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--amber-light); letter-spacing:0.08em; margin-top:6px; }
 .toast { position:fixed; bottom:2rem; right:2rem; background:var(--peat-mid); border:0.5px solid var(--amber); color:var(--cream); padding:10px 18px; border-radius:8px; font-family:'DM Mono',monospace; font-size:0.68rem; transform:translateY(20px); opacity:0; transition:all 0.3s; z-index:999; pointer-events:none; }
 .toast.show { transform:translateY(0); opacity:1; }
 
@@ -359,6 +371,23 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
     </div>
     <input type="hidden" id="m-id">
     <div class="form-row"><label>Name</label><input type="text" id="m-name" placeholder="Arran 10 Years Old"></div>
+    <div class="form-row">
+      <label>Photo</label>
+      <div class="photo-upload-area" id="photo-upload-area" onclick="document.getElementById('m-photo-file').click()">
+        <input type="file" id="m-photo-file" accept="image/*" style="display:none" onchange="handlePhotoSelect(event)">
+        <div id="photo-empty-state">
+          <div style="font-size:1.4rem;opacity:0.3">📷</div>
+          <div class="photo-upload-hint">Click to add a photo · Max 600px · JPEG compressed</div>
+        </div>
+        <div id="photo-preview-state" style="display:none">
+          <div class="photo-preview-wrap">
+            <img id="m-photo-preview" class="photo-preview" src="" alt="">
+            <button class="photo-remove" onclick="event.stopPropagation();removePhoto()" title="Remove photo">✕</button>
+          </div>
+          <div class="photo-upload-hint" id="photo-size-hint"></div>
+        </div>
+      </div>
+    </div>
     <div class="form-grid-2">
       <div class="form-row">
         <label>Distillery</label>
@@ -467,6 +496,96 @@ let selected    = [];   // array of ids, max 4
 let currentUser = null;
 let editingId   = null;
 let cpOpen      = false; // compare panel open
+
+// ── Photo handling ──
+let pendingPhotoBlob = null;   // compressed blob waiting to be uploaded on save
+let pendingPhotoURL  = null;   // local object URL for preview
+let currentPhotoUrl  = null;   // existing photo_url when editing
+
+function handlePhotoSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  compressImage(file, 600, 0.78, (blob, dataUrl) => {
+    pendingPhotoBlob = blob;
+    pendingPhotoURL  = dataUrl;
+    const kb = Math.round(blob.size / 1024);
+    document.getElementById('photo-empty-state').style.display = 'none';
+    document.getElementById('photo-preview-state').style.display = 'block';
+    document.getElementById('m-photo-preview').src = dataUrl;
+    document.getElementById('photo-size-hint').textContent = `~${kb} KB after compression`;
+  });
+}
+
+function compressImage(file, maxPx, quality, cb) {
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    let w = img.width, h = img.height;
+    if (w > maxPx || h > maxPx) {
+      if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+      else       { w = Math.round(w * maxPx / h); h = maxPx; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    canvas.toBlob(blob => {
+      URL.revokeObjectURL(url);
+      const reader = new FileReader();
+      reader.onload = ev => cb(blob, ev.target.result);
+      reader.readAsDataURL(blob);
+    }, 'image/jpeg', quality);
+  };
+  img.src = url;
+}
+
+function removePhoto() {
+  pendingPhotoBlob = null;
+  pendingPhotoURL  = null;
+  currentPhotoUrl  = null;
+  document.getElementById('m-photo-file').value = '';
+  document.getElementById('photo-empty-state').style.display = '';
+  document.getElementById('photo-preview-state').style.display = 'none';
+  document.getElementById('m-photo-preview').src = '';
+}
+
+function resetPhotoUI() {
+  pendingPhotoBlob = null;
+  pendingPhotoURL  = null;
+  currentPhotoUrl  = null;
+  document.getElementById('m-photo-file').value = '';
+  document.getElementById('photo-empty-state').style.display = '';
+  document.getElementById('photo-preview-state').style.display = 'none';
+  document.getElementById('m-photo-preview').src = '';
+}
+
+function loadPhotoIntoModal(url) {
+  currentPhotoUrl = url;
+  if (url) {
+    document.getElementById('photo-empty-state').style.display = 'none';
+    document.getElementById('photo-preview-state').style.display = 'block';
+    document.getElementById('m-photo-preview').src = url;
+    document.getElementById('photo-size-hint').textContent = 'Current photo';
+  } else {
+    resetPhotoUI();
+  }
+}
+
+async function uploadPhoto(whiskyId) {
+  if (!pendingPhotoBlob) return currentPhotoUrl; // no new photo chosen
+  const path = `${currentUser.id}/${whiskyId}.jpg`;
+  const { error } = await sb.storage.from('whisky-photos').upload(path, pendingPhotoBlob, {
+    contentType: 'image/jpeg', upsert: true
+  });
+  if (error) { toast('⚠ Photo upload failed: ' + error.message); return currentPhotoUrl; }
+  const { data } = sb.storage.from('whisky-photos').getPublicUrl(path);
+  // bust cache on re-upload
+  return data.publicUrl + '?t=' + Date.now();
+}
+
+async function deletePhoto(whiskyId, userId) {
+  const path = `${userId || currentUser.id}/${whiskyId}.jpg`;
+  await sb.storage.from('whisky-photos').remove([path]);
+}
 
 // ── Autocomplete lookup tables ──
 // Expected Supabase table: lookup_options(id serial, category text, value text unique per category)
@@ -693,6 +812,7 @@ function renderGrid(){
     <div class="wcard${isSel?' selected':''}" onclick="toggleSelect(${w.id})" style="${col?`border-color:${col};`:''}">
       <div class="sel-ring" style="${col?`background:${col};border-color:${col};`:''}"></div>
       <div class="sel-check">✓</div>
+      ${w.photo_url ? `<img class="wcard-photo" src="${w.photo_url}" alt="${w.name}" loading="lazy">` : ''}
       <div>
         <span class="wcard-type type-${w.type}">${typeLabel(w.type)}</span>
         <div class="wcard-distillery">${w.distillery||'—'}</div>
@@ -821,6 +941,7 @@ function resetForm(){
   document.getElementById('m-type').value='scotch';
   document.getElementById('m-date').value=new Date().toISOString().split('T')[0];
   ATTRS.forEach(a=>{document.getElementById('sl-'+a).value=DEFAULTS[a];document.getElementById('sv-'+a).textContent=DEFAULTS[a];});
+  resetPhotoUI();
 }
 
 function openAddModal(){
@@ -840,6 +961,7 @@ function openEditModal(id){
   ATTRS.forEach(a=>{document.getElementById('sl-'+a).value=w[a]??DEFAULTS[a];document.getElementById('sv-'+a).textContent=w[a]??DEFAULTS[a];});
   document.getElementById('modal-title').innerHTML=`Edit <span>${w.name}</span>`;
   document.getElementById('modal-save-btn').textContent='✓ Save changes';
+  loadPhotoIntoModal(w.photo_url || null);
   document.getElementById('entry-modal').classList.add('open');
 }
 
@@ -855,6 +977,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEntryModal();})
 async function saveEntry(){
   const name=document.getElementById('m-name').value.trim();
   if(!name){toast('Name is required');return;}
+
+  // Determine the record id up front so we can use it as the storage filename
+  const recordId = editingId || Date.now();
+
+  // Upload photo if one was selected (shows saving state)
+  const saveBtn = document.getElementById('modal-save-btn');
+  const origLabel = saveBtn.textContent;
+  if (pendingPhotoBlob) { saveBtn.disabled=true; saveBtn.textContent='Uploading photo…'; }
+  const photo_url = await uploadPhoto(recordId);
+  saveBtn.disabled=false; saveBtn.textContent=origLabel;
+
   const fields={
     name,
     distillery:document.getElementById('m-distillery').value.trim(),
@@ -866,6 +999,7 @@ async function saveEntry(){
     nose:document.getElementById('m-nose').value.trim(),
     palate:document.getElementById('m-palate').value.trim(),
     notes:document.getElementById('m-notes').value.trim(),
+    photo_url: photo_url || null,
     ...Object.fromEntries(ATTRS.map(a=>[a,parseFloat(document.getElementById('sl-'+a).value)])),
   };
   if(editingId){
@@ -876,7 +1010,7 @@ async function saveEntry(){
     closeEntryModal(); renderGrid(); if(cpOpen)renderCompare();
     toast('✓ '+name+' updated');
   }else{
-    const saved=await dbInsert({id:Date.now(),...fields});
+    const saved=await dbInsert({id:recordId,...fields});
     if(!saved)return;
     whiskies.push(saved);
     document.getElementById('total-count').textContent=whiskies.length;
@@ -890,6 +1024,7 @@ async function confirmDelete(id){
   const w=whiskies.find(w=>w.id===id); if(!w)return;
   if(!confirm(`Delete "${w.name}"?`))return;
   const ok=await dbDelete(id); if(!ok)return;
+  if(w.photo_url) deletePhoto(id);
   whiskies=whiskies.filter(w=>w.id!==id);
   selected=selected.filter(s=>s!==id);
   document.getElementById('total-count').textContent=whiskies.length;
@@ -1062,6 +1197,7 @@ async function loadShareView(shareId) {
   screen.innerHTML = `
     <div class="share-hero">
       <div class="share-brand">The <span>Dram</span> Journal</div>
+      ${w.photo_url ? `<img src="${w.photo_url}" alt="${w.name}" style="width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-bottom:1.2rem;border:0.5px solid var(--border)">` : ''}
       <div class="share-whisky-name">${w.name}</div>
       <div class="share-meta">
         <span class="cm-badge" style="${typeBadgeStyle[w.type]||typeBadgeStyle.other}">${typeLabel(w.type)}</span>
