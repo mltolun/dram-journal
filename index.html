@@ -208,7 +208,40 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 .ac-item-add span { opacity:0.6; font-size:0.65rem; }
 .ac-empty { padding:10px 12px; font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--peat-light); letter-spacing:0.08em; }
 
-::-webkit-scrollbar { width:4px; }
+/* ── SHARE SCREEN (public view) ── */
+#share-screen { display:none; min-height:100vh; }
+#share-screen.visible { display:block; }
+.share-hero { padding:2.5rem 2.5rem 0; border-bottom:0.5px solid var(--border); }
+.share-brand { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:400; color:var(--peat-light); margin-bottom:1.5rem; }
+.share-brand span { color:var(--amber-light); font-style:italic; }
+.share-whisky-name { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:700; line-height:1.15; margin-bottom:6px; }
+.share-meta { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding-bottom:1.5rem; }
+.share-distillery { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--peat-light); }
+.share-body { padding:2rem 2.5rem; display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+@media(max-width:680px){ .share-body { grid-template-columns:1fr; } .share-hero,.share-body { padding-left:1.2rem; padding-right:1.2rem; } }
+.share-section-lbl { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--amber); margin-bottom:0.9rem; }
+.share-detail-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:0.5px solid rgba(200,130,42,0.07); font-size:0.82rem; }
+.share-detail-lbl { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); text-transform:uppercase; letter-spacing:0.08em; }
+.share-detail-val { color:var(--cream-dark); text-align:right; max-width:60%; }
+.share-notes-box { background:rgba(250,245,236,0.03); border:0.5px solid var(--border); border-radius:8px; padding:14px; font-size:0.82rem; color:var(--peat-light); line-height:1.7; font-style:italic; margin-top:0.5rem; }
+.share-bars { display:flex; flex-direction:column; gap:10px; }
+.share-bar-row { display:flex; align-items:center; gap:10px; }
+.share-bar-lbl { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); width:72px; text-align:right; flex-shrink:0; }
+.share-track { flex:1; height:5px; background:rgba(250,245,236,0.07); border-radius:3px; }
+.share-fill { height:100%; border-radius:3px; background:var(--amber); }
+.share-val { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); width:18px; text-align:right; flex-shrink:0; }
+.share-actions { padding:0 2.5rem 2.5rem; display:flex; gap:10px; flex-wrap:wrap; }
+.share-error { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:1rem; }
+.share-error-icon { font-size:3rem; opacity:0.2; }
+.share-error-txt { font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--peat-light); }
+
+/* ── SHARE LINK MODAL ── */
+#share-modal .modal { max-width:420px; }
+.share-link-box { display:flex; gap:6px; margin-top:0.4rem; }
+.share-link-box input { flex:1; background:rgba(250,245,236,0.05); border:0.5px solid rgba(200,130,42,0.25); border-radius:6px; color:var(--cream); font-family:'DM Mono',monospace; font-size:0.65rem; padding:8px 10px; outline:none; }
+.share-link-box button { padding:8px 14px; background:var(--amber); color:var(--peat); border:none; border-radius:6px; font-family:'DM Mono',monospace; font-size:0.65rem; cursor:pointer; white-space:nowrap; font-weight:500; transition:background 0.2s; }
+.share-link-box button:hover { background:var(--amber-light); }
+.share-tip { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--peat-light); margin-top:0.7rem; line-height:1.6; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(200,130,42,0.2); border-radius:2px; }
 
@@ -390,6 +423,30 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
     <div class="modal-actions">
       <button class="btn-save" id="modal-save-btn" onclick="saveEntry()">＋ Add to journal</button>
       <button class="btn-cancel" onclick="closeEntryModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PUBLIC SHARE SCREEN ── -->
+<div id="share-screen">
+  <div id="share-content"></div>
+</div>
+
+<!-- ── SHARE LINK MODAL ── -->
+<div class="modal-backdrop" id="share-modal" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">Share <span>this dram</span></div>
+      <button class="modal-close" onclick="closeShareModal()">✕</button>
+    </div>
+    <p style="font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--peat-light);margin-bottom:1rem;line-height:1.6;">Anyone with this link can view a read-only snapshot. Dram Journal members can import it into their own collection.</p>
+    <div class="share-link-box">
+      <input type="text" id="share-link-input" readonly>
+      <button onclick="copyShareLink()">Copy</button>
+    </div>
+    <div class="share-tip" id="share-tip">Generating link…</div>
+    <div class="modal-actions" style="margin-top:1.2rem">
+      <button class="btn-cancel" onclick="closeShareModal()">Close</button>
     </div>
   </div>
 </div>
@@ -646,6 +703,7 @@ function renderGrid(){
       </div>
       <div class="wcard-bars">${bars}</div>
       <div class="wcard-actions">
+        <button class="wcard-btn" onclick="event.stopPropagation();openShareModal(${w.id})">↗ Share</button>
         <button class="wcard-btn" onclick="event.stopPropagation();openEditModal(${w.id})">✎ Edit</button>
         <button class="wcard-btn del" onclick="event.stopPropagation();confirmDelete(${w.id})">✕ Delete</button>
       </div>
@@ -886,17 +944,183 @@ async function submitReset() {
   }, 1500);
 }
 
+// ── Share ──
+// Supabase table needed:
+// create table shared_whiskies (
+//   share_id uuid primary key default gen_random_uuid(),
+//   created_at timestamptz default now(),
+//   payload jsonb not null
+// );
+// RLS: enable, add policy: FOR SELECT USING (true)  ← public read
+//       add policy: FOR INSERT WITH CHECK (true)     ← anyone can create
+
+async function openShareModal(id) {
+  const w = whiskies.find(w => w.id === id);
+  if (!w) return;
+  document.getElementById('share-tip').textContent = 'Generating link…';
+  document.getElementById('share-link-input').value = '';
+  document.getElementById('share-modal').classList.add('open');
+
+  // Check if a share already exists for this whisky (match by original id in payload)
+  const { data: existing } = await sb
+    .from('shared_whiskies')
+    .select('share_id')
+    .eq('payload->>id', String(w.id))
+    .maybeSingle();
+
+  let shareId;
+  if (existing) {
+    shareId = existing.share_id;
+  } else {
+    const { data: inserted, error } = await sb
+      .from('shared_whiskies')
+      .insert({ payload: w })
+      .select('share_id')
+      .single();
+    if (error) {
+      document.getElementById('share-tip').textContent = '⚠ Could not generate link: ' + error.message;
+      return;
+    }
+    shareId = inserted.share_id;
+  }
+
+  const url = window.location.origin + window.location.pathname + '?share=' + shareId;
+  document.getElementById('share-link-input').value = url;
+  document.getElementById('share-tip').textContent = 'Link is public — anyone can view this dram. Logged-in users can import it.';
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal').classList.remove('open');
+}
+
+function copyShareLink() {
+  const input = document.getElementById('share-link-input');
+  navigator.clipboard.writeText(input.value).then(() => toast('✓ Link copied')).catch(() => {
+    input.select(); document.execCommand('copy'); toast('✓ Link copied');
+  });
+}
+
+// ── Public share view ──
+async function loadShareView(shareId) {
+  // Hide all other screens completely
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('reset-screen').classList.add('hidden');
+  const screen = document.getElementById('share-screen');
+  screen.classList.add('visible');
+
+  const { data, error } = await sb
+    .from('shared_whiskies')
+    .select('payload, created_at')
+    .eq('share_id', shareId)
+    .single();
+
+  if (error || !data) {
+    screen.innerHTML = `<div class="share-error">
+      <div class="share-error-icon">🥃</div>
+      <div class="share-error-txt">This dram could not be found</div>
+      <a href="${window.location.pathname}" style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">← Back to The Dram Journal</a>
+    </div>`;
+    return;
+  }
+
+  const w = data.payload;
+  const typeBadgeStyle = {
+    scotch:'background:rgba(200,130,42,0.15);color:var(--amber-light)',
+    irish:'background:rgba(50,170,100,0.15);color:#6ecb93',
+    bourbon:'background:rgba(180,80,80,0.15);color:#e08888',
+    japanese:'background:rgba(180,150,230,0.15);color:#c4aff0',
+    other:'background:rgba(150,150,150,0.15);color:#aaa',
+  };
+
+  // Check if viewer is logged in → show import button
+  const { data: { session } } = await sb.auth.getSession();
+  const importBtn = session
+    ? `<button class="btn-t btn-primary" onclick="importSharedWhisky(${JSON.stringify(w).replace(/"/g,'&quot;')})">＋ Import to my journal</button>`
+    : `<a href="${window.location.pathname}" class="btn-t btn-outline" style="text-decoration:none;">Sign in to import</a>`;
+
+  const details = [
+    { label:'Distillery', val: w.distillery },
+    { label:'Region / Origin', val: w.origin },
+    { label:'Style', val: typeLabel(w.type) },
+    { label:'Age / Maturation', val: w.age },
+    { label:'Price', val: w.price },
+    { label:'Tasting date', val: w.date },
+    { label:'Nose', val: w.nose },
+    { label:'Palate', val: w.palate },
+  ].filter(d => d.val).map(d => `
+    <div class="share-detail-row">
+      <span class="share-detail-lbl">${d.label}</span>
+      <span class="share-detail-val">${d.val}</span>
+    </div>`).join('');
+
+  const bars = ATTRS.map(a => `
+    <div class="share-bar-row">
+      <div class="share-bar-lbl">${ATTR_LABELS[a]}</div>
+      <div class="share-track"><div class="share-fill" style="width:${(w[a]||0)*20}%"></div></div>
+      <div class="share-val">${w[a]||0}</div>
+    </div>`).join('');
+
+  screen.innerHTML = `
+    <div class="share-hero">
+      <div class="share-brand">The <span>Dram</span> Journal</div>
+      <div class="share-whisky-name">${w.name}</div>
+      <div class="share-meta">
+        <span class="cm-badge" style="${typeBadgeStyle[w.type]||typeBadgeStyle.other}">${typeLabel(w.type)}</span>
+        ${w.distillery ? `<span class="share-distillery">${w.distillery}</span>` : ''}
+        ${w.origin ? `<span class="share-distillery" style="opacity:0.5">· ${w.origin}</span>` : ''}
+      </div>
+    </div>
+    <div class="share-body">
+      <div>
+        <div class="share-section-lbl">— Details</div>
+        ${details || '<span style="opacity:.4;font-size:0.8rem">No details recorded</span>'}
+        ${w.notes ? `<div class="share-section-lbl" style="margin-top:1.2rem">— Notes</div><div class="share-notes-box">${w.notes}</div>` : ''}
+      </div>
+      <div>
+        <div class="share-section-lbl">— Flavour profile</div>
+        <div class="share-bars">${bars}</div>
+      </div>
+    </div>
+    <div class="share-actions">
+      ${importBtn}
+      <a href="${window.location.pathname}" class="btn-t btn-outline" style="text-decoration:none;">← Back to journal</a>
+    </div>`;
+}
+
+async function importSharedWhisky(w) {
+  if (!currentUser) { toast('Sign in to import'); return; }
+  // Strip original id/user_id so a new row is created
+  const { id, user_id, created_at, ...fields } = w;
+  const saved = await dbInsert({ id: Date.now(), ...fields });
+  if (!saved) return;
+  whiskies.push(saved);
+  toast('✓ ' + w.name + ' imported to your journal!');
+  // Navigate back to main app
+  window.history.replaceState({}, document.title, window.location.pathname);
+  document.getElementById('share-screen').classList.remove('visible');
+  document.getElementById('app-screen').classList.remove('hidden');
+  document.getElementById('total-count').textContent = whiskies.length;
+  renderGrid();
+}
+
 // ── Init ──
 (async()=>{
-  // Debug: log full URL so we can see what Supabase sends
   console.log('URL hash:', window.location.hash);
   console.log('URL search:', window.location.search);
 
-  // Supabase puts the token in the hash as: #access_token=...&type=recovery
-  const hashStr = window.location.hash.slice(1); // remove leading #
+  // Check for public share link first
+  const urlParams = new URLSearchParams(window.location.search);
+  const shareId = urlParams.get('share');
+  if (shareId) {
+    await loadShareView(shareId);
+    return;
+  }
+
+  // Supabase recovery token in hash
+  const hashStr = window.location.hash.slice(1);
   const hashParams = new URLSearchParams(hashStr);
   const tokenType = hashParams.get('type');
-
   console.log('token type detected:', tokenType);
 
   if (tokenType === 'recovery') {
