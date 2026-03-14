@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -198,25 +198,25 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
     <div class="auth-logo">The <span>Dram</span> Journal</div>
     <div class="auth-tagline">Whisky tasting & comparison log</div>
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Iniciar sesión</button>
-      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Registrarse</button>
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign in</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Register</button>
     </div>
     <div id="auth-error" class="auth-msg auth-error"></div>
     <div id="auth-success" class="auth-msg auth-success"></div>
     <div class="form-row">
-      <label>Correo electrónico</label>
-      <input type="email" id="auth-email" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')authSubmit()">
+      <label>Email address</label>
+      <input type="email" id="auth-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')authSubmit()">
     </div>
     <div class="form-row">
-      <label>Contraseña</label>
+      <label>Password</label>
       <input type="password" id="auth-password" placeholder="········" onkeydown="if(event.key==='Enter')authSubmit()">
     </div>
     <div class="form-row" id="auth-pass2-row" style="display:none;">
-      <label>Confirmar contraseña</label>
+      <label>Confirm password</label>
       <input type="password" id="auth-password2" placeholder="········" onkeydown="if(event.key==='Enter')authSubmit()">
     </div>
-    <button class="btn-auth" id="auth-btn" onclick="authSubmit()">Entrar</button>
-    <div class="forgot-link" id="forgot-link" onclick="forgotPassword()">¿Olvidaste tu contraseña?</div>
+    <button class="btn-auth" id="auth-btn" onclick="authSubmit()">Sign in</button>
+    <div class="forgot-link" id="forgot-link" onclick="forgotPassword()">Forgot your password?</div>
   </div>
 </div>
 
@@ -236,11 +236,11 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
         <div class="sync-indicator">
           <span class="sync-dot" id="sync-dot"></span>
-          <span class="sync-text" id="sync-text">conectando...</span>
+          <span class="sync-text" id="sync-text">connecting...</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="header-email" id="header-email"></span>
-          <button class="btn-signout" onclick="signOut()">Salir</button>
+          <button class="btn-signout" onclick="signOut()">Sign out</button>
         </div>
       </div>
     </div>
@@ -248,13 +248,13 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="toolbar-title">Mi colección</span>
+      <span class="toolbar-title">My collection</span>
       <span class="compare-badge" id="compare-badge" style="display:none;"></span>
     </div>
     <div class="toolbar-right">
       <button class="btn-t btn-outline" onclick="exportCSV()">↓ CSV</button>
-      <button class="btn-t btn-compare" id="btn-compare" onclick="toggleComparePanel()">Comparar</button>
-      <button class="btn-t btn-primary" onclick="openAddModal()">＋ Añadir</button>
+      <button class="btn-t btn-compare" id="btn-compare" onclick="toggleComparePanel()">Compare</button>
+      <button class="btn-t btn-primary" onclick="openAddModal()">＋ Add</button>
     </div>
   </div>
 
@@ -264,7 +264,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 
   <div id="compare-panel">
     <div class="cp-header">
-      <span class="cp-title">— Comparativa</span>
+      <span class="cp-title">— Comparison</span>
       <div class="cp-legend" id="cp-legend"></div>
     </div>
     <div id="compare-content"></div>
@@ -276,59 +276,59 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 <div class="modal-backdrop" id="entry-modal" onclick="closeMBackdrop(event)">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="modal-title">Añadir <span>whisky</span></div>
+      <div class="modal-title" id="modal-title">Add <span>whisky</span></div>
       <button class="modal-close" onclick="closeEntryModal()">✕</button>
     </div>
     <input type="hidden" id="m-id">
-    <div class="form-row"><label>Nombre</label><input type="text" id="m-name" placeholder="Arran 10 Years Old"></div>
+    <div class="form-row"><label>Name</label><input type="text" id="m-name" placeholder="Arran 10 Years Old"></div>
     <div class="form-grid-2">
-      <div class="form-row"><label>Destilería</label><input type="text" id="m-distillery" placeholder="Arran"></div>
-      <div class="form-row"><label>Origen</label><input type="text" id="m-origin" placeholder="Isla de Arran, Escocia"></div>
+      <div class="form-row"><label>Distillery</label><input type="text" id="m-distillery" placeholder="Arran"></div>
+      <div class="form-row"><label>Region / Origin</label><input type="text" id="m-origin" placeholder="Isle of Arran, Scotland"></div>
     </div>
     <div class="form-grid-2">
       <div class="form-row">
-        <label>Tipo</label>
+        <label>Style</label>
         <select id="m-type">
           <option value="scotch">Scotch</option>
           <option value="irish">Irish</option>
           <option value="bourbon">Bourbon</option>
           <option value="japanese">Japanese</option>
-          <option value="other">Otro</option>
+          <option value="other">Other</option>
         </select>
       </div>
-      <div class="form-row"><label>Maduración</label><input type="text" id="m-age" placeholder="10 años / Bourbon"></div>
+      <div class="form-row"><label>Age / Maturation</label><input type="text" id="m-age" placeholder="10 years / Bourbon cask"></div>
     </div>
     <div class="form-grid-2">
-      <div class="form-row"><label>Precio (€)</label><input type="text" id="m-price" placeholder="35–45 €"></div>
-      <div class="form-row"><label>Fecha de cata</label><input type="date" id="m-date"></div>
+      <div class="form-row"><label>Price</label><input type="text" id="m-price" placeholder="£35–45"></div>
+      <div class="form-row"><label>Tasting date</label><input type="date" id="m-date"></div>
     </div>
-    <div class="form-section-lbl">— Perfil de sabor (0–10)</div>
+    <div class="form-section-lbl">— Flavour profile (0–10)</div>
     <div class="slider-row">
-      <div class="slider-header"><span class="slider-lbl">Dulzor</span><span class="slider-val" id="sv-dulzor">5</span></div>
+      <div class="slider-header"><span class="slider-lbl">Sweetness</span><span class="slider-val" id="sv-dulzor">5</span></div>
       <input type="range" min="0" max="10" step="0.5" value="5" id="sl-dulzor" oninput="document.getElementById('sv-dulzor').textContent=this.value">
     </div>
     <div class="slider-row">
-      <div class="slider-header"><span class="slider-lbl">Ahumado</span><span class="slider-val" id="sv-ahumado">2</span></div>
+      <div class="slider-header"><span class="slider-lbl">Smokiness</span><span class="slider-val" id="sv-ahumado">2</span></div>
       <input type="range" min="0" max="10" step="0.5" value="2" id="sl-ahumado" oninput="document.getElementById('sv-ahumado').textContent=this.value">
     </div>
     <div class="slider-row">
-      <div class="slider-header"><span class="slider-lbl">Cuerpo</span><span class="slider-val" id="sv-cuerpo">5</span></div>
+      <div class="slider-header"><span class="slider-lbl">Body</span><span class="slider-val" id="sv-cuerpo">5</span></div>
       <input type="range" min="0" max="10" step="0.5" value="5" id="sl-cuerpo" oninput="document.getElementById('sv-cuerpo').textContent=this.value">
     </div>
     <div class="slider-row">
-      <div class="slider-header"><span class="slider-lbl">Frutado</span><span class="slider-val" id="sv-frutado">5</span></div>
+      <div class="slider-header"><span class="slider-lbl">Fruitiness</span><span class="slider-val" id="sv-frutado">5</span></div>
       <input type="range" min="0" max="10" step="0.5" value="5" id="sl-frutado" oninput="document.getElementById('sv-frutado').textContent=this.value">
     </div>
     <div class="slider-row">
-      <div class="slider-header"><span class="slider-lbl">Especiado</span><span class="slider-val" id="sv-especiado">4</span></div>
+      <div class="slider-header"><span class="slider-lbl">Spiciness</span><span class="slider-val" id="sv-especiado">4</span></div>
       <input type="range" min="0" max="10" step="0.5" value="4" id="sl-especiado" oninput="document.getElementById('sv-especiado').textContent=this.value">
     </div>
-    <div class="form-row"><label>Nariz</label><input type="text" id="m-nose" placeholder="Vainilla, manzana verde..."></div>
-    <div class="form-row"><label>Paladar</label><input type="text" id="m-palate" placeholder="Malta dulce, especias..."></div>
-    <div class="form-row"><label>Notas personales</label><textarea id="m-notes" placeholder="Mis impresiones..."></textarea></div>
+    <div class="form-row"><label>Nose</label><input type="text" id="m-nose" placeholder="Vanilla, green apple..."></div>
+    <div class="form-row"><label>Palate</label><input type="text" id="m-palate" placeholder="Sweet malt, warm spice..."></div>
+    <div class="form-row"><label>Personal notes</label><textarea id="m-notes" placeholder="My impressions..."></textarea></div>
     <div class="modal-actions">
-      <button class="btn-save" id="modal-save-btn" onclick="saveEntry()">＋ Añadir al diario</button>
-      <button class="btn-cancel" onclick="closeEntryModal()">Cancelar</button>
+      <button class="btn-save" id="modal-save-btn" onclick="saveEntry()">＋ Add to journal</button>
+      <button class="btn-cancel" onclick="closeEntryModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -343,7 +343,7 @@ const sb     = supabase.createClient(SB_URL, SB_KEY);
 
 const COLOR_HEX   = ['#C8822A','#3B8BD4','#1D9E75','#7F77DD'];
 const ATTRS       = ['dulzor','ahumado','cuerpo','frutado','especiado'];
-const ATTR_LABELS = {dulzor:'Dulzor',ahumado:'Ahumado',cuerpo:'Cuerpo',frutado:'Frutado',especiado:'Especiado'};
+const ATTR_LABELS = {dulzor:'Sweetness',ahumado:'Smokiness',cuerpo:'Body',frutado:'Fruitiness',especiado:'Spiciness'};
 const DEFAULTS    = {dulzor:5,ahumado:2,cuerpo:5,frutado:5,especiado:4};
 
 let whiskies    = [];
@@ -354,7 +354,7 @@ let cpOpen      = false; // compare panel open
 
 // ── Sync ──
 function syncStatus(s) {
-  const m = {loading:{c:'#7A6255',t:'cargando...'},saving:{c:'#E8A84C',t:'guardando...'},ok:{c:'#1D9E75',t:'sincronizado'},error:{c:'#E24B4A',t:'error'}}[s]||{c:'#1D9E75',t:'ok'};
+  const m = {loading:{c:'#7A6255',t:'loading...'},saving:{c:'#E8A84C',t:'saving...'},ok:{c:'#1D9E75',t:'synced'},error:{c:'#E24B4A',t:'error'}}[s]||{c:'#1D9E75',t:'ok'};
   document.getElementById('sync-dot').style.background = m.c;
   document.getElementById('sync-text').textContent = m.t;
 }
@@ -383,7 +383,7 @@ function switchTab(tab) {
   document.getElementById('tab-login').classList.toggle('active',tab==='login');
   document.getElementById('tab-register').classList.toggle('active',tab==='register');
   document.getElementById('auth-pass2-row').style.display=tab==='register'?'':'none';
-  document.getElementById('auth-btn').textContent=tab==='login'?'Entrar':'Crear cuenta';
+  document.getElementById('auth-btn').textContent=tab==='login'?'Sign in':'Create account';
   document.getElementById('forgot-link').style.display=tab==='login'?'':'none';
   document.getElementById('auth-error').classList.remove('show');
   document.getElementById('auth-success').classList.remove('show');
@@ -397,29 +397,29 @@ async function authSubmit() {
   const errEl=document.getElementById('auth-error');
   const okEl=document.getElementById('auth-success');
   errEl.classList.remove('show'); okEl.classList.remove('show');
-  if(!email||!pass){errEl.textContent='Completa todos los campos';errEl.classList.add('show');return;}
-  if(!isLogin&&pass!==pass2){errEl.textContent='Las contraseñas no coinciden';errEl.classList.add('show');return;}
-  if(!isLogin&&pass.length<6){errEl.textContent='Mínimo 6 caracteres';errEl.classList.add('show');return;}
+  if(!email||!pass){errEl.textContent='Please fill in all fields';errEl.classList.add('show');return;}
+  if(!isLogin&&pass!==pass2){errEl.textContent='Passwords do not match';errEl.classList.add('show');return;}
+  if(!isLogin&&pass.length<6){errEl.textContent='Password must be at least 6 characters';errEl.classList.add('show');return;}
   btn.disabled=true; btn.textContent='...';
   if(isLogin){
     const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error){errEl.textContent=error.message;errEl.classList.add('show');btn.disabled=false;btn.textContent='Entrar';return;}
+    if(error){errEl.textContent=error.message;errEl.classList.add('show');btn.disabled=false;btn.textContent='Sign in';return;}
     showApp(data.user);
   }else{
     const{data,error}=await sb.auth.signUp({email,password:pass});
-    if(error){errEl.textContent=error.message;errEl.classList.add('show');btn.disabled=false;btn.textContent='Crear cuenta';return;}
+    if(error){errEl.textContent=error.message;errEl.classList.add('show');btn.disabled=false;btn.textContent='Create account';return;}
     if(data.user&&data.session){showApp(data.user);}
-    else{okEl.textContent='¡Cuenta creada! Revisa tu correo.';okEl.classList.add('show');btn.disabled=false;btn.textContent='Crear cuenta';}
+    else{okEl.textContent='Account created! Check your email to confirm.';okEl.classList.add('show');btn.disabled=false;btn.textContent='Create account';}
   }
 }
 async function forgotPassword(){
   const email=document.getElementById('auth-email').value.trim();
   const errEl=document.getElementById('auth-error');
   const okEl=document.getElementById('auth-success');
-  if(!email){errEl.textContent='Introduce tu correo primero';errEl.classList.add('show');return;}
+  if(!email){errEl.textContent='Enter your email first';errEl.classList.add('show');return;}
   const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
   if(error){errEl.textContent=error.message;errEl.classList.add('show');return;}
-  okEl.textContent='Correo de restablecimiento enviado.';okEl.classList.add('show');
+  okEl.textContent='Password reset email sent.';okEl.classList.add('show');
 }
 async function signOut(){await sb.auth.signOut();showAuth();}
 
@@ -427,7 +427,7 @@ async function signOut(){await sb.auth.signOut();showAuth();}
 async function loadData(){
   syncStatus('loading');
   const{data,error}=await sb.from('whiskies').select('*').order('created_at',{ascending:true});
-  if(error){syncStatus('error');toast('⚠ Error al cargar');return;}
+  if(error){syncStatus('error');toast('⚠ Failed to load data');return;}
   whiskies=data; syncStatus('ok');
   document.getElementById('total-count').textContent=whiskies.length;
   renderGrid(); if(cpOpen) renderCompare();
@@ -447,18 +447,18 @@ async function dbUpdate(id,ch){
 async function dbDelete(id){
   syncStatus('saving');
   const{error}=await sb.from('whiskies').delete().eq('id',id);
-  if(error){syncStatus('error');toast('⚠ Error al eliminar');return false;}
+  if(error){syncStatus('error');toast('⚠ Failed to delete');return false;}
   syncStatus('ok'); return true;
 }
 
 // ── Type label ──
-function typeLabel(t){return{scotch:'Scotch',irish:'Irish',bourbon:'Bourbon',japanese:'Japanese',other:'Otro'}[t]||t;}
+function typeLabel(t){return{scotch:'Scotch',irish:'Irish',bourbon:'Bourbon',japanese:'Japanese',other:'Other'}[t]||t;}
 
 // ── Render whisky grid ──
 function renderGrid(){
   const grid=document.getElementById('whisky-grid');
   if(whiskies.length===0){
-    grid.innerHTML=`<div class="empty-grid"><div class="empty-icon">🥃</div><div class="empty-text">Sin whiskies aún<br>Pulsa "＋ Añadir" para empezar</div></div>`;
+    grid.innerHTML=`<div class="empty-grid"><div class="empty-icon">🥃</div><div class="empty-text">No whiskies yet<br>Press "＋ Add" to get started</div></div>`;
     updateToolbar(); return;
   }
   grid.innerHTML=whiskies.map(w=>{
@@ -483,8 +483,8 @@ function renderGrid(){
       </div>
       <div class="wcard-bars">${bars}</div>
       <div class="wcard-actions">
-        <button class="wcard-btn" onclick="event.stopPropagation();openEditModal(${w.id})">✎ Editar</button>
-        <button class="wcard-btn del" onclick="event.stopPropagation();confirmDelete(${w.id})">✕ Eliminar</button>
+        <button class="wcard-btn" onclick="event.stopPropagation();openEditModal(${w.id})">✎ Edit</button>
+        <button class="wcard-btn del" onclick="event.stopPropagation();confirmDelete(${w.id})">✕ Delete</button>
       </div>
     </div>`;
   }).join('');
@@ -496,7 +496,7 @@ function toggleSelect(id){
   const idx=selected.indexOf(id);
   if(idx>=0){selected.splice(idx,1);}
   else{
-    if(selected.length>=4){toast('Máximo 4 whiskies para comparar');return;}
+    if(selected.length>=4){toast('Maximum 4 whiskies for comparison');return;}
     selected.push(id);
   }
   renderGrid();
@@ -508,7 +508,7 @@ function updateToolbar(){
   const btn=document.getElementById('btn-compare');
   if(selected.length>0){
     badge.style.display='';
-    badge.textContent=selected.length+' seleccionado'+(selected.length>1?'s':'');
+    badge.textContent=selected.length+' selected';
     btn.classList.add('ready');
   }else{
     badge.style.display='none';
@@ -519,7 +519,7 @@ function updateToolbar(){
 
 // ── Compare panel ──
 function toggleComparePanel(){
-  if(selected.length===0){toast('Toca una carta para seleccionarla y compararla');return;}
+  if(selected.length===0){toast('Select a card first to compare');return;}
   cpOpen=!cpOpen;
   const panel=document.getElementById('compare-panel');
   panel.classList.toggle('open',cpOpen);
@@ -536,9 +536,9 @@ function renderCompare(){
   legendEl.innerHTML=ws.map((w,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${COLOR_HEX[i]}"></div><span>${w.name}</span></div>`).join('');
 
   const fields=[
-    {label:'Destilería',key:'distillery'},{label:'Origen',key:'origin'},
-    {label:'Tipo',key:'type',render:typeLabel},{label:'Maduración',key:'age'},
-    {label:'Precio',key:'price'},{label:'Nariz',key:'nose'},{label:'Paladar',key:'palate'},
+    {label:'Distillery',key:'distillery'},{label:'Region / Origin',key:'origin'},
+    {label:'Style',key:'type',render:typeLabel},{label:'Age / Maturation',key:'age'},
+    {label:'Price',key:'price'},{label:'Nose',key:'nose'},{label:'Palate',key:'palate'},
   ];
   const thRow=`<th></th>${ws.map((w,i)=>`<th><span style="color:${COLOR_HEX[i]}">●</span> ${w.name}</th>`).join('')}`;
   const tdRows=fields.map(f=>`<tr><td class="comp-row-label">${f.label}</td>${ws.map(w=>`<td>${(f.render?f.render(w[f.key]):w[f.key])||'<span style="opacity:.3">—</span>'}</td>`).join('')}</tr>`).join('');
@@ -549,13 +549,13 @@ function renderCompare(){
       ${ws.map((w,i)=>`<div class="bar-row-c"><div class="bar-lbl-c">${w.name}</div><div class="bar-track-c"><div class="bar-fill-c" style="width:${(w[a]||0)*10}%;background:${COLOR_HEX[i]}"></div></div><div class="bar-val-c">${w[a]||0}</div></div>`).join('')}
     </div>`).join('');
 
-  const noteCards=ws.map((w,i)=>`<div class="note-card"><div class="note-name" style="color:${COLOR_HEX[i]}">${w.name}</div><div class="note-body">${w.notes||'<span style="opacity:.4;font-style:normal;">Sin notas</span>'}</div></div>`).join('');
+  const noteCards=ws.map((w,i)=>`<div class="note-card"><div class="note-name" style="color:${COLOR_HEX[i]}">${w.name}</div><div class="note-body">${w.notes||'<span style="opacity:.4;font-style:normal;">No notes</span>'}</div></div>`).join('');
 
   content.innerHTML=`
     <table class="comp-table"><thead><tr>${thRow}</tr></thead><tbody>${tdRows}</tbody></table>
-    <div class="section-lbl">— Perfil de sabor</div>
+    <div class="section-lbl">— Flavour profile</div>
     <div class="profile-grid">${profBars}</div>
-    <div class="section-lbl">— Notas personales</div>
+    <div class="section-lbl">— Personal notes</div>
     <div class="notes-grid">${noteCards}</div>`;
 }
 
@@ -569,8 +569,8 @@ function resetForm(){
 
 function openAddModal(){
   editingId=null; resetForm();
-  document.getElementById('modal-title').innerHTML='Añadir <span>whisky</span>';
-  document.getElementById('modal-save-btn').textContent='＋ Añadir al diario';
+  document.getElementById('modal-title').innerHTML='Add <span>whisky</span>';
+  document.getElementById('modal-save-btn').textContent='＋ Add to journal';
   document.getElementById('entry-modal').classList.add('open');
 }
 
@@ -582,8 +582,8 @@ function openEditModal(id){
   document.getElementById('m-type').value=w.type||'scotch';
   document.getElementById('m-date').value=w.date||'';
   ATTRS.forEach(a=>{document.getElementById('sl-'+a).value=w[a]??DEFAULTS[a];document.getElementById('sv-'+a).textContent=w[a]??DEFAULTS[a];});
-  document.getElementById('modal-title').innerHTML=`Editar <span>${w.name}</span>`;
-  document.getElementById('modal-save-btn').textContent='✓ Guardar cambios';
+  document.getElementById('modal-title').innerHTML=`Edit <span>${w.name}</span>`;
+  document.getElementById('modal-save-btn').textContent='✓ Save changes';
   document.getElementById('entry-modal').classList.add('open');
 }
 
@@ -593,7 +593,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEntryModal();})
 
 async function saveEntry(){
   const name=document.getElementById('m-name').value.trim();
-  if(!name){toast('El nombre es obligatorio');return;}
+  if(!name){toast('Name is required');return;}
   const fields={
     name,
     distillery:document.getElementById('m-distillery').value.trim(),
@@ -613,40 +613,40 @@ async function saveEntry(){
     const idx=whiskies.findIndex(w=>w.id===editingId);
     if(idx>=0)whiskies[idx]={...whiskies[idx],...updated};
     closeEntryModal(); renderGrid(); if(cpOpen)renderCompare();
-    toast('✓ '+name+' actualizado');
+    toast('✓ '+name+' updated');
   }else{
     const saved=await dbInsert({id:Date.now(),...fields});
     if(!saved)return;
     whiskies.push(saved);
     document.getElementById('total-count').textContent=whiskies.length;
     closeEntryModal(); renderGrid();
-    toast('✓ '+name+' añadido');
+    toast('✓ '+name+' added');
   }
 }
 
 // ── Delete with confirm ──
 async function confirmDelete(id){
   const w=whiskies.find(w=>w.id===id); if(!w)return;
-  if(!confirm(`¿Eliminar "${w.name}"?`))return;
+  if(!confirm(`Delete "${w.name}"?`))return;
   const ok=await dbDelete(id); if(!ok)return;
   whiskies=whiskies.filter(w=>w.id!==id);
   selected=selected.filter(s=>s!==id);
   document.getElementById('total-count').textContent=whiskies.length;
   renderGrid(); if(cpOpen)renderCompare();
-  toast('Eliminado');
+  toast('Deleted');
 }
 
 // ── Export CSV ──
 function exportCSV(){
-  if(whiskies.length===0){toast('No hay whiskies para exportar');return;}
-  const h=['Nombre','Destilería','Origen','Tipo','Maduración','Precio','Fecha','Nariz','Paladar','Notas','Dulzor','Ahumado','Cuerpo','Frutado','Especiado'];
+  if(whiskies.length===0){toast('No whiskies to export');return;}
+  const h=['Name','Distillery','Region / Origin','Style','Age / Maturation','Price','Date','Nose','Palate','Notes','Sweetness','Smokiness','Body','Fruitiness','Spiciness'];
   const esc=v=>{const s=(v==null)?'':String(v);return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;};
   const rows=whiskies.map(w=>[w.name,w.distillery,w.origin,w.type,w.age,w.price,w.date,w.nose,w.palate,w.notes,w.dulzor,w.ahumado,w.cuerpo,w.frutado,w.especiado].map(esc).join(','));
   const csv=[h.join(','),...rows].join('\r\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='dram-journal-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-  URL.revokeObjectURL(url); toast('✓ CSV exportado');
+  URL.revokeObjectURL(url); toast('✓ CSV exported');
 }
 
 // ── Init ──
