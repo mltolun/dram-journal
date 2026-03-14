@@ -654,6 +654,84 @@
     .sidebar { border-right: none; border-bottom: 0.5px solid var(--border); }
     header { padding: 1.5rem; }
   }
+
+  /* ── EDIT MODAL ── */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(20,14,8,0.82);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--peat-mid);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    width: min(620px, 94vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 2rem;
+    transform: translateY(16px);
+    transition: transform 0.25s;
+  }
+  .modal-backdrop.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--cream);
+  }
+  .modal-title span { color: var(--amber-light); font-style: italic; }
+  .modal-close {
+    background: none; border: none; color: var(--peat-light);
+    font-size: 1.1rem; cursor: pointer; padding: 4px 8px;
+    border-radius: 6px; transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--cream); }
+
+  .modal-actions {
+    display: flex; gap: 10px; margin-top: 1.2rem;
+  }
+  .btn-save {
+    flex: 1; padding: 10px;
+    background: var(--amber); color: var(--peat);
+    border: none; border-radius: 7px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-save:hover { background: var(--amber-light); transform: translateY(-1px); }
+  .btn-cancel {
+    padding: 10px 18px;
+    background: transparent; color: var(--peat-light);
+    border: 0.5px solid rgba(200,130,42,0.25); border-radius: 7px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--amber); color: var(--cream); }
+
+  .card-edit {
+    opacity: 0;
+    background: none; border: none;
+    color: var(--peat-light);
+    cursor: pointer; font-size: 12px;
+    padding: 2px 5px; border-radius: 4px;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .whisky-card:hover .card-edit { opacity: 0.5; }
+  .card-edit:hover { opacity: 1 !important; color: var(--amber-light); }
 </style>
 </head>
 <body>
@@ -809,6 +887,101 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- EDIT MODAL -->
+<div class="modal-backdrop" id="edit-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Editar <span id="modal-name-title"></span></div>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+
+    <input type="hidden" id="e-id">
+
+    <div class="form-row">
+      <label>Nombre</label>
+      <input type="text" id="e-name">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+      <div class="form-row">
+        <label>Destilería</label>
+        <input type="text" id="e-distillery">
+      </div>
+      <div class="form-row">
+        <label>Origen</label>
+        <input type="text" id="e-origin">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+      <div class="form-row">
+        <label>Tipo</label>
+        <select id="e-type">
+          <option value="scotch">Scotch</option>
+          <option value="irish">Irish</option>
+          <option value="bourbon">Bourbon</option>
+          <option value="japanese">Japanese</option>
+          <option value="other">Otro</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Maduración</label>
+        <input type="text" id="e-age">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+      <div class="form-row">
+        <label>Precio (€)</label>
+        <input type="text" id="e-price">
+      </div>
+      <div class="form-row">
+        <label>Fecha</label>
+        <input type="date" id="e-date">
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0 0.5rem;">
+      <div class="form-title" style="margin-bottom:0.8rem;">— Perfil de sabor (0–10)</div>
+      <div class="slider-row">
+        <div class="slider-header"><span class="slider-label">Dulzor</span><span class="slider-value" id="esv-dulzor">5</span></div>
+        <input type="range" min="0" max="10" step="0.5" id="esl-dulzor" oninput="document.getElementById('esv-dulzor').textContent=this.value">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header"><span class="slider-label">Ahumado</span><span class="slider-value" id="esv-ahumado">2</span></div>
+        <input type="range" min="0" max="10" step="0.5" id="esl-ahumado" oninput="document.getElementById('esv-ahumado').textContent=this.value">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header"><span class="slider-label">Cuerpo</span><span class="slider-value" id="esv-cuerpo">5</span></div>
+        <input type="range" min="0" max="10" step="0.5" id="esl-cuerpo" oninput="document.getElementById('esv-cuerpo').textContent=this.value">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header"><span class="slider-label">Frutado</span><span class="slider-value" id="esv-frutado">5</span></div>
+        <input type="range" min="0" max="10" step="0.5" id="esl-frutado" oninput="document.getElementById('esv-frutado').textContent=this.value">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header"><span class="slider-label">Especiado</span><span class="slider-value" id="esv-especiado">4</span></div>
+        <input type="range" min="0" max="10" step="0.5" id="esl-especiado" oninput="document.getElementById('esv-especiado').textContent=this.value">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Nariz</label>
+      <input type="text" id="e-nose">
+    </div>
+    <div class="form-row">
+      <label>Paladar</label>
+      <input type="text" id="e-palate">
+    </div>
+    <div class="form-row">
+      <label>Notas personales</label>
+      <textarea id="e-notes"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveEdit()">✓ Guardar cambios</button>
+      <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── Supabase config ─────────────────────────────────────────────
@@ -998,6 +1171,7 @@ function renderList() {
         <div class="card-meta">${w.origin || w.distillery || '—'}</div>
       </div>
       <span class="card-type type-${w.type}">${typeLabel(w.type)}</span>
+      <button class="card-edit" onclick="event.stopPropagation();openEditModal(${w.id})" title="Editar">✎</button>
       <button class="card-delete" onclick="event.stopPropagation();deleteWhisky(${w.id})" title="Eliminar">✕</button>
     </div>`;
   }).join('');
@@ -1083,7 +1257,100 @@ function renderCompare() {
     </div>`;
 }
 
-// ── Export CSV ──
+// ── Update whisky in Supabase ──
+async function updateWhisky(id, changes) {
+  syncStatus('saving');
+  try {
+    const res = await fetch(`${TABLE}?id=eq.${id}`, {
+      method:  'PATCH',
+      headers: SB_HDRS,
+      body:    JSON.stringify(changes)
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message || res.status); }
+    const rows = await res.json();
+    syncStatus('ok');
+    return rows[0];
+  } catch (e) {
+    console.error('Supabase update error:', e);
+    syncStatus('error');
+    toast('⚠ Error al actualizar: ' + e.message);
+    return null;
+  }
+}
+
+// ── Modal: open ──
+function openEditModal(id) {
+  const w = whiskies.find(w => w.id === id);
+  if (!w) return;
+
+  document.getElementById('e-id').value          = w.id;
+  document.getElementById('e-name').value        = w.name        || '';
+  document.getElementById('e-distillery').value  = w.distillery  || '';
+  document.getElementById('e-origin').value      = w.origin      || '';
+  document.getElementById('e-type').value        = w.type        || 'scotch';
+  document.getElementById('e-age').value         = w.age         || '';
+  document.getElementById('e-price').value       = w.price       || '';
+  document.getElementById('e-date').value        = w.date        || '';
+  document.getElementById('e-nose').value        = w.nose        || '';
+  document.getElementById('e-palate').value      = w.palate      || '';
+  document.getElementById('e-notes').value       = w.notes       || '';
+
+  ['dulzor','ahumado','cuerpo','frutado','especiado'].forEach(attr => {
+    document.getElementById('esl-'+attr).value          = w[attr] ?? 5;
+    document.getElementById('esv-'+attr).textContent    = w[attr] ?? 5;
+  });
+
+  document.getElementById('modal-name-title').textContent = w.name;
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+// ── Modal: close ──
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('edit-modal')) closeEditModal();
+}
+
+// ── Modal: save ──
+async function saveEdit() {
+  const id = parseInt(document.getElementById('e-id').value);
+  const name = document.getElementById('e-name').value.trim();
+  if (!name) { toast('El nombre es obligatorio'); return; }
+
+  const changes = {
+    name,
+    distillery: document.getElementById('e-distillery').value.trim(),
+    origin:     document.getElementById('e-origin').value.trim(),
+    type:       document.getElementById('e-type').value,
+    age:        document.getElementById('e-age').value.trim(),
+    price:      document.getElementById('e-price').value.trim(),
+    date:       document.getElementById('e-date').value,
+    nose:       document.getElementById('e-nose').value.trim(),
+    palate:     document.getElementById('e-palate').value.trim(),
+    notes:      document.getElementById('e-notes').value.trim(),
+    dulzor:     parseFloat(document.getElementById('esl-dulzor').value),
+    ahumado:    parseFloat(document.getElementById('esl-ahumado').value),
+    cuerpo:     parseFloat(document.getElementById('esl-cuerpo').value),
+    frutado:    parseFloat(document.getElementById('esl-frutado').value),
+    especiado:  parseFloat(document.getElementById('esl-especiado').value),
+  };
+
+  const updated = await updateWhisky(id, changes);
+  if (!updated) return;
+
+  const idx = whiskies.findIndex(w => w.id === id);
+  if (idx >= 0) whiskies[idx] = { ...whiskies[idx], ...updated };
+
+  closeEditModal();
+  renderList();
+  renderCompare();
+  toast('✓ ' + name + ' actualizado');
+}
+
+// ── Close modal with Escape ──
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditModal(); });
 function exportCSV() {
   if (whiskies.length === 0) { toast('No hay whiskies para exportar'); return; }
   const headers = ['Nombre','Destilería','Origen','Tipo','Maduración','Precio','Fecha','Nariz','Paladar','Notas','Dulzor','Ahumado','Cuerpo','Frutado','Especiado'];
