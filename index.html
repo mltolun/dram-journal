@@ -302,26 +302,26 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
       <div class="form-row"><label>Price</label><input type="text" id="m-price" placeholder="£35–45"></div>
       <div class="form-row"><label>Tasting date</label><input type="date" id="m-date"></div>
     </div>
-    <div class="form-section-lbl">— Flavour profile (0–10)</div>
+    <div class="form-section-lbl">— Flavour profile (1–5)</div>
     <div class="slider-row">
       <div class="slider-header"><span class="slider-lbl">Sweetness</span><span class="slider-val" id="sv-dulzor">5</span></div>
-      <input type="range" min="0" max="10" step="0.5" value="5" id="sl-dulzor" oninput="document.getElementById('sv-dulzor').textContent=this.value">
+      <input type="range" min="0" max="5" step="1" value="3" id="sl-dulzor" oninput="document.getElementById('sv-dulzor').textContent=this.value">
     </div>
     <div class="slider-row">
       <div class="slider-header"><span class="slider-lbl">Smokiness</span><span class="slider-val" id="sv-ahumado">2</span></div>
-      <input type="range" min="0" max="10" step="0.5" value="2" id="sl-ahumado" oninput="document.getElementById('sv-ahumado').textContent=this.value">
+      <input type="range" min="0" max="5" step="1" value="1" id="sl-ahumado" oninput="document.getElementById('sv-ahumado').textContent=this.value">
     </div>
     <div class="slider-row">
       <div class="slider-header"><span class="slider-lbl">Body</span><span class="slider-val" id="sv-cuerpo">5</span></div>
-      <input type="range" min="0" max="10" step="0.5" value="5" id="sl-cuerpo" oninput="document.getElementById('sv-cuerpo').textContent=this.value">
+      <input type="range" min="0" max="5" step="1" value="3" id="sl-cuerpo" oninput="document.getElementById('sv-cuerpo').textContent=this.value">
     </div>
     <div class="slider-row">
       <div class="slider-header"><span class="slider-lbl">Fruitiness</span><span class="slider-val" id="sv-frutado">5</span></div>
-      <input type="range" min="0" max="10" step="0.5" value="5" id="sl-frutado" oninput="document.getElementById('sv-frutado').textContent=this.value">
+      <input type="range" min="0" max="5" step="1" value="3" id="sl-frutado" oninput="document.getElementById('sv-frutado').textContent=this.value">
     </div>
     <div class="slider-row">
       <div class="slider-header"><span class="slider-lbl">Spiciness</span><span class="slider-val" id="sv-especiado">4</span></div>
-      <input type="range" min="0" max="10" step="0.5" value="4" id="sl-especiado" oninput="document.getElementById('sv-especiado').textContent=this.value">
+      <input type="range" min="0" max="5" step="1" value="2" id="sl-especiado" oninput="document.getElementById('sv-especiado').textContent=this.value">
     </div>
     <div class="form-row"><label>Nose</label><input type="text" id="m-nose" placeholder="Vanilla, green apple..."></div>
     <div class="form-row"><label>Palate</label><input type="text" id="m-palate" placeholder="Sweet malt, warm spice..."></div>
@@ -344,7 +344,7 @@ const sb     = supabase.createClient(SB_URL, SB_KEY);
 const COLOR_HEX   = ['#C8822A','#3B8BD4','#1D9E75','#7F77DD'];
 const ATTRS       = ['dulzor','ahumado','cuerpo','frutado','especiado'];
 const ATTR_LABELS = {dulzor:'Sweetness',ahumado:'Smokiness',cuerpo:'Body',frutado:'Fruitiness',especiado:'Spiciness'};
-const DEFAULTS    = {dulzor:5,ahumado:2,cuerpo:5,frutado:5,especiado:4};
+const DEFAULTS    = {dulzor:3,ahumado:1,cuerpo:3,frutado:3,especiado:2};
 
 let whiskies    = [];
 let selected    = [];   // array of ids, max 4
@@ -468,7 +468,7 @@ function renderGrid(){
     const bars=ATTRS.map(a=>`
       <div class="bar-row-s">
         <div class="bar-lbl-s">${ATTR_LABELS[a]}</div>
-        <div class="bar-track-s"><div class="bar-fill-s" style="width:${(w[a]||0)*10}%;${col?`background:${col};opacity:0.75`:''} "></div></div>
+        <div class="bar-track-s"><div class="bar-fill-s" style="width:${(w[a]||0)*20}%;${col?`background:${col};opacity:0.75`:''} "></div></div>
         <div class="bar-val-s">${w[a]||0}</div>
       </div>`).join('');
     return `
@@ -546,7 +546,7 @@ function renderCompare(){
   const profBars=ATTRS.map(a=>`
     <div class="profile-attr">
       <span class="attr-lbl">${ATTR_LABELS[a]}</span>
-      ${ws.map((w,i)=>`<div class="bar-row-c"><div class="bar-lbl-c">${w.name}</div><div class="bar-track-c"><div class="bar-fill-c" style="width:${(w[a]||0)*10}%;background:${COLOR_HEX[i]}"></div></div><div class="bar-val-c">${w[a]||0}</div></div>`).join('')}
+      ${ws.map((w,i)=>`<div class="bar-row-c"><div class="bar-lbl-c">${w.name}</div><div class="bar-track-c"><div class="bar-fill-c" style="width:${(w[a]||0)*20}%;background:${COLOR_HEX[i]}"></div></div><div class="bar-val-c">${w[a]||0}</div></div>`).join('')}
     </div>`).join('');
 
   const noteCards=ws.map((w,i)=>`<div class="note-card"><div class="note-name" style="color:${COLOR_HEX[i]}">${w.name}</div><div class="note-body">${w.notes||'<span style="opacity:.4;font-style:normal;">No notes</span>'}</div></div>`).join('');
