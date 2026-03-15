@@ -75,7 +75,7 @@ const emit = defineEmits(['close', 'identified'])
 
 const FIELD_LABELS = {
   name: 'Name', distillery: 'Distillery', origin: 'Region',
-  type: 'Style', age: 'Age / Maturation', abv: 'ABV',
+  type: 'Style', age: 'Age / ABV',
 }
 
 const step       = ref('pick')
@@ -97,7 +97,6 @@ const displayResult = computed(() => {
   if (r.origin)     out.origin     = r.origin
   if (r.type)       out.type       = r.type
   if (r.age)        out.age        = r.age
-  if (r.abv)        out.abv        = r.abv
   return out
 })
 
@@ -158,7 +157,7 @@ If you cannot read the label clearly or identify the whisky, set name to "Unknow
 async function analyse() {
   step.value = 'loading'
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${API_KEY}`
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`
 
     const response = await fetch(url, {
       method: 'POST',
@@ -170,7 +169,7 @@ async function analyse() {
             { text: PROMPT }
           ]
         }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
       })
     })
 
@@ -188,19 +187,35 @@ async function analyse() {
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    const cleaned = text.replace(/```json|```/g, '').trim()
-    const parsed = JSON.parse(cleaned)
+
+    // Extract the first {...} block in case the model adds surrounding text
+    const match = text.match(/\{[\s\S]*\}/)
+    if (!match) throw new Error('Could not read the label. Try a clearer photo.')
+
+    let parsed
+    try {
+      parsed = JSON.parse(match[0])
+    } catch {
+      // Sometimes the model truncates — try to salvage by closing open structure
+      try {
+        parsed = JSON.parse(match[0] + '"}')
+      } catch {
+        throw new Error('Could not parse label data. Try a clearer photo.')
+      }
+    }
+
+    const abv = parsed.abv || ''
+    const notesBase = parsed.notes || ''
 
     result.value = {
       name:       parsed.name       || '',
       distillery: parsed.distillery || '',
       origin:     parsed.origin     || '',
       type:       parsed.type       || 'scotch',
-      age:        parsed.age        || '',
-      abv:        parsed.abv        || '',
+      age:        parsed.age        ? `${parsed.age}${abv ? ' · ' + abv : ''}` : abv,
       nose:       parsed.nose       || '',
       palate:     parsed.palate     || '',
-      notes:      parsed.notes      || '',
+      notes:      notesBase,
       dulzor:     parsed.dulzor     ?? DEFAULTS.dulzor,
       ahumado:    parsed.ahumado    ?? DEFAULTS.ahumado,
       cuerpo:     parsed.cuerpo     ?? DEFAULTS.cuerpo,
