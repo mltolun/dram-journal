@@ -93,7 +93,7 @@ import { ATTRS, ATTR_LABELS, DEFAULTS } from '../lib/constants.js'
 import Autocomplete from './Autocomplete.vue'
 import PhotoUpload  from './PhotoUpload.vue'
 
-const props = defineProps({ editing: Object })
+const props = defineProps({ editing: Object, prefill: Object })
 const emit  = defineEmits(['saved', 'close'])
 
 const { insertWhisky, updateWhisky } = useWhiskies()
@@ -115,6 +115,9 @@ onMounted(() => {
     loadExisting(props.editing.photo_url || null)
   } else {
     clearPhoto()
+    if (props.prefill) {
+      Object.assign(form, props.prefill)
+    }
   }
 })
 

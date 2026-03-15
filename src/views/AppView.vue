@@ -13,6 +13,7 @@
       @add="openAddModal"
       @compare="toggleCompare"
       @export="doExport"
+      @scan="scanOpen = true"
     />
     <div class="grid-area">
       <div class="whisky-grid">
@@ -46,14 +47,21 @@
     <WhiskyModal
       v-if="modalOpen"
       :editing="editingWhisky"
+      :prefill="scanPrefill"
       @saved="onSaved"
-      @close="modalOpen = false"
+      @close="modalOpen = false; scanPrefill = null"
     />
 
     <ShareModal
       v-if="shareModalWhisky"
       :whisky="shareModalWhisky"
       @close="shareModalWhisky = null"
+    />
+
+    <ScanModal
+      v-if="scanOpen"
+      @close="scanOpen = false"
+      @identified="onScanned"
     />
   </div>
 </template>
@@ -75,6 +83,7 @@ import WhiskyCard   from '../components/WhiskyCard.vue'
 import WhiskyModal  from '../components/WhiskyModal.vue'
 import ComparePanel from '../components/ComparePanel.vue'
 import ShareModal   from '../components/ShareModal.vue'
+import ScanModal    from '../components/ScanModal.vue'
 
 const { getSession } = useAuth()
 const { loadWhiskies, deleteWhisky } = useWhiskies()
@@ -87,6 +96,8 @@ const compareOpen   = ref(false)
 const modalOpen     = ref(false)
 const editingWhisky = ref(null)
 const shareModalWhisky = ref(null)
+const scanOpen      = ref(false)
+const scanPrefill   = ref(null)
 
 const selectedWhiskies = computed(() =>
   selected.value.map(id => whiskies.value.find(w => w.id === id)).filter(Boolean)
@@ -116,7 +127,15 @@ function toggleCompare() {
 
 function openAddModal() {
   editingWhisky.value = null
+  scanPrefill.value   = null
   modalOpen.value = true
+}
+
+function onScanned(data) {
+  scanOpen.value      = false
+  editingWhisky.value = null
+  scanPrefill.value   = data
+  modalOpen.value     = true
 }
 
 function openEditModal(w) {
