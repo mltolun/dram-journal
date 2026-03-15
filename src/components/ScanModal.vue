@@ -18,6 +18,7 @@
           <div class="scan-drop-label">Tap to take / choose photo</div>
           <div class="scan-drop-hint">or drag & drop</div>
         </div>
+        <div class="scan-quota">{{ DAILY_CAP - scansToday }} of {{ DAILY_CAP }} scans remaining today</div>
         <input ref="fileInput" type="file" accept="image/*" capture="environment"
           style="display:none" @change="onFileChange" />
       </div>
@@ -70,8 +71,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ATTRS, DEFAULTS } from '../lib/constants.js'
+import { sb } from '../lib/supabase.js'
+import { currentUser } from '../composables/useAuth.js'
 
 const emit = defineEmits(['close', 'identified'])
+
+const DAILY_CAP = 10  // ← change this to set the daily limit per user
 
 const FIELD_LABELS = {
   name: 'Name', distillery: 'Distillery', origin: 'Region',
@@ -86,8 +91,30 @@ const imageMime  = ref('image/jpeg')
 const result     = ref({})
 const errorMsg   = ref('')
 const fileInput  = ref(null)
+const scansToday = ref(0)
 
 const API_KEY = import.meta.env.VITE_GEMINI_KEY
+
+async function fetchScansToday() {
+  const today = new Date().toISOString().split('T')[0]
+  const { data } = await sb
+    .from('scan_usage')
+    .select('count')
+    .eq('user_id', currentUser.value.id)
+    .eq('date', today)
+    .single()
+  scansToday.value = data?.count ?? 0
+}
+
+async function incrementScans() {
+  const today = new Date().toISOString().split('T')[0]
+  await sb.from('scan_usage').upsert({
+    user_id: currentUser.value.id,
+    date: today,
+    count: scansToday.value + 1,
+  }, { onConflict: 'user_id,date' })
+  scansToday.value++
+}
 
 const displayResult = computed(() => {
   const r = result.value
@@ -107,6 +134,9 @@ function reset() {
   result.value     = {}
   errorMsg.value   = ''
 }
+
+// Fetch today's count when modal opens
+fetchScansToday()
 
 function onDrop(e) {
   dragging.value = false
@@ -155,6 +185,12 @@ Respond ONLY with a valid JSON object — no explanation, no markdown, no backti
 If you cannot read the label clearly or identify the whisky, set name to "Unknown" and fill what you can.`
 
 async function analyse() {
+  if (scansToday.value >= DAILY_CAP) {
+    errorMsg.value = `Daily scan limit of ${DAILY_CAP} reached. Try again tomorrow.`
+    step.value = 'error'
+    return
+  }
+
   step.value = 'loading'
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`
@@ -223,6 +259,7 @@ async function analyse() {
       especiado:  parsed.especiado  ?? DEFAULTS.especiado,
     }
     step.value = 'result'
+    await incrementScans()
 
   } catch (e) {
     errorMsg.value = e.message || 'Could not identify the bottle. Try a clearer photo.'
@@ -254,6 +291,16 @@ function confirm() {
 .scan-drop-icon  { font-size: 2.8rem; margin-bottom: 0.75rem; }
 .scan-drop-label { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.3rem; }
 .scan-drop-hint  { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--peat-light); text-transform: uppercase; }
+
+.scan-quota {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--peat-light);
+  text-align: center;
+  margin-top: 0.75rem;
+}
 
 .scan-preview {
   width: 100%;
