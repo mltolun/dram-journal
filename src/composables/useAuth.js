@@ -24,8 +24,9 @@ export function useAuth() {
   }
 
   async function forgotPassword(email) {
+    const base = window.location.origin + window.location.pathname
     const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.href,
+      redirectTo: base + '?recovery=1',
     })
     if (error) throw error
   }
