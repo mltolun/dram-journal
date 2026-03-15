@@ -158,7 +158,7 @@ If you cannot read the label clearly or identify the whisky, set name to "Unknow
 async function analyse() {
   step.value = 'loading'
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${API_KEY}`
 
     const response = await fetch(url, {
       method: 'POST',
@@ -178,9 +178,11 @@ async function analyse() {
 
     if (!response.ok) {
       const msg = data.error?.message || 'API error'
-      // Bad key — clear it so the user is prompted again
       if (response.status === 400 || response.status === 403) {
         throw new Error('API key error. Please check your VITE_GEMINI_KEY.')
+      }
+      if (response.status === 429 || msg.includes('Quota') || msg.includes('quota')) {
+        throw new Error('Gemini quota exceeded. Enable billing at console.cloud.google.com or try again later.')
       }
       throw new Error(msg)
     }
