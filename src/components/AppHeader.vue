@@ -16,6 +16,7 @@
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="header-email">{{ currentUser?.email }}</span>
+          <button class="btn-theme" @click="cycleTheme" :title="`Theme: ${theme}`">{{ themeIcon }}</button>
           <button class="btn-signout" @click="doSignOut">Sign out</button>
         </div>
       </div>
@@ -27,8 +28,16 @@
 import { computed } from 'vue'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { whiskies, syncStatus } from '../composables/useWhiskies.js'
+import { useTheme } from '../composables/useTheme.js'
 
 const { signOut } = useAuth()
+const { theme, cycleTheme } = useTheme()
+
+const themeIcon = computed(() => ({
+  whisky: '🥃',
+  dark: '🌑',
+  light: '☀️'
+})[theme.value] || '🥃')
 
 const syncColor = computed(() => ({
   loading: '#7A6255', saving: '#E8A84C', ok: '#1D9E75', error: '#E24B4A'
@@ -42,3 +51,20 @@ async function doSignOut() {
   await signOut()
 }
 </script>
+
+<style scoped>
+.btn-theme {
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.6;
+}
+.btn-theme:hover {
+  border-color: var(--amber);
+  transform: scale(1.1);
+}
+</style>
