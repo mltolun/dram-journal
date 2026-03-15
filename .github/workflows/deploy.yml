@@ -31,10 +31,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
           VITE_GEMINI_KEY: ${{ secrets.VITE_GEMINI_KEY }}
-          VITE_BASE_PATH: /${{ github.event.repository.name || 'dram-journal' }}/
-        run: |
-          echo "Building with base path: $VITE_BASE_PATH"
-          npm run build
+        run: npm run build
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
