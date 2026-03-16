@@ -18,7 +18,7 @@
           <div class="scan-drop-label">Tap to take / choose photo</div>
           <div class="scan-drop-hint">or drag & drop</div>
         </div>
-        <div class="scan-quota">{{ DAILY_CAP - scansToday }} of {{ DAILY_CAP }} scans remaining today</div>
+        <div class="scan-quota">{{ Math.max(0, DAILY_CAP - scansToday) }} of {{ DAILY_CAP }} scans remaining today</div>
         <input ref="fileInput" type="file" accept="image/*"
           style="display:none" @change="onFileChange" />
       </div>
@@ -80,7 +80,7 @@ const emit = defineEmits(['close', 'identified'])
 
 const props = defineProps({ list: { type: String, default: 'journal' } })
 
-const DAILY_CAP = 10
+const DAILY_CAP = 20
 
 const FIELD_LABELS = {
   name: 'Name', distillery: 'Distillery', origin: 'Region',
@@ -113,18 +113,19 @@ async function fetchScansToday() {
     .select('count')
     .eq('user_id', currentUser.value.id)
     .eq('date', today)
-    .single()
-  scansToday.value = data?.count ?? 0
+    .maybeSingle()
+  scansToday.value = parseInt(data?.count ?? 0, 10)
 }
 
 async function incrementScans() {
   const today = new Date().toISOString().split('T')[0]
+  const next = scansToday.value + 1
   await sb.from('scan_usage').upsert({
     user_id: currentUser.value.id,
     date: today,
-    count: scansToday.value + 1,
+    count: next,
   }, { onConflict: 'user_id,date' })
-  scansToday.value++
+  scansToday.value = next
 }
 
 fetchScansToday()
