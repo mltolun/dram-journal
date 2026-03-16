@@ -264,9 +264,48 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(200,130,42,0.2); border-radius:2px; }
 
+/* ── HEADER LAYOUT ── */
+.header-top { display:flex; justify-content:space-between; align-items:center; width:100%; gap:12px; }
+.header-brand { flex-shrink:0; }
+.header-right { display:flex; align-items:center; gap:14px; min-width:0; }
+.header-stat { flex-shrink:0; text-align:right; }
+.header-controls { display:flex; flex-direction:column; align-items:flex-end; gap:5px; min-width:0; }
+.header-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
 @media(max-width:680px) {
-  header, .toolbar, .grid-area, .compare-panel { padding-left:1.2rem; padding-right:1.2rem; }
+  /* Header */
+  header { padding:1rem 1.2rem; }
+  .header-top { flex-wrap:wrap; gap:8px; }
+  .header-brand { flex:1; min-width:0; }
   .brand-title { font-size:1.3rem; }
+  .brand-sub { font-size:0.52rem; }
+  .header-right { flex-wrap:wrap; justify-content:flex-end; gap:8px; }
+  .header-controls { width:100%; flex-direction:row; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+  .header-actions { gap:6px; flex-wrap:nowrap; }
+  .header-email { max-width:110px; font-size:0.52rem; }
+  .stat-count { font-size:1.4rem; }
+
+  /* Toolbar */
+  .toolbar { padding:0.9rem 1.2rem; flex-wrap:wrap; gap:8px; }
+  .toolbar-left { width:100%; }
+  .toolbar-right { display:flex; gap:6px; flex-wrap:nowrap; width:100%; }
+  .btn-t { flex:1; padding:7px 6px; font-size:0.58rem; }
+
+  /* Grid */
+  .grid-area { padding:1.2rem 1rem 2rem; }
+  .whisky-grid { grid-template-columns:1fr; gap:10px; }
+
+  /* Compare / share */
+  .compare-panel { padding:1.2rem; }
   .share-body { grid-template-columns:1fr; }
   .share-hero, .share-body { padding-left:1.2rem; padding-right:1.2rem; }
+
+  /* Toast */
+  .toast { bottom:1rem; right:1rem; left:1rem; text-align:center; }
+}
+
+@media(max-width:400px) {
+  .header-email { display:none; }
+  .btn-label { display:none; }
+  .btn-t { padding:7px 5px; }
 }

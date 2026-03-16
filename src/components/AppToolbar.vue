@@ -7,8 +7,8 @@
     <div class="toolbar-right">
       <button class="btn-t btn-outline" @click="$emit('export')">↓ CSV</button>
       <button class="btn-t btn-compare" :class="{ ready: selectedCount > 0, active: compareOpen }" @click="$emit('compare')">Compare</button>
-      <button class="btn-t btn-scan" @click="$emit('scan')" title="Scan a bottle label">📷 Scan</button>
-      <button class="btn-t btn-primary" @click="$emit('add')">＋ Add</button>
+      <button class="btn-t btn-scan" @click="$emit('scan')" title="Scan a bottle label">📷 <span class="btn-label">Scan</span></button>
+      <button class="btn-t btn-primary" @click="$emit('add')">＋ <span class="btn-label">Add</span></button>
     </div>
   </div>
 </template>
