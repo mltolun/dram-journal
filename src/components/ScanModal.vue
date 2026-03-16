@@ -164,6 +164,8 @@ function loadFile(file) {
 
 const PROMPT = `You are a whisky expert. Analyse this bottle label image and extract all the information you can see.
 
+IMPORTANT: For "nose" and "palate", you MUST use your whisky knowledge to fill these in based on the distillery, age, type and region — even if they are not written on the label. For example, a Islay Scotch will have smoky/peaty notes, a Speyside will have fruity/floral notes, a Bourbon will have vanilla/caramel notes. Never leave nose or palate empty.
+
 Respond ONLY with a valid JSON object — no explanation, no markdown, no backticks. Use exactly these keys:
 {
   "name": "full whisky name including age statement if on label",
@@ -172,8 +174,8 @@ Respond ONLY with a valid JSON object — no explanation, no markdown, no backti
   "type": one of: "scotch" | "irish" | "bourbon" | "japanese" | "other",
   "age": "age statement or maturation info e.g. 12 Years Old / Sherry Cask",
   "abv": "ABV percentage e.g. 46%",
-  "nose": "likely nose notes based on the whisky if you know it, otherwise empty string",
-  "palate": "likely palate notes if you know it, otherwise empty string",
+  "nose": "2-4 tasting notes for the nose based on your whisky knowledge e.g. Vanilla, honey, light oak",
+  "palate": "2-4 tasting notes for the palate based on your whisky knowledge e.g. Sweet malt, dried fruit, warm spice",
   "notes": "any other interesting details from the label",
   "dulzor": sweetness score 0-5 integer,
   "ahumado": smokiness score 0-5 integer,
