@@ -14,7 +14,7 @@
         <input type="text" v-model="form.name" placeholder="Arran 10 Years Old">
       </div>
 
-      <div class="form-row">
+      <div v-if="isJournal" class="form-row">
         <label>Photo</label>
         <PhotoUpload
           :preview-src="previewUrl"
