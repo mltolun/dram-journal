@@ -16,7 +16,6 @@
       <span v-if="selectedCount > 0" class="compare-badge">{{ selectedCount }} selected</span>
     </div>
     <div class="toolbar-right">
-      <button class="btn-t btn-outline" @click="$emit('export')">↓ CSV</button>
       <button
         v-if="activeList === 'journal'"
         class="btn-t btn-compare"
@@ -31,7 +30,7 @@
 
 <script setup>
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String })
-defineEmits(['add', 'compare', 'export', 'scan', 'setList'])
+defineEmits(['add', 'compare', 'scan', 'setList'])
 </script>
 
 <style scoped>

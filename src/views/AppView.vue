@@ -13,7 +13,6 @@
       :active-list="activeList"
       @add="openAddModal"
       @compare="toggleCompare"
-      @export="doExport"
       @scan="scanOpen = true"
       @set-list="setActiveList"
     />
@@ -81,7 +80,6 @@ import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
 import { useLookups } from '../composables/useLookups.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
-import { exportCSV } from '../utils/csv.js'
 import { COLOR_HEX } from '../lib/constants.js'
 
 import AuthBox      from '../components/AuthBox.vue'
@@ -180,13 +178,6 @@ async function doMoveToJournal(w) {
 function onSaved(w) {
   modalOpen.value = false
   toast('✓ ' + w.name + (editingWhisky.value ? ' updated' : ' added'))
-}
-
-function doExport() {
-  const items = activeItems.value
-  if (items.length === 0) { toast('Nothing to export'); return }
-  exportCSV(items)
-  toast('✓ CSV exported')
 }
 </script>
 

@@ -18,6 +18,10 @@
             <div class="avatar-menu" v-if="menuOpen">
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
               <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item" @click="doExport">
+                <span class="menu-item-icon">↓</span> Export CSV
+              </button>
+              <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item avatar-menu-item--danger" @click="doSignOut">
                 <span class="menu-item-icon">↪</span> Sign out
               </button>
@@ -33,11 +37,14 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useAuth, currentUser } from '../composables/useAuth.js'
-import { syncStatus } from '../composables/useWhiskies.js'
+import { whiskies, syncStatus } from '../composables/useWhiskies.js'
 import { useTheme } from '../composables/useTheme.js'
+import { useToast } from '../composables/useToast.js'
+import { exportCSV } from '../utils/csv.js'
 
 const { signOut } = useAuth()
 const { theme, cycleTheme } = useTheme()
+const { toast } = useToast()
 
 const menuOpen = ref(false)
 const avatarWrap = ref(null)
@@ -64,6 +71,13 @@ function onClickOutside(e) {
 
 onMounted(() => document.addEventListener('click', onClickOutside, true))
 onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
+
+function doExport() {
+  menuOpen.value = false
+  if (whiskies.value.length === 0) { toast('Nothing to export'); return }
+  exportCSV(whiskies.value)
+  toast('✓ CSV exported')
+}
 
 async function doSignOut() {
   menuOpen.value = false
