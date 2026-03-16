@@ -11,7 +11,7 @@ export const ATTR_LABELS = {
 }
 
 export const DEFAULTS = {
-  dulzor: 3, ahumado: 1, cuerpo: 3, frutado: 3, especiado: 2,
+  dulzor: 0, ahumado: 0, cuerpo: 0, frutado: 0, especiado: 0,
 }
 
 export const TYPE_LABELS = {
