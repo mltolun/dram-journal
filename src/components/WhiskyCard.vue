@@ -5,6 +5,11 @@
     <!-- Wishlist badge -->
     <div v-if="isWishlist" class="wishlist-badge">✦ Wishlist</div>
 
+    <!-- Rating top-right (journal only) -->
+    <div v-if="!isWishlist && whisky.rating" class="wcard-rating" @click.stop>
+      <span v-for="n in 5" :key="n" class="wcard-star" :class="{ filled: n <= whisky.rating }">★</span>
+    </div>
+
     <img v-if="whisky.photo_url" class="wcard-photo" :src="whisky.photo_url" :alt="whisky.name" loading="lazy">
     <div>
       <span class="wcard-type" :class="`type-${whisky.type}`">{{ TYPE_LABELS[whisky.type] }}</span>
@@ -53,6 +58,22 @@ const isWishlist = computed(() => props.whisky?.list === 'wishlist')
 </script>
 
 <style scoped>
+.wcard-rating {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  gap: 1px;
+  line-height: 1;
+}
+.wcard-star {
+  font-size: 0.7rem;
+  color: var(--border-hi);
+  transition: color 0.15s;
+}
+.wcard-star.filled {
+  color: var(--amber-light);
+}
 .wishlist-badge {
   position: absolute;
   top: 10px;

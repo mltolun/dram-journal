@@ -77,6 +77,21 @@
         <div class="form-row"><label>Palate</label><input type="text" v-model="form.palate" placeholder="Sweet malt, warm spice…"></div>
       </template>
 
+      <div v-if="isJournal" class="form-row">
+        <label>Rating</label>
+        <div class="star-picker">
+          <button
+            v-for="n in 5" :key="n"
+            type="button"
+            class="star-btn"
+            :class="{ filled: n <= form.rating }"
+            @click="form.rating = form.rating === n ? 0 : n"
+            :title="`${n} star${n > 1 ? 's' : ''}`"
+          >★</button>
+          <span v-if="form.rating" class="star-clear" @click="form.rating = 0">✕</span>
+        </div>
+      </div>
+
       <div class="form-row">
         <label>{{ isJournal ? 'Personal notes' : 'Notes / Why I want this' }}</label>
         <textarea v-model="form.notes" :placeholder="isJournal ? 'My impressions…' : 'Recommended by…, Seen at…'"></textarea>
@@ -114,7 +129,7 @@ const isJournal = computed(() => (props.editing?.list || props.list) === 'journa
 const form = reactive({
   name: '', distillery: '', origin: '', type: 'scotch', age: '',
   price: '', date: new Date().toISOString().split('T')[0],
-  nose: '', palate: '', notes: '',
+  nose: '', palate: '', notes: '', rating: 0,
   ...Object.fromEntries(ATTRS.map(a => [a, DEFAULTS[a]])),
 })
 
@@ -171,3 +186,42 @@ async function save() {
   }
 }
 </script>
+
+<style scoped>
+.star-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--border-hi);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.12s, transform 0.12s;
+}
+.star-btn.filled {
+  color: var(--amber-light);
+}
+.star-btn:hover {
+  color: var(--amber);
+  transform: scale(1.15);
+}
+.star-clear {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--peat-light);
+  cursor: pointer;
+  margin-left: 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.star-clear:hover {
+  opacity: 1;
+  color: var(--amber-light);
+}
+</style>
