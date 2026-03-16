@@ -7,6 +7,18 @@
         <button class="modal-close" @click="$emit('close')">✕</button>
       </div>
 
+      <!-- Model toggle (always visible) -->
+      <div class="model-toggle">
+        <button
+          class="model-opt" :class="{ active: useGemma }"
+          @click="useGemma = true"
+        >Gemma 3 27B</button>
+        <button
+          class="model-opt" :class="{ active: !useGemma }"
+          @click="useGemma = false"
+        >Gemini Flash Lite</button>
+      </div>
+
       <!-- Step 1: pick image -->
       <div v-if="step === 'pick'">
         <div class="scan-drop" :class="{ 'scan-drop--hover': dragging }"
@@ -36,13 +48,14 @@
       <div v-else-if="step === 'loading'" class="scan-loading">
         <div class="scan-spinner"></div>
         <div class="scan-loading-text">Analysing bottle…</div>
-        <div class="scan-loading-sub">Gemini is reading the label</div>
+        <div class="scan-loading-sub">{{ useGemma ? 'Gemma 3 27B' : 'Gemini Flash Lite' }} is reading the label</div>
       </div>
 
       <!-- Step 4: result -->
       <div v-else-if="step === 'result'">
         <div class="scan-result-header">
           <span class="scan-tick">✓</span> Whisky identified
+          <span class="scan-model-badge">{{ useGemma ? 'Gemma 3' : 'Gemini' }}</span>
         </div>
         <div class="scan-fields">
           <div class="scan-field" v-for="(val, key) in displayResult" :key="key">
@@ -69,24 +82,31 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ATTRS, DEFAULTS } from '../lib/constants.js'
+import { ref, computed, watch } from 'vue'
+import { DEFAULTS } from '../lib/constants.js'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from '../composables/useAuth.js'
 
 const emit = defineEmits(['close', 'identified'])
 
-const DAILY_CAP = 10  // ← change this to set the daily limit per user
+const DAILY_CAP = 10
 
 const FIELD_LABELS = {
   name: 'Name', distillery: 'Distillery', origin: 'Region',
   type: 'Style', age: 'Age / ABV',
 }
 
+const STORAGE_KEY = 'dram-scan-model'
+const useGemma = ref(localStorage.getItem(STORAGE_KEY) !== 'gemini')
+
+// Persist preference
+watch(useGemma, v => localStorage.setItem(STORAGE_KEY, v ? 'gemma' : 'gemini'))
+
 const step       = ref('pick')
 const dragging   = ref(false)
 const previewSrc = ref(null)
-const imageB64   = ref(null)
+const imageFile  = ref(null)   // kept for Gemma upload
+const imageB64   = ref(null)   // kept for Gemini inline
 const imageMime  = ref('image/jpeg')
 const result     = ref({})
 const errorMsg   = ref('')
@@ -94,6 +114,8 @@ const fileInput  = ref(null)
 const scansToday = ref(0)
 
 const API_KEY = import.meta.env.VITE_GEMINI_KEY
+
+// ── Quota tracking ────────────────────────────────────────────────────────────
 
 async function fetchScansToday() {
   const today = new Date().toISOString().split('T')[0]
@@ -116,6 +138,10 @@ async function incrementScans() {
   scansToday.value++
 }
 
+fetchScansToday()
+
+// ── Display ───────────────────────────────────────────────────────────────────
+
 const displayResult = computed(() => {
   const r = result.value
   const out = {}
@@ -130,13 +156,13 @@ const displayResult = computed(() => {
 function reset() {
   step.value       = 'pick'
   previewSrc.value = null
+  imageFile.value  = null
   imageB64.value   = null
   result.value     = {}
   errorMsg.value   = ''
 }
 
-// Fetch today's count when modal opens
-fetchScansToday()
+// ── File loading ──────────────────────────────────────────────────────────────
 
 function onDrop(e) {
   dragging.value = false
@@ -152,19 +178,21 @@ function onFileChange(e) {
 
 function loadFile(file) {
   imageMime.value = file.type || 'image/jpeg'
+  imageFile.value = file
   const reader = new FileReader()
-  reader.onload = (e) => {
-    const dataUrl = e.target.result
-    previewSrc.value = dataUrl
-    imageB64.value   = dataUrl.split(',')[1]
+  reader.onload = (ev) => {
+    previewSrc.value = ev.target.result
+    imageB64.value   = ev.target.result.split(',')[1]
     step.value = 'preview'
   }
   reader.readAsDataURL(file)
 }
 
+// ── Prompt ────────────────────────────────────────────────────────────────────
+
 const PROMPT = `You are a whisky expert. Analyse this bottle label image and extract all the information you can see.
 
-IMPORTANT: For "nose" and "palate", you MUST use your whisky knowledge to fill these in based on the distillery, age, type and region — even if they are not written on the label. For example, a Islay Scotch will have smoky/peaty notes, a Speyside will have fruity/floral notes, a Bourbon will have vanilla/caramel notes. Never leave nose or palate empty.
+IMPORTANT: For "nose" and "palate", you MUST use your whisky knowledge to fill these in based on the distillery, age, type and region — even if they are not written on the label. For example, an Islay Scotch will have smoky/peaty notes, a Speyside will have fruity/floral notes, a Bourbon will have vanilla/caramel notes. Never leave nose or palate empty.
 
 Respond ONLY with a valid JSON object — no explanation, no markdown, no backticks. Use exactly these keys:
 {
@@ -186,6 +214,116 @@ Respond ONLY with a valid JSON object — no explanation, no markdown, no backti
 
 If you cannot read the label clearly or identify the whisky, set name to "Unknown" and fill what you can.`
 
+// ── API calls ─────────────────────────────────────────────────────────────────
+
+async function callGemma() {
+  // Step 1: upload file
+  const uploadRes = await fetch(
+    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${API_KEY}`,
+    {
+      method: 'POST',
+      headers: {
+        'X-Goog-Upload-Protocol': 'multipart',
+        'Content-Type': 'multipart/related; boundary=dj_boundary',
+      },
+      body: await buildMultipartBody(imageFile.value),
+    }
+  )
+  if (!uploadRes.ok) {
+    const err = await uploadRes.json().catch(() => ({}))
+    throw new Error(err.error?.message || 'File upload failed')
+  }
+  const uploadData = await uploadRes.json()
+  const fileUri = uploadData.file?.uri
+  if (!fileUri) throw new Error('Upload did not return a file URI')
+
+  // Step 2: generate
+  const genRes = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { file_data: { mime_type: imageMime.value, file_uri: fileUri } },
+            { text: PROMPT },
+          ]
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
+      }),
+    }
+  )
+  const genData = await genRes.json()
+  if (!genRes.ok) handleApiError(genRes.status, genData)
+  return genData.candidates?.[0]?.content?.parts?.[0]?.text || ''
+}
+
+async function callGeminiFlashLite() {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: imageMime.value, data: imageB64.value } },
+            { text: PROMPT },
+          ]
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
+      }),
+    }
+  )
+  const data = await res.json()
+  if (!res.ok) handleApiError(res.status, data)
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+}
+
+function handleApiError(status, data) {
+  const msg = data.error?.message || 'API error'
+  if (status === 400 || status === 403) throw new Error('API key error. Please check your VITE_GEMINI_KEY.')
+  if (status === 429 || msg.includes('quota') || msg.includes('Quota'))
+    throw new Error('Quota exceeded. Enable billing at console.cloud.google.com or try again later.')
+  throw new Error(msg)
+}
+
+// Build a multipart/related body for the file upload
+async function buildMultipartBody(file) {
+  const meta = JSON.stringify({ file: { display_name: 'bottle' } })
+  const boundary = 'dj_boundary'
+  const enc = new TextEncoder()
+  const fileBytes = await file.arrayBuffer()
+
+  const parts = [
+    enc.encode(`--${boundary}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n`),
+    enc.encode(`--${boundary}\r\nContent-Type: ${file.type}\r\n\r\n`),
+    new Uint8Array(fileBytes),
+    enc.encode(`\r\n--${boundary}--`),
+  ]
+
+  const total = parts.reduce((n, p) => n + p.byteLength, 0)
+  const merged = new Uint8Array(total)
+  let offset = 0
+  for (const p of parts) { merged.set(p, offset); offset += p.byteLength }
+  return merged
+}
+
+// ── Parse & build result ──────────────────────────────────────────────────────
+
+function parseModelText(text) {
+  const match = text.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('Could not read the label. Try a clearer photo.')
+  try { return JSON.parse(match[0]) } catch {
+    try { return JSON.parse(match[0] + '"}') } catch {
+      throw new Error('Could not parse label data. Try a clearer photo.')
+    }
+  }
+}
+
+// ── Main analyse ──────────────────────────────────────────────────────────────
+
 async function analyse() {
   if (scansToday.value >= DAILY_CAP) {
     errorMsg.value = `Daily scan limit of ${DAILY_CAP} reached. Try again tomorrow.`
@@ -195,56 +333,10 @@ async function analyse() {
 
   step.value = 'loading'
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: imageMime.value, data: imageB64.value } },
-            { text: PROMPT }
-          ]
-        }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
-      })
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      const msg = data.error?.message || 'API error'
-      if (response.status === 400 || response.status === 403) {
-        throw new Error('API key error. Please check your VITE_GEMINI_KEY.')
-      }
-      if (response.status === 429 || msg.includes('Quota') || msg.includes('quota')) {
-        throw new Error('Gemini quota exceeded. Enable billing at console.cloud.google.com or try again later.')
-      }
-      throw new Error(msg)
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-
-    // Extract the first {...} block in case the model adds surrounding text
-    const match = text.match(/\{[\s\S]*\}/)
-    if (!match) throw new Error('Could not read the label. Try a clearer photo.')
-
-    let parsed
-    try {
-      parsed = JSON.parse(match[0])
-    } catch {
-      // Sometimes the model truncates — try to salvage by closing open structure
-      try {
-        parsed = JSON.parse(match[0] + '"}')
-      } catch {
-        throw new Error('Could not parse label data. Try a clearer photo.')
-      }
-    }
+    const text = useGemma.value ? await callGemma() : await callGeminiFlashLite()
+    const parsed = parseModelText(text)
 
     const abv = parsed.abv || ''
-    const notesBase = parsed.notes || ''
-
     result.value = {
       name:       parsed.name       || '',
       distillery: parsed.distillery || '',
@@ -253,7 +345,7 @@ async function analyse() {
       age:        parsed.age        ? `${parsed.age}${abv ? ' · ' + abv : ''}` : abv,
       nose:       parsed.nose       || '',
       palate:     parsed.palate     || '',
-      notes:      notesBase,
+      notes:      parsed.notes      || '',
       dulzor:     parsed.dulzor     ?? DEFAULTS.dulzor,
       ahumado:    parsed.ahumado    ?? DEFAULTS.ahumado,
       cuerpo:     parsed.cuerpo     ?? DEFAULTS.cuerpo,
@@ -276,6 +368,38 @@ function confirm() {
 
 <style scoped>
 .scan-modal { max-width: 420px; }
+
+/* Model toggle */
+.model-toggle {
+  display: flex;
+  gap: 2px;
+  background: rgba(200,130,42,0.06);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 1.1rem;
+}
+.model-opt {
+  flex: 1;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--peat-light);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.model-opt.active {
+  background: var(--amber);
+  color: var(--peat);
+  font-weight: 500;
+}
+.model-opt:not(.active):hover { color: var(--amber-light); }
 
 .scan-drop {
   border: 1.5px dashed var(--border-hi);
@@ -348,9 +472,19 @@ function confirm() {
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .scan-tick { font-size: 1rem; }
+.scan-model-badge {
+  margin-left: auto;
+  font-size: 0.52rem;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(200,130,42,0.12);
+  color: var(--amber-light);
+  letter-spacing: 0.08em;
+  border: 0.5px solid var(--border);
+}
 
 .scan-fields {
   display: flex;
