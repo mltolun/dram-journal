@@ -202,7 +202,7 @@ async function analyse() {
       body: JSON.stringify({
         model: 'kimi-k2.5',
         max_tokens: 2048,
-        temperature: 1,
+        temperature: 0.6,
         extra_body: { thinking: { type: 'disabled' } },
         messages: [{
           role: 'user',
