@@ -2,10 +2,7 @@
   <div class="wcard" :class="{ selected, wishlist: isWishlist }" :style="selectColor ? `border-color:${selectColor}` : ''" @click="$emit('toggle')">
     <div v-if="!isWishlist" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
-    <!-- Wishlist badge -->
-    <div v-if="isWishlist" class="wishlist-badge">✦ Wishlist</div>
-
-    <img v-if="whisky.photo_url" class="wcard-photo" :src="whisky.photo_url" :alt="whisky.name" loading="lazy">
+    <img class="wcard-photo" :src="cardImage" :alt="whisky.name" loading="lazy">
 
     <div>
       <div class="wcard-meta-row">
@@ -51,11 +48,13 @@
 <script setup>
 import { computed } from 'vue'
 import { ATTRS, ATTR_LABELS, TYPE_LABELS } from '../lib/constants.js'
+import placeholderImg from '../assets/bottle-placeholder.jpg'
 
 const props = defineProps({ whisky: Object, selected: Boolean, selectColor: String })
 defineEmits(['toggle', 'edit', 'delete', 'share', 'move'])
 
 const isWishlist = computed(() => props.whisky?.list === 'wishlist')
+const cardImage = computed(() => props.whisky?.photo_url || placeholderImg)
 </script>
 
 <style scoped>
@@ -75,17 +74,6 @@ const isWishlist = computed(() => props.whisky?.list === 'wishlist')
   align-items: center;
   gap: 3px;
   letter-spacing: 0.04em;
-}
-.wishlist-badge {
-  position: absolute;
-  top: 10px;
-  left: 12px;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.5rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--amber-light);
-  opacity: 0.6;
 }
 .wcard-wish-notes {
   font-size: 0.75rem;
