@@ -67,6 +67,7 @@
 
     <ScanModal
       v-if="scanOpen"
+      :list="activeList"
       @close="scanOpen = false"
       @identified="onScanned"
     />

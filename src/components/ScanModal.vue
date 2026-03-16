@@ -53,7 +53,7 @@
         </div>
         <div v-if="result.notes" class="scan-notes">{{ result.notes }}</div>
         <div class="scan-actions">
-          <button class="btn-auth" @click="confirm">＋ Add to journal</button>
+          <button class="btn-auth" @click="confirm">＋ Add to {{ props.list === 'wishlist' ? 'Wishlist' : 'Journal' }}</button>
           <button class="btn-cancel" @click="reset">Scan again</button>
         </div>
       </div>
@@ -74,10 +74,13 @@ import { ref, computed } from 'vue'
 import { DEFAULTS } from '../lib/constants.js'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from '../composables/useAuth.js'
+import { compressImage } from '../utils/compressImage.js'
 
 const emit = defineEmits(['close', 'identified'])
 
-const DAILY_CAP = 20
+const props = defineProps({ list: { type: String, default: 'journal' } })
+
+const DAILY_CAP = 10
 
 const FIELD_LABELS = {
   name: 'Name', distillery: 'Distillery', origin: 'Region',
@@ -163,15 +166,20 @@ function onFileChange(e) {
 }
 
 function loadFile(file) {
-  imageMime.value = file.type || 'image/jpeg'
-  imageFile.value = file
+  imageMime.value = 'image/jpeg' // always JPEG after compression
   const reader = new FileReader()
-  reader.onload = (ev) => {
-    previewSrc.value = ev.target.result
-    imageB64.value   = ev.target.result.split(',')[1]
-    step.value = 'preview'
-  }
+  reader.onload = (ev) => { previewSrc.value = ev.target.result }
   reader.readAsDataURL(file)
+
+  // Compress to max 1024px / 0.82 quality before sending to AI
+  // This significantly reduces token usage while keeping labels readable
+  compressImage(file, 1024, 0.82).then(({ blob, dataUrl, kb }) => {
+    imageFile.value = new File([blob], 'scan.jpg', { type: 'image/jpeg' })
+    imageB64.value  = dataUrl.split(',')[1]
+    console.debug(`[scan] compressed to ${kb}KB`)
+  })
+
+  step.value = 'preview'
 }
 
 // ── Prompt ────────────────────────────────────────────────────────────────────
@@ -311,6 +319,11 @@ function parseModelText(text) {
 // ── Main analyse ──────────────────────────────────────────────────────────────
 
 async function analyse() {
+  if (!imageB64.value || !imageFile.value) {
+    errorMsg.value = 'Image still processing, please wait a moment.'
+    step.value = 'error'
+    return
+  }
   if (scansToday.value >= DAILY_CAP) {
     errorMsg.value = `Daily scan limit of ${DAILY_CAP} reached. Try again tomorrow.`
     step.value = 'error'
