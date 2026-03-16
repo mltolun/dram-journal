@@ -7,18 +7,6 @@
         <button class="modal-close" @click="$emit('close')">✕</button>
       </div>
 
-      <!-- Model toggle (always visible) -->
-      <div class="model-toggle">
-        <button
-          class="model-opt" :class="{ active: useGemma }"
-          @click="useGemma = true"
-        >Gemma 3 27B</button>
-        <button
-          class="model-opt" :class="{ active: !useGemma }"
-          @click="useGemma = false"
-        >Gemini Flash Lite</button>
-      </div>
-
       <!-- Step 1: pick image -->
       <div v-if="step === 'pick'">
         <div class="scan-drop" :class="{ 'scan-drop--hover': dragging }"
@@ -48,14 +36,14 @@
       <div v-else-if="step === 'loading'" class="scan-loading">
         <div class="scan-spinner"></div>
         <div class="scan-loading-text">Analysing bottle…</div>
-        <div class="scan-loading-sub">{{ useGemma ? 'Gemma 3 27B' : 'Gemini Flash Lite' }} is reading the label</div>
+        <div class="scan-loading-sub">{{ USE_GEMMA ? 'Gemma 3 27B' : 'Gemini Flash Lite' }} is reading the label</div>
       </div>
 
       <!-- Step 4: result -->
       <div v-else-if="step === 'result'">
         <div class="scan-result-header">
           <span class="scan-tick">✓</span> Whisky identified
-          <span class="scan-model-badge">{{ useGemma ? 'Gemma 3' : 'Gemini' }}</span>
+          <span class="scan-model-badge">{{ USE_GEMMA ? 'Gemma 3' : 'Gemini' }}</span>
         </div>
         <div class="scan-fields">
           <div class="scan-field" v-for="(val, key) in displayResult" :key="key">
@@ -82,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { DEFAULTS } from '../lib/constants.js'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from '../composables/useAuth.js'
@@ -96,11 +84,9 @@ const FIELD_LABELS = {
   type: 'Style', age: 'Age / ABV',
 }
 
-const STORAGE_KEY = 'dram-scan-model'
-const useGemma = ref(localStorage.getItem(STORAGE_KEY) !== 'gemini')
-
-// Persist preference
-watch(useGemma, v => localStorage.setItem(STORAGE_KEY, v ? 'gemma' : 'gemini'))
+// ── Model selection ───────────────────────────────────────────────────────────
+// Set to true to use Gemma 3 27B, false to use Gemini 2.5 Flash Lite
+const USE_GEMMA = true
 
 const step       = ref('pick')
 const dragging   = ref(false)
@@ -333,7 +319,7 @@ async function analyse() {
 
   step.value = 'loading'
   try {
-    const text = useGemma.value ? await callGemma() : await callGeminiFlashLite()
+    const text = USE_GEMMA ? await callGemma() : await callGeminiFlashLite()
     const parsed = parseModelText(text)
 
     const abv = parsed.abv || ''
@@ -368,38 +354,6 @@ function confirm() {
 
 <style scoped>
 .scan-modal { max-width: 420px; }
-
-/* Model toggle */
-.model-toggle {
-  display: flex;
-  gap: 2px;
-  background: rgba(200,130,42,0.06);
-  border: 0.5px solid var(--border);
-  border-radius: 8px;
-  padding: 3px;
-  margin-bottom: 1.1rem;
-}
-.model-opt {
-  flex: 1;
-  padding: 5px 10px;
-  border-radius: 5px;
-  background: transparent;
-  border: none;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--peat-light);
-  cursor: pointer;
-  transition: all 0.18s;
-  white-space: nowrap;
-}
-.model-opt.active {
-  background: var(--amber);
-  color: var(--peat);
-  font-weight: 500;
-}
-.model-opt:not(.active):hover { color: var(--amber-light); }
 
 .scan-drop {
   border: 1.5px dashed var(--border-hi);
