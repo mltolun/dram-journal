@@ -22,6 +22,12 @@
         :class="{ ready: selectedCount > 0, active: compareOpen }"
         @click="$emit('compare')"
       >Compare</button>
+      <button
+        v-if="activeList === 'wishlist'"
+        class="btn-t btn-share-wl"
+        @click="$emit('shareWishlist')"
+        title="Share your entire wishlist"
+      >↗ <span class="btn-label">Share</span></button>
       <button class="btn-t btn-scan" @click="$emit('scan')" title="Scan a bottle label">📷 <span class="btn-label">Scan</span></button>
       <button class="btn-t btn-primary" @click="$emit('add')">＋ <span class="btn-label">Add</span></button>
     </div>
@@ -30,7 +36,7 @@
 
 <script setup>
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String })
-defineEmits(['add', 'compare', 'scan', 'setList'])
+defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
 </script>
 
 <style scoped>
@@ -70,6 +76,15 @@ defineEmits(['add', 'compare', 'scan', 'setList'])
   border: 0.5px solid rgba(200,130,42,0.35);
 }
 .btn-scan:hover {
+  background: rgba(200,130,42,0.1);
+  border-color: var(--amber);
+}
+.btn-share-wl {
+  background: transparent;
+  color: var(--amber-light);
+  border: 0.5px solid rgba(200,130,42,0.35);
+}
+.btn-share-wl:hover {
   background: rgba(200,130,42,0.1);
   border-color: var(--amber);
 }

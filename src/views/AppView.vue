@@ -15,6 +15,7 @@
       @compare="toggleCompare"
       @scan="scanOpen = true"
       @set-list="setActiveList"
+      @share-wishlist="wishlistShareOpen = true"
     />
     <div class="grid-area">
       <div class="whisky-grid">
@@ -65,6 +66,12 @@
       @close="shareModalWhisky = null"
     />
 
+    <WishlistShareModal
+      v-if="wishlistShareOpen"
+      :items="wishlist"
+      @close="wishlistShareOpen = false"
+    />
+
     <ScanModal
       v-if="scanOpen"
       :list="activeList"
@@ -90,8 +97,9 @@ import AppToolbar   from '../components/AppToolbar.vue'
 import WhiskyCard   from '../components/WhiskyCard.vue'
 import WhiskyModal  from '../components/WhiskyModal.vue'
 import ComparePanel from '../components/ComparePanel.vue'
-import ShareModal   from '../components/ShareModal.vue'
-import ScanModal    from '../components/ScanModal.vue'
+import ShareModal          from '../components/ShareModal.vue'
+import ScanModal           from '../components/ScanModal.vue'
+import WishlistShareModal  from '../components/WishlistShareModal.vue'
 
 const { getSession } = useAuth()
 const { loadWhiskies, deleteWhisky, moveToJournal } = useWhiskies()
@@ -108,6 +116,7 @@ const editingWhisky = ref(null)
 const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
+const wishlistShareOpen = ref(false)
 
 const activeItems = computed(() => activeList.value === 'wishlist' ? wishlist.value : journal.value)
 
