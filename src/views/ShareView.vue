@@ -51,7 +51,7 @@
 
     <div class="share-actions">
       <button v-if="currentUser" class="btn-t btn-primary" :disabled="importing" @click="doImport">
-        {{ importing ? 'Importing…' : '＋ Import to my journal' }}
+        {{ importing ? 'Importing…' : '✦ Add to my Wishlist' }}
       </button>
       <RouterLink v-else to="/" class="btn-t btn-outline" style="text-decoration:none;">Sign in to import</RouterLink>
       <RouterLink to="/" class="btn-t btn-outline" style="text-decoration:none;">← Back to journal</RouterLink>
@@ -105,8 +105,8 @@ async function doImport() {
   importing.value = true
   const { id, user_id, created_at, ...fields } = whisky.value
   try {
-    await insertWhisky({ id: Date.now(), ...fields })
-    toast('✓ ' + whisky.value.name + ' imported!')
+    await insertWhisky({ id: Date.now(), ...fields, list: 'wishlist' })
+    toast('✦ ' + whisky.value.name + ' added to your Wishlist!')
   } catch (e) {
     toast('⚠ Import failed: ' + e.message)
   } finally {

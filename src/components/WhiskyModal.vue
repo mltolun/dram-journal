@@ -2,7 +2,9 @@
   <div class="modal-backdrop open" @click.self="$emit('close')">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title" v-if="!editing">Add <span>whisky</span></div>
+        <div class="modal-title" v-if="!editing">
+          Add to <span>{{ list === 'wishlist' ? 'Wishlist' : 'Journal' }}</span>
+        </div>
         <div class="modal-title" v-else>Edit <span>{{ editing.name }}</span></div>
         <button class="modal-close" @click="$emit('close')">✕</button>
       </div>
@@ -55,28 +57,34 @@
           <label>Price</label>
           <input type="text" v-model="form.price" placeholder="£35–45">
         </div>
-        <div class="form-row">
+        <div v-if="isJournal" class="form-row">
           <label>Tasting date</label>
           <input type="date" v-model="form.date">
         </div>
       </div>
 
-      <div class="form-section-lbl">— Flavour profile (0–5)</div>
-      <div v-for="a in ATTRS" :key="a" class="slider-row">
-        <div class="slider-header">
-          <span class="slider-lbl">{{ ATTR_LABELS[a] }}</span>
-          <span class="slider-val">{{ form[a] }}</span>
+      <!-- Tasting fields only for journal -->
+      <template v-if="isJournal">
+        <div class="form-section-lbl">— Flavour profile (0–5)</div>
+        <div v-for="a in ATTRS" :key="a" class="slider-row">
+          <div class="slider-header">
+            <span class="slider-lbl">{{ ATTR_LABELS[a] }}</span>
+            <span class="slider-val">{{ form[a] }}</span>
+          </div>
+          <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
         </div>
-        <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
-      </div>
+        <div class="form-row"><label>Nose</label><input type="text" v-model="form.nose" placeholder="Vanilla, green apple…"></div>
+        <div class="form-row"><label>Palate</label><input type="text" v-model="form.palate" placeholder="Sweet malt, warm spice…"></div>
+      </template>
 
-      <div class="form-row"><label>Nose</label><input type="text" v-model="form.nose" placeholder="Vanilla, green apple…"></div>
-      <div class="form-row"><label>Palate</label><input type="text" v-model="form.palate" placeholder="Sweet malt, warm spice…"></div>
-      <div class="form-row"><label>Personal notes</label><textarea v-model="form.notes" placeholder="My impressions…"></textarea></div>
+      <div class="form-row">
+        <label>{{ isJournal ? 'Personal notes' : 'Notes / Why I want this' }}</label>
+        <textarea v-model="form.notes" :placeholder="isJournal ? 'My impressions…' : 'Recommended by…, Seen at…'"></textarea>
+      </div>
 
       <div class="modal-actions">
         <button class="btn-save" :disabled="saving" @click="save">
-          {{ saving ? 'Saving…' : (editing ? '✓ Save changes' : '＋ Add to journal') }}
+          {{ saving ? 'Saving…' : (editing ? '✓ Save changes' : (isJournal ? '＋ Add to Journal' : '✦ Add to Wishlist')) }}
         </button>
         <button class="btn-cancel" @click="$emit('close')">Cancel</button>
       </div>
@@ -85,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -93,7 +101,7 @@ import { ATTRS, ATTR_LABELS, DEFAULTS } from '../lib/constants.js'
 import Autocomplete from './Autocomplete.vue'
 import PhotoUpload  from './PhotoUpload.vue'
 
-const props = defineProps({ editing: Object, prefill: Object })
+const props = defineProps({ editing: Object, prefill: Object, list: { type: String, default: 'journal' } })
 const emit  = defineEmits(['saved', 'close'])
 
 const { insertWhisky, updateWhisky } = useWhiskies()
@@ -101,6 +109,7 @@ const { pendingBlob, previewUrl, compressedKb, clearPhoto, loadExisting, uploadP
 const { toast } = useToast()
 
 const saving = ref(false)
+const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
 
 const form = reactive({
   name: '', distillery: '', origin: '', type: 'scotch', age: '',
@@ -144,7 +153,11 @@ async function save() {
       saving.value = false
       return
     }
-    const fields = { ...form, photo_url: photo_url || null }
+    const fields = {
+      ...form,
+      photo_url: photo_url || null,
+      list: props.editing?.list || props.list,
+    }
     if (props.editing) {
       await updateWhisky(props.editing.id, fields)
     } else {

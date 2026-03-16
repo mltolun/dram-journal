@@ -1,9 +1,12 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from './useAuth.js'
 
 export const whiskies = ref([])
 export const syncStatus = ref('ok') // 'loading' | 'saving' | 'ok' | 'error'
+
+export const journal   = computed(() => whiskies.value.filter(w => (w.list || 'journal') === 'journal'))
+export const wishlist  = computed(() => whiskies.value.filter(w => w.list === 'wishlist'))
 
 export function useWhiskies() {
   function setSync(s) { syncStatus.value = s }
@@ -45,5 +48,9 @@ export function useWhiskies() {
     setSync('ok')
   }
 
-  return { whiskies, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky }
+  async function moveToJournal(id) {
+    return updateWhisky(id, { list: 'journal' })
+  }
+
+  return { whiskies, journal, wishlist, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToJournal }
 }

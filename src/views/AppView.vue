@@ -10,29 +10,36 @@
     <AppToolbar
       :selected-count="selected.length"
       :compare-open="compareOpen"
+      :active-list="activeList"
       @add="openAddModal"
       @compare="toggleCompare"
       @export="doExport"
       @scan="scanOpen = true"
+      @set-list="setActiveList"
     />
     <div class="grid-area">
       <div class="whisky-grid">
-        <template v-if="whiskies.length === 0">
+        <template v-if="activeItems.length === 0">
           <div class="empty-grid">
-            <div class="empty-icon">🥃</div>
-            <div class="empty-text">No whiskies yet<br>Press "＋ Add" to get started</div>
+            <div class="empty-icon">{{ activeList === 'wishlist' ? '✦' : '🥃' }}</div>
+            <div class="empty-text">
+              {{ activeList === 'wishlist'
+                ? 'Your wishlist is empty\nPress "＋ Add" to start one'
+                : 'No whiskies yet\nPress "＋ Add" to get started' }}
+            </div>
           </div>
         </template>
         <WhiskyCard
-          v-for="(w, i) in whiskies"
+          v-for="w in activeItems"
           :key="w.id"
           :whisky="w"
           :selected="selected.includes(w.id)"
           :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
-          @toggle="toggleSelect(w.id)"
+          @toggle="activeList === 'journal' ? toggleSelect(w.id) : null"
           @edit="openEditModal(w)"
           @delete="doDelete(w)"
           @share="openShareModal(w)"
+          @move="doMoveToJournal(w)"
         />
       </div>
     </div>
@@ -48,6 +55,7 @@
       v-if="modalOpen"
       :editing="editingWhisky"
       :prefill="scanPrefill"
+      :list="activeList"
       @saved="onSaved"
       @close="modalOpen = false; scanPrefill = null"
     />
@@ -69,7 +77,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuth, currentUser } from '../composables/useAuth.js'
-import { useWhiskies, whiskies } from '../composables/useWhiskies.js'
+import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
 import { useLookups } from '../composables/useLookups.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -86,11 +94,12 @@ import ShareModal   from '../components/ShareModal.vue'
 import ScanModal    from '../components/ScanModal.vue'
 
 const { getSession } = useAuth()
-const { loadWhiskies, deleteWhisky } = useWhiskies()
+const { loadWhiskies, deleteWhisky, moveToJournal } = useWhiskies()
 const { deletePhoto } = usePhoto()
 const { loadLookups } = useLookups()
 const { toast } = useToast()
 
+const activeList    = ref('journal')
 const selected      = ref([])
 const compareOpen   = ref(false)
 const modalOpen     = ref(false)
@@ -99,8 +108,10 @@ const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
 
+const activeItems = computed(() => activeList.value === 'wishlist' ? wishlist.value : journal.value)
+
 const selectedWhiskies = computed(() =>
-  selected.value.map(id => whiskies.value.find(w => w.id === id)).filter(Boolean)
+  selected.value.map(id => journal.value.find(w => w.id === id)).filter(Boolean)
 )
 
 onMounted(async () => {
@@ -109,6 +120,12 @@ onMounted(async () => {
     await Promise.all([loadWhiskies(), loadLookups()])
   }
 })
+
+function setActiveList(list) {
+  activeList.value = list
+  selected.value = []
+  compareOpen.value = false
+}
 
 function toggleSelect(id) {
   const idx = selected.value.indexOf(id)
@@ -155,14 +172,20 @@ async function doDelete(w) {
   toast('Deleted')
 }
 
+async function doMoveToJournal(w) {
+  await moveToJournal(w.id)
+  toast('✓ ' + w.name + ' moved to Journal')
+}
+
 function onSaved(w) {
   modalOpen.value = false
   toast('✓ ' + w.name + (editingWhisky.value ? ' updated' : ' added'))
 }
 
 function doExport() {
-  if (whiskies.value.length === 0) { toast('No whiskies to export'); return }
-  exportCSV(whiskies.value)
+  const items = activeItems.value
+  if (items.length === 0) { toast('Nothing to export'); return }
+  exportCSV(items)
   toast('✓ CSV exported')
 }
 </script>
