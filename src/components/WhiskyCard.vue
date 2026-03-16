@@ -5,14 +5,15 @@
     <!-- Wishlist badge -->
     <div v-if="isWishlist" class="wishlist-badge">✦ Wishlist</div>
 
-    <!-- Rating top-right (journal only) -->
-    <div v-if="!isWishlist && whisky.rating" class="wcard-rating" @click.stop>
-      <span v-for="n in 5" :key="n" class="wcard-star" :class="{ filled: n <= whisky.rating }">★</span>
-    </div>
-
     <img v-if="whisky.photo_url" class="wcard-photo" :src="whisky.photo_url" :alt="whisky.name" loading="lazy">
+
     <div>
-      <span class="wcard-type" :class="`type-${whisky.type}`">{{ TYPE_LABELS[whisky.type] }}</span>
+      <div class="wcard-meta-row">
+        <span class="wcard-type" :class="`type-${whisky.type}`">{{ TYPE_LABELS[whisky.type] }}</span>
+        <span v-if="!isWishlist && whisky.rating" class="wcard-rating-pill" @click.stop>
+          ★ {{ whisky.rating }}
+        </span>
+      </div>
       <div class="wcard-distillery">{{ whisky.distillery || '—' }}</div>
       <div class="wcard-name">{{ whisky.name }}</div>
       <div v-if="whisky.age" class="wcard-age">{{ whisky.age }}</div>
@@ -58,21 +59,22 @@ const isWishlist = computed(() => props.whisky?.list === 'wishlist')
 </script>
 
 <style scoped>
-.wcard-rating {
-  position: absolute;
-  top: 10px;
-  right: 12px;
+.wcard-meta-row {
   display: flex;
-  gap: 1px;
-  line-height: 1;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
 }
-.wcard-star {
-  font-size: 0.7rem;
-  color: var(--border-hi);
-  transition: color 0.15s;
-}
-.wcard-star.filled {
+.wcard-rating-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
   color: var(--amber-light);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: 0.04em;
 }
 .wishlist-badge {
   position: absolute;
