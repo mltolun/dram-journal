@@ -7,24 +7,40 @@
       </div>
       <div class="header-right">
         <button class="btn-theme" @click="cycleTheme" :title="`Theme: ${theme}`">{{ themeIcon }}</button>
-        <button class="btn-signout" @click="doSignOut">Sign out</button>
-        <div class="user-avatar" :title="currentUser?.email">
-          <span class="avatar-letter">{{ avatarLetter }}</span>
-          <span class="avatar-sync-dot" :style="{ background: syncColor }"></span>
+
+        <div class="avatar-wrap" ref="avatarWrap">
+          <div class="user-avatar" :title="currentUser?.email" @click="menuOpen = !menuOpen" :class="{ active: menuOpen }">
+            <span class="avatar-letter">{{ avatarLetter }}</span>
+            <span class="avatar-sync-dot" :style="{ background: syncColor }"></span>
+          </div>
+
+          <transition name="menu">
+            <div class="avatar-menu" v-if="menuOpen">
+              <div class="avatar-menu-email">{{ currentUser?.email }}</div>
+              <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item avatar-menu-item--danger" @click="doSignOut">
+                <span class="menu-item-icon">↪</span> Sign out
+              </button>
+            </div>
+          </transition>
         </div>
+
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { syncStatus } from '../composables/useWhiskies.js'
 import { useTheme } from '../composables/useTheme.js'
 
 const { signOut } = useAuth()
 const { theme, cycleTheme } = useTheme()
+
+const menuOpen = ref(false)
+const avatarWrap = ref(null)
 
 const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()
@@ -40,7 +56,17 @@ const syncColor = computed(() => ({
   loading: '#7A6255', saving: '#E8A84C', ok: '#1D9E75', error: '#E24B4A'
 })[syncStatus.value] || '#1D9E75')
 
+function onClickOutside(e) {
+  if (avatarWrap.value && !avatarWrap.value.contains(e.target)) {
+    menuOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', onClickOutside, true))
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
+
 async function doSignOut() {
+  menuOpen.value = false
   await signOut()
 }
 </script>
@@ -63,6 +89,10 @@ async function doSignOut() {
 }
 
 /* Avatar */
+.avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
 .user-avatar {
   position: relative;
   width: 34px;
@@ -73,7 +103,13 @@ async function doSignOut() {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.user-avatar:hover,
+.user-avatar.active {
+  background: rgba(200, 130, 42, 0.28);
+  border-color: var(--amber);
 }
 .avatar-letter {
   font-family: 'DM Mono', monospace;
@@ -92,5 +128,76 @@ async function doSignOut() {
   border-radius: 50%;
   border: 1.5px solid var(--bg);
   transition: background 0.3s;
+}
+
+/* Dropdown menu */
+.avatar-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--bg-modal);
+  border: 0.5px solid var(--border-hi);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  z-index: 500;
+  transform-origin: top right;
+}
+.avatar-menu-email {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  color: var(--peat-light);
+  padding: 10px 14px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.avatar-menu-divider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 0;
+}
+.avatar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+.avatar-menu-item:hover {
+  background: rgba(200, 130, 42, 0.08);
+  color: var(--text-primary);
+}
+.avatar-menu-item--danger:hover {
+  background: rgba(226, 75, 74, 0.1);
+  color: #e08888;
+}
+.menu-item-icon {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Transition */
+.menu-enter-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.menu-leave-active {
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+.menu-enter-from,
+.menu-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateY(-4px);
 }
 </style>
