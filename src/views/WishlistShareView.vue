@@ -33,6 +33,15 @@
             <div v-if="item.age" class="wl-age">{{ item.age }}</div>
             <div v-if="item.notes" class="wl-notes">{{ item.notes }}</div>
           </div>
+          <div v-if="currentUser" class="wl-card-action">
+            <button
+              class="wcard-btn"
+              :disabled="importedIds.has(item.id)"
+              @click="doImportOne(item)"
+            >
+              {{ importedIds.has(item.id) ? '✓ Added' : '✦ Add to Wishlist' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -65,6 +74,7 @@ const { toast } = useToast()
 const items = ref([])
 const loading = ref(true)
 const importing = ref(false)
+const importedIds = ref(new Set())
 const sharedAt = ref(null)
 
 const sharedDate = computed(() => {
@@ -86,14 +96,28 @@ onMounted(async () => {
   loading.value = false
 })
 
+async function doImportOne(item) {
+  if (!currentUser.value) return
+  const { id, user_id, created_at, ...fields } = item
+  try {
+    await insertWhisky({ id: Date.now(), ...fields, list: 'wishlist' })
+    importedIds.value = new Set([...importedIds.value, item.id])
+    toast('✦ ' + item.name + ' added to your Wishlist!')
+  } catch (e) {
+    toast('⚠ Import failed: ' + e.message)
+  }
+}
+
 async function doImportAll() {
   if (!currentUser.value) return
   importing.value = true
   let added = 0
   try {
     for (const item of items.value) {
+      if (importedIds.value.has(item.id)) continue
       const { id, user_id, created_at, ...fields } = item
       await insertWhisky({ id: Date.now() + added, ...fields, list: 'wishlist' })
+      importedIds.value = new Set([...importedIds.value, item.id])
       added++
     }
     toast(`✦ ${added} bottles added to your Wishlist!`)
@@ -131,7 +155,9 @@ async function doImportAll() {
   padding: 0.9rem 1rem;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 3px;
+  flex: 1;
 }
 .wl-distillery {
   font-family: 'DM Mono', monospace;
@@ -164,6 +190,19 @@ async function doImportAll() {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+.wl-card-action {
+  padding: 0 1rem 0.8rem;
+}
+.wl-card-action .wcard-btn {
+  width: 100%;
+  padding: 6px 0;
+}
+.wcard-btn:disabled {
+  border-color: #1D9E75;
+  color: #6ecb9a;
+  cursor: default;
+  opacity: 0.8;
 }
 
 @media (max-width: 680px) {
