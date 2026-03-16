@@ -77,7 +77,7 @@ import { currentUser } from '../composables/useAuth.js'
 
 const emit = defineEmits(['close', 'identified'])
 
-const DAILY_CAP = 10
+const DAILY_CAP = 20
 
 const FIELD_LABELS = {
   name: 'Name', distillery: 'Distillery', origin: 'Region',
