@@ -75,6 +75,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
 import { useLookups } from '../composables/useLookups.js'
@@ -97,6 +98,7 @@ const { deletePhoto } = usePhoto()
 const { loadLookups } = useLookups()
 const { toast } = useToast()
 
+const route = useRoute()
 const activeList    = ref('journal')
 const selected      = ref([])
 const compareOpen   = ref(false)
@@ -113,6 +115,7 @@ const selectedWhiskies = computed(() =>
 )
 
 onMounted(async () => {
+  if (route.query.list === 'wishlist') activeList.value = 'wishlist'
   const session = await getSession()
   if (session) {
     await Promise.all([loadWhiskies(), loadLookups()])

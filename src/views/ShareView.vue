@@ -61,7 +61,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { sb } from '../lib/supabase.js'
 import { currentUser, useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
@@ -69,6 +69,7 @@ import { useToast } from '../composables/useToast.js'
 import { ATTRS, ATTR_LABELS, TYPE_LABELS, TYPE_BADGE_STYLE } from '../lib/constants.js'
 
 const route = useRoute()
+const router = useRouter()
 const { getSession } = useAuth()
 const { insertWhisky } = useWhiskies()
 const { toast } = useToast()
@@ -107,6 +108,7 @@ async function doImport() {
   try {
     await insertWhisky({ id: Date.now(), ...fields, list: 'wishlist' })
     toast('✦ ' + whisky.value.name + ' added to your Wishlist!')
+    router.push({ path: '/', query: { list: 'wishlist' } })
   } catch (e) {
     toast('⚠ Import failed: ' + e.message)
   } finally {
