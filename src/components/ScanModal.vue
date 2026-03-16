@@ -19,7 +19,7 @@
           <div class="scan-drop-hint">or drag & drop</div>
         </div>
         <div class="scan-quota">{{ DAILY_CAP - scansToday }} of {{ DAILY_CAP }} scans remaining today</div>
-        <input ref="fileInput" type="file" accept="image/*" capture="environment"
+        <input ref="fileInput" type="file" accept="image/*"
           style="display:none" @change="onFileChange" />
       </div>
 
