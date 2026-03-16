@@ -36,7 +36,7 @@
       <div v-else-if="step === 'loading'" class="scan-loading">
         <div class="scan-spinner"></div>
         <div class="scan-loading-text">Analysing bottle…</div>
-        <div class="scan-loading-sub">Kimi is reading the label</div>
+        <div class="scan-loading-sub">Gemini is reading the label</div>
       </div>
 
       <!-- Step 4: result -->
@@ -93,7 +93,7 @@ const errorMsg   = ref('')
 const fileInput  = ref(null)
 const scansToday = ref(0)
 
-const API_KEY = import.meta.env.VITE_KIMI_KEY
+const API_KEY = import.meta.env.VITE_GEMINI_KEY
 
 async function fetchScansToday() {
   const today = new Date().toISOString().split('T')[0]
@@ -193,27 +193,19 @@ async function analyse() {
 
   step.value = 'loading'
   try {
-    const response = await fetch('https://api.moonshot.ai/v1/chat/completions', {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'kimi-k2.5',
-        max_tokens: 2048,
-        temperature: 0.6,
-        extra_body: { thinking: { type: 'disabled' } },
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: `data:${imageMime.value};base64,${imageB64.value}` }
-            },
-            { type: 'text', text: PROMPT }
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: imageMime.value, data: imageB64.value } },
+            { text: PROMPT }
           ]
-        }]
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
       })
     })
 
@@ -221,16 +213,16 @@ async function analyse() {
 
     if (!response.ok) {
       const msg = data.error?.message || 'API error'
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('API key error. Please check your VITE_KIMI_KEY.')
+      if (response.status === 400 || response.status === 403) {
+        throw new Error('API key error. Please check your VITE_GEMINI_KEY.')
       }
-      if (response.status === 429) {
-        throw new Error('Kimi API rate limit reached. Check your plan at platform.moonshot.ai or try again shortly.')
+      if (response.status === 429 || msg.includes('Quota') || msg.includes('quota')) {
+        throw new Error('Gemini quota exceeded. Enable billing at console.cloud.google.com or try again later.')
       }
       throw new Error(msg)
     }
 
-    const text = data.choices?.[0]?.message?.content || ''
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
     // Extract the first {...} block in case the model adds surrounding text
     const match = text.match(/\{[\s\S]*\}/)
