@@ -34,14 +34,11 @@ export function usePhoto() {
     if (!pendingBlob.value) return currentUrl.value
     const path = `${currentUser.value.id}/${whiskyId}.jpg`
 
-    // Remove existing first (avoids upsert RLS issues)
-    await sb.storage.from('whisky-photos').remove([path])
-
     const { data, error } = await sb.storage.from('whisky-photos').upload(path, pendingBlob.value, {
       contentType: 'image/jpeg',
       cacheControl: '3600',
+      upsert: true,
     })
-    console.log('photo upload:', { data, error, path, size: pendingBlob.value.size })
     if (error) { console.error(error); throw new Error('Photo upload failed: ' + error.message) }
 
     const { data: urlData } = sb.storage.from('whisky-photos').getPublicUrl(path)

@@ -2,7 +2,7 @@
   <div class="wcard" :class="{ selected, wishlist: isWishlist }" :style="selectColor ? `border-color:${selectColor}` : ''" @click="$emit('toggle')">
     <div v-if="!isWishlist" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
-    <img class="wcard-photo" :src="cardImage" :alt="whisky.name" loading="lazy">
+    <img v-if="!isWishlist" class="wcard-photo" :src="cardImage" :alt="whisky.name" loading="lazy">
 
     <div>
       <div class="wcard-meta-row">
