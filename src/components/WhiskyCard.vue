@@ -1,7 +1,6 @@
 <template>
   <div class="wcard" :class="{ selected, wishlist: isWishlist }" :style="selectColor ? `border-color:${selectColor}` : ''" @click="$emit('toggle')">
-    <div class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
-    <div v-if="selected" class="sel-check">✓</div>
+    <div v-if="!isWishlist" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
     <!-- Wishlist badge -->
     <div v-if="isWishlist" class="wishlist-badge">✦ Wishlist</div>
