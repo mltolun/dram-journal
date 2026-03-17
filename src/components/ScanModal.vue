@@ -89,8 +89,8 @@ const FIELD_LABELS = {
 
 // ── Model selection ───────────────────────────────────────────────────────────
 // Toggle between: 'gemma'  → Gemma 3 27B (file-upload path)
-//                 'gemini' → Gemini 2.0 Flash Lite (inline b64 path)
-const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
+//                 'gemini' → Gemini 3.1 Flash Lite (inline b64 path)
+const ACTIVE_MODEL = 'gemini' // 'gemma' | 'gemini'
 
 const MODEL_LABELS = {
   gemma:  'Gemma 3 27B',
