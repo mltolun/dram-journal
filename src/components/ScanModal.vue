@@ -36,14 +36,14 @@
       <div v-else-if="step === 'loading'" class="scan-loading">
         <div class="scan-spinner"></div>
         <div class="scan-loading-text">Analysing bottle…</div>
-        <div class="scan-loading-sub">{{ USE_GEMMA ? 'Gemma 3 27B' : 'Gemini Flash Lite' }} is reading the label</div>
+        <div class="scan-loading-sub">{{ MODEL_LABELS[ACTIVE_MODEL] }} is reading the label</div>
       </div>
 
       <!-- Step 4: result -->
       <div v-else-if="step === 'result'">
         <div class="scan-result-header">
           <span class="scan-tick">✓</span> Whisky identified
-          <span class="scan-model-badge">{{ USE_GEMMA ? 'Gemma 3' : 'Gemini' }}</span>
+          <span class="scan-model-badge">{{ MODEL_LABELS[ACTIVE_MODEL] }}</span>
         </div>
         <div class="scan-fields">
           <div class="scan-field" v-for="(val, key) in displayResult" :key="key">
@@ -88,8 +88,14 @@ const FIELD_LABELS = {
 }
 
 // ── Model selection ───────────────────────────────────────────────────────────
-// Set to true to use Gemma 3 27B, false to use Gemini 2.5 Flash Lite
-const USE_GEMMA = true
+// Toggle between: 'gemma'  → Gemma 3 27B (file-upload path)
+//                 'gemini' → Gemini 2.0 Flash Lite (inline b64 path)
+const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
+
+const MODEL_LABELS = {
+  gemma:  'Gemma 3 27B',
+  gemini: 'Gemini 3.1 Flash Lite',
+}
 
 const step       = ref('pick')
 const dragging   = ref(false)
@@ -256,7 +262,7 @@ async function callGemma() {
 
 async function callGeminiFlashLite() {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -333,7 +339,7 @@ async function analyse() {
 
   step.value = 'loading'
   try {
-    const text = USE_GEMMA ? await callGemma() : await callGeminiFlashLite()
+    const text = ACTIVE_MODEL === 'gemma' ? await callGemma() : await callGeminiFlashLite()
     const parsed = parseModelText(text)
 
     const abv = parsed.abv || ''
