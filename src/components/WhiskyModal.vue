@@ -19,7 +19,7 @@
 
           <!-- Left: photo -->
           <div v-if="isJournal && form.photo_url" class="view-photo-col">
-            <img :src="form.photo_url" class="view-photo" :alt="form.name">
+            <img :src="form.photo_url" class="view-photo" :alt="form.name" @click="lightboxOpen = true">
           </div>
 
           <!-- Right (or full-width if no photo): details -->
@@ -99,6 +99,14 @@
           <button class="btn-save" @click="switchToEdit">{{ t.editBtn }}</button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
+
+        <!-- Lightbox -->
+        <Teleport to="body">
+          <div v-if="lightboxOpen" class="lightbox" @click="lightboxOpen = false">
+            <button class="lightbox-close" @click="lightboxOpen = false">✕</button>
+            <img :src="form.photo_url" :alt="form.name" class="lightbox-img" @click.stop>
+          </div>
+        </Teleport>
       </template>
 
       <!-- ── ADD / EDIT MODE ── -->
@@ -227,6 +235,7 @@ const { t } = useI18n()
 
 const saving = ref(false)
 const inViewMode = ref(props.viewMode)
+const lightboxOpen = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
@@ -353,6 +362,57 @@ async function save() {
   display: block;
   border: 0.5px solid var(--border);
   background: var(--bg-card);
+  cursor: zoom-in;
+  transition: opacity 0.15s;
+}
+.view-photo:hover {
+  opacity: 0.88;
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  animation: lb-in 0.18s ease;
+}
+@keyframes lb-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  cursor: default;
+}
+.lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  z-index: 2001;
+}
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 .view-details-col {
   min-width: 0;
