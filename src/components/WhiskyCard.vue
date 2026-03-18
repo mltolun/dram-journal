@@ -16,8 +16,8 @@
       <div v-if="whisky.age" class="wcard-age">{{ whisky.age }}</div>
     </div>
 
-    <!-- Flavour bars only for journal entries -->
-    <div v-if="!isWishlist" class="wcard-bars">
+    <!-- Flavour bars (journal and wishlist) -->
+    <div class="wcard-bars">
       <div v-for="a in ATTRS" :key="a" class="bar-row-s">
         <div class="bar-lbl-s">{{ t.attrs[a] }}</div>
         <div class="bar-track-s">
@@ -27,8 +27,8 @@
       </div>
     </div>
 
-    <!-- Wishlist: show notes snippet if any -->
-    <div v-else-if="whisky.notes" class="wcard-wish-notes">{{ whisky.notes }}</div>
+    <!-- Notes snippet -->
+    <div v-if="whisky.notes" class="wcard-wish-notes">{{ whisky.notes }}</div>
 
     <div class="wcard-actions">
       <template v-if="isWishlist">
