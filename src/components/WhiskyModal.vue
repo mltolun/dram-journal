@@ -14,7 +14,7 @@
 
       <!-- ── VIEW MODE ── -->
       <template v-if="isViewMode">
-        <div v-if="isJournal && form.photo_url" class="view-photo-wrap">
+        <div v-if="form.photo_url" class="view-photo-wrap">
           <img :src="form.photo_url" class="view-photo" :alt="form.name">
         </div>
 
@@ -45,13 +45,13 @@
             <div class="view-label">{{ t.price }}</div>
             <div class="view-value">{{ form.price }}</div>
           </div>
-          <div class="view-field" v-if="isJournal && form.date">
+          <div class="view-field" v-if="form.date">
             <div class="view-label">{{ t.tastingDate }}</div>
             <div class="view-value">{{ form.date }}</div>
           </div>
         </div>
 
-        <template v-if="isJournal">
+        <template>
           <div class="view-section-lbl">{{ t.flavourProfileView }}</div>
           <div v-for="a in ATTRS" :key="a" class="slider-row view-slider-row">
             <div class="slider-header">
@@ -143,14 +143,14 @@
             <label>{{ t.price }}</label>
             <input type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
           </div>
-          <div v-if="isJournal" class="form-row">
+          <div class="form-row">
             <label>{{ t.tastingDate }}</label>
             <input type="date" v-model="form.date">
           </div>
         </div>
 
-        <!-- Tasting fields only for journal -->
-        <template v-if="isJournal">
+        <!-- Tasting fields for all entries -->
+        <template>
           <div class="form-section-lbl">{{ t.flavourProfile }}</div>
           <div v-for="a in ATTRS" :key="a" class="slider-row">
             <div class="slider-header">
@@ -163,7 +163,7 @@
           <div class="form-row"><label>{{ t.palate }}</label><input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder"></div>
         </template>
 
-        <div v-if="isJournal" class="form-row">
+        <div class="form-row">
           <label>{{ t.rating }}</label>
           <div class="star-picker">
             <button
