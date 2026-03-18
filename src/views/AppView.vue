@@ -42,12 +42,11 @@
       </div>
     </div>
 
-    <Transition name="slide-down">
-      <ComparePanel
-        v-if="compareOpen && selected.length > 0"
-        :whiskies="selectedWhiskies"
-      />
-    </Transition>
+    <ComparePanel
+      v-if="compareOpen && selected.length > 0"
+      :whiskies="selectedWhiskies"
+      @close="compareOpen = false"
+    />
 
     <WhiskyModal
       v-if="modalOpen"
@@ -200,6 +199,4 @@ function onSaved(w) {
 </script>
 
 <style scoped>
-.slide-down-enter-active, .slide-down-leave-active { transition: all 0.3s ease; }
-.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
 </style>
