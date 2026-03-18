@@ -145,7 +145,7 @@ function toggleSelect(id) {
   if (idx >= 0) {
     selected.value.splice(idx, 1)
   } else {
-    if (selected.value.length >= 4) { toast(t.value.maxWhiskies); return }
+    if (selected.value.length >= 3) { toast(t.value.maxWhiskies); return }
     selected.value.push(id)
   }
 }

@@ -55,7 +55,7 @@ const TRANSLATIONS = {
     scan: 'Scan',
     add: 'Add',
     selectFirst: 'Select a card first to compare',
-    maxWhiskies: 'Maximum 4 whiskies for comparison',
+    maxWhiskies: 'Maximum 3 whiskies for comparison',
 
     // WhiskyCard
     moveToJournal: '↑ Move to Journal',
@@ -263,7 +263,7 @@ const TRANSLATIONS = {
     scan: 'Escanear',
     add: 'Añadir',
     selectFirst: 'Selecciona una tarjeta primero para comparar',
-    maxWhiskies: 'Máximo 4 whiskies para comparar',
+    maxWhiskies: 'Máximo 3 whiskies para comparar',
 
     // WhiskyCard
     moveToJournal: '↑ Mover al Diario',
