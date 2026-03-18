@@ -60,17 +60,6 @@
         </div>
 
         <template v-if="isJournal">
-          <div class="view-section-lbl">{{ t.flavourProfileView }}</div>
-          <div v-for="a in ATTRS" :key="a" class="slider-row view-slider-row">
-            <div class="slider-header">
-              <span class="slider-lbl">{{ t.attrs[a] }}</span>
-              <span class="slider-val">{{ form[a] }}</span>
-            </div>
-            <div class="view-bar-track">
-              <div class="view-bar-fill" :style="{ width: (form[a] || 0) * 20 + '%' }"></div>
-            </div>
-          </div>
-
           <div class="view-grid-2">
             <div class="view-field" v-if="form.nose">
               <div class="view-label">{{ t.nose }}</div>
@@ -79,6 +68,17 @@
             <div class="view-field" v-if="form.palate">
               <div class="view-label">{{ t.palate }}</div>
               <div class="view-value">{{ form.palate }}</div>
+            </div>
+          </div>
+
+          <div class="view-section-lbl">{{ t.flavourProfileView }}</div>
+          <div v-for="a in ATTRS" :key="a" class="slider-row view-slider-row">
+            <div class="slider-header">
+              <span class="slider-lbl">{{ t.attrs[a] }}</span>
+              <span class="slider-val">{{ form[a] }}</span>
+            </div>
+            <div class="view-bar-track">
+              <div class="view-bar-fill" :style="{ width: (form[a] || 0) * 20 + '%' }"></div>
             </div>
           </div>
 
