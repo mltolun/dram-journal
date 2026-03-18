@@ -14,7 +14,7 @@
 
       <!-- ── VIEW MODE ── -->
       <template v-if="isViewMode">
-        <div v-if="form.photo_url" class="view-photo-wrap">
+        <div v-if="isJournal && form.photo_url" class="view-photo-wrap">
           <img :src="form.photo_url" class="view-photo" :alt="form.name">
         </div>
 
@@ -45,13 +45,13 @@
             <div class="view-label">{{ t.price }}</div>
             <div class="view-value">{{ form.price }}</div>
           </div>
-          <div class="view-field" v-if="form.date">
+          <div class="view-field" v-if="isJournal && form.date">
             <div class="view-label">{{ t.tastingDate }}</div>
             <div class="view-value">{{ form.date }}</div>
           </div>
         </div>
 
-        <template v-if="hasAnyFlavour">
+        <template v-if="isJournal">
           <div class="view-section-lbl">{{ t.flavourProfileView }}</div>
           <div v-for="a in ATTRS" :key="a" class="slider-row view-slider-row">
             <div class="slider-header">
@@ -74,7 +74,7 @@
             </div>
           </div>
 
-          <div class="view-field" v-if="isJournal && form.rating">
+          <div class="view-field" v-if="form.rating">
             <div class="view-label">{{ t.rating }}</div>
             <div class="view-stars">
               <span v-for="n in 5" :key="n" class="view-star" :class="{ filled: n <= form.rating }">★</span>
@@ -143,23 +143,25 @@
             <label>{{ t.price }}</label>
             <input type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
           </div>
-          <div class="form-row">
+          <div v-if="isJournal" class="form-row">
             <label>{{ t.tastingDate }}</label>
             <input type="date" v-model="form.date">
           </div>
         </div>
 
-        <!-- Flavour profile (all entries) -->
-        <div class="form-section-lbl">{{ t.flavourProfile }}</div>
-        <div v-for="a in ATTRS" :key="a" class="slider-row">
-          <div class="slider-header">
-            <span class="slider-lbl">{{ t.attrs[a] }}</span>
-            <span class="slider-val">{{ form[a] }}</span>
+        <!-- Tasting fields only for journal -->
+        <template v-if="isJournal">
+          <div class="form-section-lbl">{{ t.flavourProfile }}</div>
+          <div v-for="a in ATTRS" :key="a" class="slider-row">
+            <div class="slider-header">
+              <span class="slider-lbl">{{ t.attrs[a] }}</span>
+              <span class="slider-val">{{ form[a] }}</span>
+            </div>
+            <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
           </div>
-          <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
-        </div>
-        <div class="form-row"><label>{{ t.nose }}</label><input type="text" v-model="form.nose" :placeholder="t.nosePlaceholder"></div>
-        <div class="form-row"><label>{{ t.palate }}</label><input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder"></div>
+          <div class="form-row"><label>{{ t.nose }}</label><input type="text" v-model="form.nose" :placeholder="t.nosePlaceholder"></div>
+          <div class="form-row"><label>{{ t.palate }}</label><input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder"></div>
+        </template>
 
         <div v-if="isJournal" class="form-row">
           <label>{{ t.rating }}</label>
@@ -220,7 +222,6 @@ const inViewMode = ref(props.viewMode)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
-const hasAnyFlavour = computed(() => ATTRS.some(a => form[a] > 0) || form.nose || form.palate)
 
 function switchToEdit() {
   inViewMode.value = false
