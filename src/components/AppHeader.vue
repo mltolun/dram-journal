@@ -22,10 +22,8 @@
                 <span class="menu-item-icon">↓</span> {{ t.exportCsv }}
               </button>
               <div class="avatar-menu-divider"></div>
-              <button class="avatar-menu-item avatar-menu-item--locale" @click="doToggleLocale">
-                <span class="menu-item-icon">🌐</span>
-                <span class="locale-label">{{ locale === 'en' ? 'Español' : 'English' }}</span>
-                <span class="locale-current">{{ locale.toUpperCase() }}</span>
+              <button class="avatar-menu-item" @click="doToggleLocale">
+                <span class="menu-item-icon">🌐</span> {{ locale === 'en' ? 'Español' : 'English' }}
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item avatar-menu-item--danger" @click="doSignOut">
@@ -209,18 +207,6 @@ async function doSignOut() {
 .avatar-menu-item--danger:hover {
   background: rgba(226, 75, 74, 0.1);
   color: #e08888;
-}
-.avatar-menu-item--locale .locale-label {
-  flex: 1;
-}
-.avatar-menu-item--locale .locale-current {
-  font-size: 0.55rem;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: rgba(200, 130, 42, 0.15);
-  color: var(--amber-light);
-  border: 0.5px solid rgba(200, 130, 42, 0.3);
-  letter-spacing: 0.06em;
 }
 .menu-item-icon {
   font-size: 0.75rem;
