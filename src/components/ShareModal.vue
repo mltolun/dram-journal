@@ -2,19 +2,19 @@
   <div class="modal-backdrop open" @click.self="$emit('close')">
     <div class="modal" style="max-width:460px">
       <div class="modal-header">
-        <div class="modal-title">Share <span>this dram</span></div>
+        <div class="modal-title">{{ t.shareThisDram }}</div>
         <button class="modal-close" @click="$emit('close')">✕</button>
       </div>
       <p style="font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--peat-light);margin-bottom:1rem;line-height:1.6;">
-        Anyone with this link can view a read-only snapshot. Dram Journal members can import it into their own collection.
+        {{ t.shareDescription }}
       </p>
       <div class="share-link-box">
         <input type="text" :value="shareUrl" readonly>
-        <button @click="copy">Copy</button>
+        <button @click="copy">{{ t.copy }}</button>
       </div>
       <div class="share-tip">{{ tip }}</div>
       <div class="modal-actions" style="margin-top:1.2rem">
-        <button class="btn-cancel" @click="$emit('close')">Close</button>
+        <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
       </div>
     </div>
   </div>
@@ -24,16 +24,18 @@
 import { ref, onMounted } from 'vue'
 import { sb } from '../lib/supabase.js'
 import { useToast } from '../composables/useToast.js'
+import { useI18n } from '../composables/useI18n.js'
 
 const props = defineProps({ whisky: Object })
 defineEmits(['close'])
 
 const { toast } = useToast()
+const { t } = useI18n()
 const shareUrl = ref('')
-const tip = ref('Generating link…')
+const tip = ref('')
 
 onMounted(async () => {
-  // Reuse existing share if present
+  tip.value = t.value.generatingLink
   const { data: existing } = await sb
     .from('shared_whiskies')
     .select('share_id')
@@ -49,18 +51,17 @@ onMounted(async () => {
       .insert({ payload: props.whisky })
       .select('share_id')
       .single()
-    if (error) { tip.value = '⚠ Could not generate link: ' + error.message; return }
+    if (error) { tip.value = t.value.couldNotGenerateLink + error.message; return }
     shareId = data.share_id
   }
 
-  // Use hash-based URL to match vue-router hash history
   shareUrl.value = window.location.origin + window.location.pathname + '#/share/' + shareId
-  tip.value = 'Link is public — anyone can view this dram. Logged-in users can import it.'
+  tip.value = t.value.linkPublicDram
 })
 
 function copy() {
   navigator.clipboard.writeText(shareUrl.value)
-    .then(() => toast('✓ Link copied'))
-    .catch(() => { toast('✓ Link copied') })
+    .then(() => toast(t.value.linkCopied))
+    .catch(() => toast(t.value.linkCopied))
 }
 </script>

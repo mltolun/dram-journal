@@ -3,10 +3,13 @@
     <div class="header-top">
       <div class="header-brand">
         <div class="brand-title">The <span>Dram</span> Journal</div>
-        <div class="brand-sub">Whisky tasting & comparison log</div>
+        <div class="brand-sub">{{ t.brandSub }}</div>
       </div>
       <div class="header-right">
         <button class="btn-theme" @click="cycleTheme" :title="`Theme: ${theme}`">{{ themeIcon }}</button>
+        <button class="btn-locale" @click="toggleLocale" :title="locale === 'en' ? 'Switch to Spanish' : 'Cambiar a inglés'">
+          {{ locale === 'en' ? 'EN' : 'ES' }}
+        </button>
 
         <div class="avatar-wrap" ref="avatarWrap">
           <div class="user-avatar" :title="currentUser?.email" @click="menuOpen = !menuOpen" :class="{ active: menuOpen }">
@@ -19,11 +22,11 @@
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doExport">
-                <span class="menu-item-icon">↓</span> Export CSV
+                <span class="menu-item-icon">↓</span> {{ t.exportCsv }}
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item avatar-menu-item--danger" @click="doSignOut">
-                <span class="menu-item-icon">↪</span> Sign out
+                <span class="menu-item-icon">↪</span> {{ t.signOut }}
               </button>
             </div>
           </transition>
@@ -40,11 +43,13 @@ import { useAuth, currentUser } from '../composables/useAuth.js'
 import { whiskies, syncStatus } from '../composables/useWhiskies.js'
 import { useTheme } from '../composables/useTheme.js'
 import { useToast } from '../composables/useToast.js'
+import { useI18n } from '../composables/useI18n.js'
 import { exportCSV } from '../utils/csv.js'
 
 const { signOut } = useAuth()
 const { theme, cycleTheme } = useTheme()
 const { toast } = useToast()
+const { locale, t, toggleLocale } = useI18n()
 
 const menuOpen = ref(false)
 const avatarWrap = ref(null)
@@ -74,9 +79,9 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true
 
 function doExport() {
   menuOpen.value = false
-  if (whiskies.value.length === 0) { toast('Nothing to export'); return }
+  if (whiskies.value.length === 0) { toast(t.value.nothingToExport); return }
   exportCSV(whiskies.value)
-  toast('✓ CSV exported')
+  toast(t.value.csvExported)
 }
 
 async function doSignOut() {
@@ -86,6 +91,24 @@ async function doSignOut() {
 </script>
 
 <style scoped>
+.btn-locale {
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 5px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+.btn-locale:hover {
+  border-color: var(--amber);
+  color: var(--amber-light);
+}
 .btn-theme {
   background: none;
   border: 0.5px solid var(--border);

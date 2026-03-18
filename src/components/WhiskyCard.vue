@@ -6,7 +6,7 @@
 
     <div>
       <div class="wcard-meta-row">
-        <span class="wcard-type" :class="`type-${whisky.type}`">{{ TYPE_LABELS[whisky.type] }}</span>
+        <span class="wcard-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
         <span v-if="!isWishlist && whisky.rating" class="wcard-rating-pill" @click.stop>
           ★ {{ whisky.rating }}
         </span>
@@ -19,7 +19,7 @@
     <!-- Flavour bars only for journal entries -->
     <div v-if="!isWishlist" class="wcard-bars">
       <div v-for="a in ATTRS" :key="a" class="bar-row-s">
-        <div class="bar-lbl-s">{{ ATTR_LABELS[a] }}</div>
+        <div class="bar-lbl-s">{{ t.attrs[a] }}</div>
         <div class="bar-track-s">
           <div class="bar-fill-s" :style="{ width: (whisky[a] || 0) * 20 + '%', ...(selectColor ? { background: selectColor, opacity: '0.75' } : {}) }"></div>
         </div>
@@ -32,13 +32,13 @@
 
     <div class="wcard-actions">
       <template v-if="isWishlist">
-        <button class="wcard-btn move" @click.stop="$emit('move')">↑ Move to Journal</button>
-        <button class="wcard-btn" @click.stop="$emit('edit')">✎ Edit</button>
+        <button class="wcard-btn move" @click.stop="$emit('move')">{{ t.moveToJournal }}</button>
+        <button class="wcard-btn" @click.stop="$emit('view')">{{ t.view }}</button>
         <button class="wcard-btn del" @click.stop="$emit('delete')">✕</button>
       </template>
       <template v-else>
-        <button class="wcard-btn" @click.stop="$emit('share')">↗ Share</button>
-        <button class="wcard-btn" @click.stop="$emit('edit')">✎ Edit</button>
+        <button class="wcard-btn" @click.stop="$emit('share')">↗ {{ t.share }}</button>
+        <button class="wcard-btn" @click.stop="$emit('view')">{{ t.view }}</button>
         <button class="wcard-btn del" @click.stop="$emit('delete')">✕</button>
       </template>
     </div>
@@ -47,12 +47,14 @@
 
 <script setup>
 import { computed } from 'vue'
-import { ATTRS, ATTR_LABELS, TYPE_LABELS } from '../lib/constants.js'
+import { ATTRS } from '../lib/constants.js'
+import { useI18n } from '../composables/useI18n.js'
 import placeholderImg from '../assets/bottle-placeholder.jpg'
 
 const props = defineProps({ whisky: Object, selected: Boolean, selectColor: String })
-defineEmits(['toggle', 'edit', 'delete', 'share', 'move'])
+defineEmits(['toggle', 'view', 'delete', 'share', 'move'])
 
+const { t } = useI18n()
 const isWishlist = computed(() => props.whisky?.list === 'wishlist')
 const cardImage = computed(() => props.whisky?.photo_url || placeholderImg)
 </script>

@@ -23,9 +23,7 @@
           <div class="empty-grid">
             <div class="empty-icon">{{ activeList === 'wishlist' ? '✦' : '🥃' }}</div>
             <div class="empty-text">
-              {{ activeList === 'wishlist'
-                ? 'Your wishlist is empty\nPress "＋ Add" to start one'
-                : 'No whiskies yet\nPress "＋ Add" to get started' }}
+              {{ activeList === 'wishlist' ? t.emptyWishlist : t.emptyJournal }}
             </div>
           </div>
         </template>
@@ -36,7 +34,7 @@
           :selected="selected.includes(w.id)"
           :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
           @toggle="activeList === 'journal' ? toggleSelect(w.id) : null"
-          @edit="openEditModal(w)"
+          @view="openViewModal(w)"
           @delete="doDelete(w)"
           @share="openShareModal(w)"
           @move="doMoveToJournal(w)"
@@ -56,6 +54,7 @@
       :editing="editingWhisky"
       :prefill="scanPrefill"
       :list="activeList"
+      :view-mode="isViewMode"
       @saved="onSaved"
       @close="modalOpen = false; scanPrefill = null"
     />
@@ -89,6 +88,7 @@ import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
 import { useLookups } from '../composables/useLookups.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
+import { useI18n } from '../composables/useI18n.js'
 import { COLOR_HEX } from '../lib/constants.js'
 
 import AuthBox      from '../components/AuthBox.vue'
@@ -106,6 +106,7 @@ const { loadWhiskies, deleteWhisky, moveToJournal } = useWhiskies()
 const { deletePhoto } = usePhoto()
 const { loadLookups } = useLookups()
 const { toast } = useToast()
+const { t } = useI18n()
 
 const route = useRoute()
 const activeList    = ref('journal')
@@ -113,6 +114,7 @@ const selected      = ref([])
 const compareOpen   = ref(false)
 const modalOpen     = ref(false)
 const editingWhisky = ref(null)
+const isViewMode    = ref(false)
 const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
@@ -143,19 +145,20 @@ function toggleSelect(id) {
   if (idx >= 0) {
     selected.value.splice(idx, 1)
   } else {
-    if (selected.value.length >= 4) { toast('Maximum 4 whiskies for comparison'); return }
+    if (selected.value.length >= 4) { toast(t.value.maxWhiskies); return }
     selected.value.push(id)
   }
 }
 
 function toggleCompare() {
-  if (selected.value.length === 0) { toast('Select a card first to compare'); return }
+  if (selected.value.length === 0) { toast(t.value.selectFirst); return }
   compareOpen.value = !compareOpen.value
 }
 
 function openAddModal() {
   editingWhisky.value = null
   scanPrefill.value   = null
+  isViewMode.value    = false
   modalOpen.value = true
 }
 
@@ -163,11 +166,13 @@ function onScanned(data) {
   scanOpen.value      = false
   editingWhisky.value = null
   scanPrefill.value   = data
+  isViewMode.value    = false
   modalOpen.value     = true
 }
 
-function openEditModal(w) {
+function openViewModal(w) {
   editingWhisky.value = w
+  isViewMode.value    = true
   modalOpen.value = true
 }
 
@@ -180,17 +185,17 @@ async function doDelete(w) {
   await deleteWhisky(w.id)
   if (w.photo_url) deletePhoto(w.id)
   selected.value = selected.value.filter(id => id !== w.id)
-  toast('Deleted')
+  toast(t.value.deleted)
 }
 
 async function doMoveToJournal(w) {
   await moveToJournal(w.id)
-  toast('✓ ' + w.name + ' moved to Journal')
+  toast(t.value.movedToJournal(w.name))
 }
 
 function onSaved(w) {
   modalOpen.value = false
-  toast('✓ ' + w.name + (editingWhisky.value ? ' updated' : ' added'))
+  toast(editingWhisky.value ? t.value.whiskyUpdated(w.name) : t.value.whiskyAdded(w.name))
 }
 </script>
 

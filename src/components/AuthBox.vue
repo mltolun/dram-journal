@@ -1,29 +1,29 @@
 <template>
   <div class="auth-box">
     <div class="auth-logo">The <span>Dram</span> Journal</div>
-    <div class="auth-tagline">Whisky tasting & comparison log</div>
+    <div class="auth-tagline">{{ t.brandSub }}</div>
     <div class="auth-tabs">
-      <button class="auth-tab" :class="{ active: tab === 'login' }" @click="tab = 'login'">Sign in</button>
-      <button class="auth-tab" :class="{ active: tab === 'register' }" @click="tab = 'register'">Register</button>
+      <button class="auth-tab" :class="{ active: tab === 'login' }" @click="tab = 'login'">{{ t.signIn }}</button>
+      <button class="auth-tab" :class="{ active: tab === 'register' }" @click="tab = 'register'">{{ t.register }}</button>
     </div>
     <div v-if="error"   class="auth-msg auth-error">{{ error }}</div>
     <div v-if="success" class="auth-msg auth-success">{{ success }}</div>
     <div class="form-row">
-      <label>Email address</label>
+      <label>{{ t.emailAddress }}</label>
       <input type="email" v-model="email" placeholder="you@email.com" @keydown.enter="submit">
     </div>
     <div class="form-row">
-      <label>Password</label>
+      <label>{{ t.password }}</label>
       <input type="password" v-model="password" placeholder="········" @keydown.enter="submit">
     </div>
     <div v-if="tab === 'register'" class="form-row">
-      <label>Confirm password</label>
+      <label>{{ t.confirmPassword }}</label>
       <input type="password" v-model="password2" placeholder="········" @keydown.enter="submit">
     </div>
     <button class="btn-auth" :disabled="loading" @click="submit">
-      {{ loading ? '…' : (tab === 'login' ? 'Sign in' : 'Create account') }}
+      {{ loading ? '…' : (tab === 'login' ? t.signIn : t.createAccount) }}
     </button>
-    <div v-if="tab === 'login'" class="forgot-link" @click="forgot">Forgot your password?</div>
+    <div v-if="tab === 'login'" class="forgot-link" @click="forgot">{{ t.forgotPassword }}</div>
   </div>
 </template>
 
@@ -32,10 +32,12 @@ import { ref } from 'vue'
 import { useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { useLookups } from '../composables/useLookups.js'
+import { useI18n } from '../composables/useI18n.js'
 
 const { signIn, signUp, forgotPassword } = useAuth()
 const { loadWhiskies } = useWhiskies()
 const { loadLookups } = useLookups()
+const { t } = useI18n()
 
 const tab       = ref('login')
 const email     = ref('')
@@ -47,9 +49,9 @@ const success   = ref('')
 
 async function submit() {
   error.value = ''; success.value = ''
-  if (!email.value || !password.value) { error.value = 'Please fill in all fields'; return }
-  if (tab.value === 'register' && password.value !== password2.value) { error.value = 'Passwords do not match'; return }
-  if (tab.value === 'register' && password.value.length < 6) { error.value = 'Password must be at least 6 characters'; return }
+  if (!email.value || !password.value) { error.value = t.value.fillAllFields; return }
+  if (tab.value === 'register' && password.value !== password2.value) { error.value = t.value.passwordsNoMatch; return }
+  if (tab.value === 'register' && password.value.length < 6) { error.value = t.value.passwordTooShort; return }
   loading.value = true
   try {
     if (tab.value === 'login') {
@@ -60,7 +62,7 @@ async function submit() {
       if (data.user && data.session) {
         await Promise.all([loadWhiskies(), loadLookups()])
       } else {
-        success.value = 'Account created! Check your email to confirm.'
+        success.value = t.value.accountCreated
       }
     }
   } catch (e) {
@@ -71,10 +73,10 @@ async function submit() {
 }
 
 async function forgot() {
-  if (!email.value) { error.value = 'Enter your email first'; return }
+  if (!email.value) { error.value = t.value.enterEmailFirst; return }
   try {
     await forgotPassword(email.value)
-    success.value = 'Password reset email sent.'
+    success.value = t.value.passwordResetSent
   } catch (e) {
     error.value = e.message
   }

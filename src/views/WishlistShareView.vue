@@ -1,23 +1,23 @@
 <template>
   <div v-if="loading" class="share-error">
     <div class="share-error-icon">✦</div>
-    <div class="share-error-txt">Loading…</div>
+    <div class="share-error-txt">{{ t.loading }}</div>
   </div>
 
   <div v-else-if="!items.length" class="share-error">
     <div class="share-error-icon">✦</div>
-    <div class="share-error-txt">This wishlist could not be found</div>
-    <RouterLink to="/" style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">← Back to The Dram Journal</RouterLink>
+    <div class="share-error-txt">{{ t.wishlistNotFound }}</div>
+    <RouterLink to="/" style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
   </div>
 
   <div v-else>
     <div class="share-hero">
       <div class="share-brand">The <span>Dram</span> Journal</div>
-      <div class="share-whisky-name" style="font-size:1.6rem;">✦ Wishlist</div>
+      <div class="share-whisky-name" style="font-size:1.6rem;">✦ {{ t.wishlist }}</div>
       <div class="share-meta" style="margin-top:0.5rem;">
         <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--peat-light);letter-spacing:0.1em;text-transform:uppercase;">
-          {{ items.length }} {{ items.length === 1 ? 'bottle' : 'bottles' }}
-          · shared {{ sharedDate }}
+          {{ items.length }} {{ items.length === 1 ? t.bottle : t.bottles }}
+          · {{ t.shared }} {{ sharedDate }}
         </span>
       </div>
     </div>
@@ -27,7 +27,7 @@
         <div v-for="item in items" :key="item.id" class="wl-card">
           <img v-if="item.photo_url" class="wl-photo" :src="item.photo_url" :alt="item.name">
           <div class="wl-body">
-            <span class="wcard-type" :class="`type-${item.type}`">{{ TYPE_LABELS[item.type] }}</span>
+            <span class="wcard-type" :class="`type-${item.type}`">{{ t.types[item.type] }}</span>
             <div class="wl-distillery">{{ item.distillery || '—' }}</div>
             <div class="wl-name">{{ item.name }}</div>
             <div v-if="item.age" class="wl-age">{{ item.age }}</div>
@@ -39,7 +39,7 @@
               :disabled="importedIds.has(item.id)"
               @click="doImportOne(item)"
             >
-              {{ importedIds.has(item.id) ? '✓ Added' : '✦ Add to Wishlist' }}
+              {{ importedIds.has(item.id) ? t.added : t.addToMyWishlistOne }}
             </button>
           </div>
         </div>
@@ -48,10 +48,10 @@
 
     <div class="share-actions">
       <button v-if="currentUser" class="btn-t btn-primary" :disabled="importing" @click="doImportAll">
-        {{ importing ? 'Importing…' : `✦ Add all ${items.length} to my Wishlist` }}
+        {{ importing ? t.importing : t.addAllTo(items.length) }}
       </button>
-      <RouterLink v-else to="/" class="btn-t btn-outline" style="text-decoration:none;">Sign in to import</RouterLink>
-      <RouterLink to="/" class="btn-t btn-outline" style="text-decoration:none;">← Back to journal</RouterLink>
+      <RouterLink v-else to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.signInToImport }}</RouterLink>
+      <RouterLink to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.backToJournalBtn }}</RouterLink>
     </div>
   </div>
 </template>
@@ -63,13 +63,14 @@ import { sb } from '../lib/supabase.js'
 import { currentUser, useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { useToast } from '../composables/useToast.js'
-import { TYPE_LABELS } from '../lib/constants.js'
+import { useI18n } from '../composables/useI18n.js'
 
 const route = useRoute()
 const router = useRouter()
 const { getSession } = useAuth()
 const { insertWhisky } = useWhiskies()
 const { toast } = useToast()
+const { t } = useI18n()
 
 const items = ref([])
 const loading = ref(true)
@@ -102,9 +103,9 @@ async function doImportOne(item) {
   try {
     await insertWhisky({ id: Date.now(), ...fields, list: 'wishlist' })
     importedIds.value = new Set([...importedIds.value, item.id])
-    toast('✦ ' + item.name + ' added to your Wishlist!')
+    toast(t.value.addedToWishlist(item.name))
   } catch (e) {
-    toast('⚠ Import failed: ' + e.message)
+    toast(t.value.importFailed + e.message)
   }
 }
 
@@ -120,10 +121,10 @@ async function doImportAll() {
       importedIds.value = new Set([...importedIds.value, item.id])
       added++
     }
-    toast(`✦ ${added} bottles added to your Wishlist!`)
+    toast(t.value.addedAllToWishlist(added))
     router.push({ path: '/', query: { list: 'wishlist' } })
   } catch (e) {
-    toast('⚠ Import failed: ' + e.message)
+    toast(t.value.importFailed + e.message)
   } finally {
     importing.value = false
   }

@@ -6,14 +6,14 @@
           class="list-tab"
           :class="{ active: activeList === 'journal' }"
           @click="$emit('setList', 'journal')"
-        >🥃 <span class="tab-label">Journal</span></button>
+        >🥃 <span class="tab-label">{{ t.journal }}</span></button>
         <button
           class="list-tab"
           :class="{ active: activeList === 'wishlist' }"
           @click="$emit('setList', 'wishlist')"
-        >✦ <span class="tab-label">Wishlist</span></button>
+        >✦ <span class="tab-label">{{ t.wishlist }}</span></button>
       </div>
-      <span v-if="selectedCount > 0" class="compare-badge">{{ selectedCount }} selected</span>
+      <span v-if="selectedCount > 0" class="compare-badge">{{ selectedCount }} {{ t.selected }}</span>
     </div>
     <div class="toolbar-right">
       <button
@@ -21,20 +21,22 @@
         class="btn-t btn-compare"
         :class="{ ready: selectedCount > 0, active: compareOpen }"
         @click="$emit('compare')"
-      >Compare</button>
+      >{{ t.compare }}</button>
       <button
         v-if="activeList === 'wishlist'"
         class="btn-t btn-share-wl"
         @click="$emit('shareWishlist')"
-        title="Share your entire wishlist"
-      >↗ <span class="btn-label">Share</span></button>
-      <button class="btn-t btn-scan" @click="$emit('scan')" title="Scan a bottle label">📷 <span class="btn-label">Scan</span></button>
-      <button class="btn-t btn-primary" @click="$emit('add')">＋ <span class="btn-label">Add</span></button>
+        :title="t.share"
+      >↗ <span class="btn-label">{{ t.share }}</span></button>
+      <button class="btn-t btn-scan" @click="$emit('scan')" :title="t.scan">📷 <span class="btn-label">{{ t.scan }}</span></button>
+      <button class="btn-t btn-primary" @click="$emit('add')">＋ <span class="btn-label">{{ t.add }}</span></button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from '../composables/useI18n.js'
+const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String })
 defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
 </script>

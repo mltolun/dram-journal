@@ -3,7 +3,7 @@
     <div class="modal scan-modal">
 
       <div class="modal-header">
-        <div class="modal-title">Scan <span>bottle</span></div>
+        <div class="modal-title">{{ t.scanBottle }}</div>
         <button class="modal-close" @click="$emit('close')">✕</button>
       </div>
 
@@ -15,10 +15,10 @@
           @dragleave="dragging = false"
           @drop.prevent="onDrop">
           <div class="scan-drop-icon">📷</div>
-          <div class="scan-drop-label">Tap to take / choose photo</div>
-          <div class="scan-drop-hint">or drag & drop</div>
+          <div class="scan-drop-label">{{ t.tapToPhoto }}</div>
+          <div class="scan-drop-hint">{{ t.orDragDrop }}</div>
         </div>
-        <div class="scan-quota">{{ Math.max(0, DAILY_CAP - scansToday) }} of {{ DAILY_CAP }} scans remaining today</div>
+        <div class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
         <input ref="fileInput" type="file" accept="image/*"
           style="display:none" @change="onFileChange" />
       </div>
@@ -27,34 +27,34 @@
       <div v-else-if="step === 'preview'">
         <img :src="previewSrc" class="scan-preview" />
         <div class="scan-actions">
-          <button class="btn-auth" @click="analyse">🔍 Identify whisky</button>
-          <button class="btn-cancel" @click="reset">Retake</button>
+          <button class="btn-auth" @click="analyse">{{ t.identifyWhisky }}</button>
+          <button class="btn-cancel" @click="reset">{{ t.retake }}</button>
         </div>
       </div>
 
       <!-- Step 3: analysing -->
       <div v-else-if="step === 'loading'" class="scan-loading">
         <div class="scan-spinner"></div>
-        <div class="scan-loading-text">Analysing bottle…</div>
-        <div class="scan-loading-sub">{{ MODEL_LABELS[ACTIVE_MODEL] }} is reading the label</div>
+        <div class="scan-loading-text">{{ t.analysingBottle }}</div>
+        <div class="scan-loading-sub">{{ t.isReading(MODEL_LABELS[ACTIVE_MODEL]) }}</div>
       </div>
 
       <!-- Step 4: result -->
       <div v-else-if="step === 'result'">
         <div class="scan-result-header">
-          <span class="scan-tick">✓</span> Whisky identified
+          <span class="scan-tick">✓</span> {{ t.whiskyIdentified }}
           <span class="scan-model-badge">{{ MODEL_LABELS[ACTIVE_MODEL] }}</span>
         </div>
         <div class="scan-fields">
           <div class="scan-field" v-for="(val, key) in displayResult" :key="key">
-            <span class="scan-field-lbl">{{ FIELD_LABELS[key] }}</span>
+            <span class="scan-field-lbl">{{ t.scanFieldLabels[key] }}</span>
             <span class="scan-field-val">{{ val }}</span>
           </div>
         </div>
         <div v-if="result.notes" class="scan-notes">{{ result.notes }}</div>
         <div class="scan-actions">
-          <button class="btn-auth" @click="confirm">＋ Add to {{ props.list === 'wishlist' ? 'Wishlist' : 'Journal' }}</button>
-          <button class="btn-cancel" @click="reset">Scan again</button>
+          <button class="btn-auth" @click="confirm">{{ t.addToList(props.list) }}</button>
+          <button class="btn-cancel" @click="reset">{{ t.scanAgain }}</button>
         </div>
       </div>
 
@@ -62,7 +62,7 @@
       <div v-else-if="step === 'error'" class="scan-error">
         <div class="scan-error-icon">⚠</div>
         <div class="scan-error-msg">{{ errorMsg }}</div>
-        <button class="btn-cancel" style="margin-top:1rem" @click="reset">Try again</button>
+        <button class="btn-cancel" style="margin-top:1rem" @click="reset">{{ t.tryAgain }}</button>
       </div>
 
     </div>
@@ -75,17 +75,15 @@ import { DEFAULTS } from '../lib/constants.js'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from '../composables/useAuth.js'
 import { compressImage } from '../utils/compressImage.js'
+import { useI18n } from '../composables/useI18n.js'
 
 const emit = defineEmits(['close', 'identified'])
 
 const props = defineProps({ list: { type: String, default: 'journal' } })
 
-const DAILY_CAP = 20
+const { t } = useI18n()
 
-const FIELD_LABELS = {
-  name: 'Name', distillery: 'Distillery', origin: 'Region',
-  type: 'Style', age: 'Age / ABV',
-}
+const DAILY_CAP = 20
 
 // ── Model selection ───────────────────────────────────────────────────────────
 // Toggle between: 'gemma'  → Gemma 3 27B (file-upload path)
@@ -327,12 +325,12 @@ function parseModelText(text) {
 
 async function analyse() {
   if (!imageB64.value || !imageFile.value) {
-    errorMsg.value = 'Image still processing, please wait a moment.'
+    errorMsg.value = t.value.imageProcessing
     step.value = 'error'
     return
   }
   if (scansToday.value >= DAILY_CAP) {
-    errorMsg.value = `Daily scan limit of ${DAILY_CAP} reached. Try again tomorrow.`
+    errorMsg.value = t.value.dailyLimitReached(DAILY_CAP)
     step.value = 'error'
     return
   }
