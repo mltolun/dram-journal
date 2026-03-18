@@ -14,40 +14,48 @@
 
       <!-- ── VIEW MODE ── -->
       <template v-if="isViewMode">
-        <div v-if="isJournal && form.photo_url" class="view-photo-wrap">
-          <img :src="form.photo_url" class="view-photo" :alt="form.name">
-        </div>
 
-        <div class="view-grid-2">
-          <div class="view-field" v-if="form.distillery">
-            <div class="view-label">{{ t.distillery }}</div>
-            <div class="view-value">{{ form.distillery }}</div>
-          </div>
-          <div class="view-field" v-if="form.origin">
-            <div class="view-label">{{ t.regionOrigin }}</div>
-            <div class="view-value">{{ form.origin }}</div>
-          </div>
-        </div>
+        <div :class="isJournal && form.photo_url ? 'view-layout-split' : ''">
 
-        <div class="view-grid-2">
-          <div class="view-field" v-if="form.type">
-            <div class="view-label">{{ t.style }}</div>
-            <div class="view-value">{{ t.types[form.type] || form.type }}</div>
+          <!-- Left: photo -->
+          <div v-if="isJournal && form.photo_url" class="view-photo-col">
+            <img :src="form.photo_url" class="view-photo" :alt="form.name">
           </div>
-          <div class="view-field" v-if="form.age">
-            <div class="view-label">{{ t.ageMaturation }}</div>
-            <div class="view-value">{{ form.age }}</div>
-          </div>
-        </div>
 
-        <div class="view-grid-2">
-          <div class="view-field" v-if="form.price">
-            <div class="view-label">{{ t.price }}</div>
-            <div class="view-value">{{ form.price }}</div>
-          </div>
-          <div class="view-field" v-if="isJournal && form.date">
-            <div class="view-label">{{ t.tastingDate }}</div>
-            <div class="view-value">{{ form.date }}</div>
+          <!-- Right (or full-width if no photo): details -->
+          <div class="view-details-col">
+            <div class="view-grid-2">
+              <div class="view-field" v-if="form.distillery">
+                <div class="view-label">{{ t.distillery }}</div>
+                <div class="view-value">{{ form.distillery }}</div>
+              </div>
+              <div class="view-field" v-if="form.origin">
+                <div class="view-label">{{ t.regionOrigin }}</div>
+                <div class="view-value">{{ form.origin }}</div>
+              </div>
+            </div>
+
+            <div class="view-grid-2">
+              <div class="view-field" v-if="form.type">
+                <div class="view-label">{{ t.style }}</div>
+                <div class="view-value">{{ t.types[form.type] || form.type }}</div>
+              </div>
+              <div class="view-field" v-if="form.age">
+                <div class="view-label">{{ t.ageMaturation }}</div>
+                <div class="view-value">{{ form.age }}</div>
+              </div>
+            </div>
+
+            <div class="view-grid-2">
+              <div class="view-field" v-if="form.price">
+                <div class="view-label">{{ t.price }}</div>
+                <div class="view-value">{{ form.price }}</div>
+              </div>
+              <div class="view-field" v-if="isJournal && form.date">
+                <div class="view-label">{{ t.tastingDate }}</div>
+                <div class="view-value">{{ form.date }}</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -327,18 +335,27 @@ async function save() {
 }
 
 /* ── View mode ── */
-.view-photo-wrap {
-  width: 100%;
-  max-height: 220px;
-  overflow: hidden;
-  border-radius: 8px;
-  margin-bottom: 16px;
+.view-layout-split {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 4px;
+}
+.view-photo-col {
+  position: sticky;
+  top: 0;
 }
 .view-photo {
   width: 100%;
-  height: 220px;
+  border-radius: 8px;
   object-fit: contain;
   display: block;
+  border: 0.5px solid var(--border);
+  background: var(--bg-card);
+}
+.view-details-col {
+  min-width: 0;
 }
 .view-grid-2 {
   display: grid;
