@@ -56,21 +56,21 @@
                 <div class="view-value">{{ form.date }}</div>
               </div>
             </div>
+
+            <div class="view-grid-2" v-if="isJournal">
+              <div class="view-field" v-if="form.nose">
+                <div class="view-label">{{ t.nose }}</div>
+                <div class="view-value">{{ form.nose }}</div>
+              </div>
+              <div class="view-field" v-if="form.palate">
+                <div class="view-label">{{ t.palate }}</div>
+                <div class="view-value">{{ form.palate }}</div>
+              </div>
+            </div>
           </div>
         </div>
 
         <template v-if="isJournal">
-          <div class="view-grid-2">
-            <div class="view-field" v-if="form.nose">
-              <div class="view-label">{{ t.nose }}</div>
-              <div class="view-value">{{ form.nose }}</div>
-            </div>
-            <div class="view-field" v-if="form.palate">
-              <div class="view-label">{{ t.palate }}</div>
-              <div class="view-value">{{ form.palate }}</div>
-            </div>
-          </div>
-
           <div class="view-section-lbl">{{ t.flavourProfileView }}</div>
           <div v-for="a in ATTRS" :key="a" class="slider-row view-slider-row">
             <div class="slider-header">
