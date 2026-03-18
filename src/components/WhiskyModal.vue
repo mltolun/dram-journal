@@ -51,7 +51,7 @@
           </div>
         </div>
 
-        <template>
+        <template v-if="hasAnyFlavour">
           <div class="view-section-lbl">{{ t.flavourProfileView }}</div>
           <div v-for="a in ATTRS" :key="a" class="slider-row view-slider-row">
             <div class="slider-header">
@@ -74,7 +74,7 @@
             </div>
           </div>
 
-          <div class="view-field" v-if="form.rating">
+          <div class="view-field" v-if="isJournal && form.rating">
             <div class="view-label">{{ t.rating }}</div>
             <div class="view-stars">
               <span v-for="n in 5" :key="n" class="view-star" :class="{ filled: n <= form.rating }">★</span>
@@ -149,21 +149,19 @@
           </div>
         </div>
 
-        <!-- Tasting fields for all entries -->
-        <template>
-          <div class="form-section-lbl">{{ t.flavourProfile }}</div>
-          <div v-for="a in ATTRS" :key="a" class="slider-row">
-            <div class="slider-header">
-              <span class="slider-lbl">{{ t.attrs[a] }}</span>
-              <span class="slider-val">{{ form[a] }}</span>
-            </div>
-            <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
+        <!-- Flavour profile (all entries) -->
+        <div class="form-section-lbl">{{ t.flavourProfile }}</div>
+        <div v-for="a in ATTRS" :key="a" class="slider-row">
+          <div class="slider-header">
+            <span class="slider-lbl">{{ t.attrs[a] }}</span>
+            <span class="slider-val">{{ form[a] }}</span>
           </div>
-          <div class="form-row"><label>{{ t.nose }}</label><input type="text" v-model="form.nose" :placeholder="t.nosePlaceholder"></div>
-          <div class="form-row"><label>{{ t.palate }}</label><input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder"></div>
-        </template>
+          <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
+        </div>
+        <div class="form-row"><label>{{ t.nose }}</label><input type="text" v-model="form.nose" :placeholder="t.nosePlaceholder"></div>
+        <div class="form-row"><label>{{ t.palate }}</label><input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder"></div>
 
-        <div class="form-row">
+        <div v-if="isJournal" class="form-row">
           <label>{{ t.rating }}</label>
           <div class="star-picker">
             <button
@@ -222,6 +220,7 @@ const inViewMode = ref(props.viewMode)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
+const hasAnyFlavour = computed(() => ATTRS.some(a => form[a] > 0) || form.nose || form.palate)
 
 function switchToEdit() {
   inViewMode.value = false
