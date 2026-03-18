@@ -7,9 +7,6 @@
       </div>
       <div class="header-right">
         <button class="btn-theme" @click="cycleTheme" :title="`Theme: ${theme}`">{{ themeIcon }}</button>
-        <button class="btn-locale" @click="toggleLocale" :title="locale === 'en' ? 'Switch to Spanish' : 'Cambiar a inglés'">
-          {{ locale === 'en' ? 'EN' : 'ES' }}
-        </button>
 
         <div class="avatar-wrap" ref="avatarWrap">
           <div class="user-avatar" :title="currentUser?.email" @click="menuOpen = !menuOpen" :class="{ active: menuOpen }">
@@ -23,6 +20,12 @@
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doExport">
                 <span class="menu-item-icon">↓</span> {{ t.exportCsv }}
+              </button>
+              <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item avatar-menu-item--locale" @click="doToggleLocale">
+                <span class="menu-item-icon">🌐</span>
+                <span class="locale-label">{{ locale === 'en' ? 'Español' : 'English' }}</span>
+                <span class="locale-current">{{ locale.toUpperCase() }}</span>
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item avatar-menu-item--danger" @click="doSignOut">
@@ -84,6 +87,11 @@ function doExport() {
   toast(t.value.csvExported)
 }
 
+function doToggleLocale() {
+  toggleLocale()
+  // keep menu open so user sees the change
+}
+
 async function doSignOut() {
   menuOpen.value = false
   await signOut()
@@ -91,24 +99,6 @@ async function doSignOut() {
 </script>
 
 <style scoped>
-.btn-locale {
-  background: none;
-  border: 0.5px solid var(--border);
-  border-radius: 5px;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  padding: 2px 7px;
-  cursor: pointer;
-  transition: all 0.2s;
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-.btn-locale:hover {
-  border-color: var(--amber);
-  color: var(--amber-light);
-}
 .btn-theme {
   background: none;
   border: 0.5px solid var(--border);
@@ -219,6 +209,18 @@ async function doSignOut() {
 .avatar-menu-item--danger:hover {
   background: rgba(226, 75, 74, 0.1);
   color: #e08888;
+}
+.avatar-menu-item--locale .locale-label {
+  flex: 1;
+}
+.avatar-menu-item--locale .locale-current {
+  font-size: 0.55rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(200, 130, 42, 0.15);
+  color: var(--amber-light);
+  border: 0.5px solid rgba(200, 130, 42, 0.3);
+  letter-spacing: 0.06em;
 }
 .menu-item-icon {
   font-size: 0.75rem;
