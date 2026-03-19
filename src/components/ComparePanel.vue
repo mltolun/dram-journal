@@ -9,46 +9,55 @@
         </div>
 
         <div class="cp-scroll">
-          <div class="cp-grid" :style="{ gridTemplateColumns: `repeat(${whiskies.length}, 1fr)` }">
-            <div v-for="(w, i) in whiskies" :key="w.id" class="cp-col">
+          <div class="cp-table" :style="{ gridTemplateColumns: `120px repeat(${whiskies.length}, 1fr)` }">
 
+            <!-- ── Name / origin / badge ── -->
+            <div class="cp-row-lbl cp-row-lbl--top"></div>
+            <div v-for="(w, i) in whiskies" :key="`name-${w.id}`" class="cp-cell cp-cell--top">
               <div class="cp-name" :style="{ color: COLOR_HEX[i] }">{{ w.name }}</div>
               <div class="cp-origin">{{ w.origin || '—' }}</div>
               <span class="cm-badge" :style="TYPE_BADGE_STYLE[w.type] || TYPE_BADGE_STYLE.other">
                 {{ t.types[w.type] }}
               </span>
+            </div>
 
-              <div class="cp-divider"></div>
+            <!-- ── Distillery ── -->
+            <div class="cp-row-lbl">{{ t.distillery }}</div>
+            <div v-for="w in whiskies" :key="`dist-${w.id}`" class="cp-cell">
+              <div class="cp-val">{{ w.distillery || '—' }}</div>
+            </div>
 
-              <div class="cp-detail" v-if="w.distillery">
-                <div class="cp-detail-lbl">{{ t.distillery }}</div>
-                <div class="cp-detail-val">{{ w.distillery }}</div>
-              </div>
-              <div class="cp-detail" v-if="w.age">
-                <div class="cp-detail-lbl">{{ t.ageMaturation }}</div>
-                <div class="cp-detail-val">{{ w.age }}</div>
-              </div>
-              <div class="cp-detail" v-if="w.price">
-                <div class="cp-detail-lbl">{{ t.price }}</div>
-                <div class="cp-detail-val">{{ w.price }}</div>
-              </div>
+            <!-- ── Age ── -->
+            <div class="cp-row-lbl">{{ t.ageMaturation }}</div>
+            <div v-for="w in whiskies" :key="`age-${w.id}`" class="cp-cell">
+              <div class="cp-val">{{ w.age || '—' }}</div>
+            </div>
 
-              <div class="cp-divider"></div>
+            <!-- ── Price ── -->
+            <div class="cp-row-lbl">{{ t.price }}</div>
+            <div v-for="w in whiskies" :key="`price-${w.id}`" class="cp-cell">
+              <div class="cp-val">{{ w.price || '—' }}</div>
+            </div>
 
-              <div class="cp-detail" v-if="w.nose">
-                <div class="cp-detail-lbl">{{ t.nose }}</div>
-                <div class="cp-detail-val">{{ w.nose }}</div>
-              </div>
-              <div class="cp-detail" v-if="w.palate">
-                <div class="cp-detail-lbl">{{ t.palate }}</div>
-                <div class="cp-detail-val">{{ w.palate }}</div>
-              </div>
+            <!-- ── Nose ── -->
+            <div class="cp-row-lbl">{{ t.nose }}</div>
+            <div v-for="w in whiskies" :key="`nose-${w.id}`" class="cp-cell">
+              <div class="cp-val cp-val--italic">{{ w.nose || '—' }}</div>
+            </div>
 
-              <div class="cp-divider"></div>
+            <!-- ── Palate ── -->
+            <div class="cp-row-lbl">{{ t.palate }}</div>
+            <div v-for="w in whiskies" :key="`palate-${w.id}`" class="cp-cell">
+              <div class="cp-val cp-val--italic">{{ w.palate || '—' }}</div>
+            </div>
 
-              <div class="cp-detail-lbl" style="margin-bottom:0.7rem">{{ t.flavourProfileSection }}</div>
-              <div v-for="a in ATTRS" :key="a" class="flavor-attr">
-                <div class="flavor-attr-lbl">{{ t.attrs[a] }}</div>
+            <!-- ── Flavour profile ── -->
+            <div class="cp-row-lbl cp-row-lbl--section">{{ t.flavourProfileSection }}</div>
+            <div v-for="(w, i) in whiskies" :key="`flavour-header-${w.id}`" class="cp-cell cp-cell--section"></div>
+
+            <template v-for="a in ATTRS" :key="a">
+              <div class="cp-row-lbl cp-row-lbl--attr">{{ t.attrs[a] }}</div>
+              <div v-for="(w, i) in whiskies" :key="`${a}-${w.id}`" class="cp-cell cp-cell--attr">
                 <div class="flavor-bar-row">
                   <div class="flavor-track">
                     <div class="flavor-fill" :style="{ width: (w[a] || 0) * 20 + '%', background: COLOR_HEX[i] }"></div>
@@ -56,22 +65,23 @@
                   <div class="flavor-val">{{ w[a] || 0 }}</div>
                 </div>
               </div>
+            </template>
 
-              <div class="cp-divider"></div>
-
-              <div class="cp-detail" v-if="w.rating">
-                <div class="cp-detail-lbl">{{ t.rating }}</div>
-                <div class="cp-stars">
-                  <span v-for="n in 5" :key="n" class="cp-star" :class="{ filled: n <= w.rating }">★</span>
-                </div>
+            <!-- ── Rating ── -->
+            <div class="cp-row-lbl">{{ t.rating }}</div>
+            <div v-for="w in whiskies" :key="`rating-${w.id}`" class="cp-cell">
+              <div v-if="w.rating" class="cp-stars">
+                <span v-for="n in 5" :key="n" class="cp-star" :class="{ filled: n <= w.rating }">★</span>
               </div>
-
-              <div class="cp-detail">
-                <div class="cp-detail-lbl">{{ t.personalNotesSection }}</div>
-                <div class="cp-notes">{{ w.notes || t.noNotes }}</div>
-              </div>
-
+              <div v-else class="cp-val">—</div>
             </div>
+
+            <!-- ── Notes ── -->
+            <div class="cp-row-lbl">{{ t.personalNotesSection }}</div>
+            <div v-for="w in whiskies" :key="`notes-${w.id}`" class="cp-cell">
+              <div class="cp-val cp-val--italic">{{ w.notes || t.noNotes }}</div>
+            </div>
+
           </div>
         </div>
 
@@ -159,61 +169,98 @@ const { t } = useI18n()
   flex: 1;
   padding: 1.4rem 1.8rem 2rem;
 }
-.cp-grid {
+
+/* ── Row-based grid ── */
+.cp-table {
   display: grid;
-  gap: 1px;
-  background: var(--border);
   border: 0.5px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
 }
-.cp-col {
-  background: var(--bg-card);
-  padding: 1.4rem 1.2rem;
+
+/* Every cell and label share the same row height automatically */
+.cp-row-lbl,
+.cp-cell {
+  padding: 12px 14px;
+  border-bottom: 0.5px solid var(--border);
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
 }
-.cp-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.25;
+.cp-row-lbl:last-of-type,
+.cp-cell:last-child,
+.cp-table > :nth-last-child(-n+4) {
+  border-bottom: none;
 }
-.cp-origin {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.58rem;
-  color: var(--peat-light);
-  margin-bottom: 4px;
-}
-.cp-divider {
-  height: 0.5px;
-  background: var(--border);
-  margin: 8px 0;
-}
-.cp-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 6px;
-}
-.cp-detail-lbl {
+
+/* Label column */
+.cp-row-lbl {
   font-family: 'DM Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--peat-light);
+  background: rgba(200,130,42,0.04);
+  border-right: 0.5px solid var(--border);
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: center;
 }
-.cp-detail-val {
+.cp-row-lbl--top {
+  background: rgba(200,130,42,0.04);
+}
+.cp-row-lbl--section {
+  color: var(--amber);
+  letter-spacing: 0.14em;
+  background: rgba(200,130,42,0.08);
+}
+.cp-row-lbl--attr {
+  font-size: 0.52rem;
+  padding-left: 20px;
+}
+
+/* Data cells */
+.cp-cell {
+  background: var(--bg-card);
+  border-right: 0.5px solid var(--border);
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+}
+.cp-cell:last-child {
+  border-right: none;
+}
+.cp-cell--top {
+  padding: 14px 14px 12px;
+  background: var(--bg-card);
+}
+.cp-cell--section {
+  background: rgba(200,130,42,0.04);
+  padding: 8px 14px;
+}
+.cp-cell--attr {
+  padding: 8px 14px;
+}
+
+.cp-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.cp-origin {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.56rem;
+  color: var(--peat-light);
+  margin-bottom: 4px;
+}
+.cp-val {
   font-size: 0.82rem;
   color: var(--cream-dark);
   line-height: 1.45;
 }
-.cp-notes {
-  font-size: 0.78rem;
-  color: var(--peat-light);
+.cp-val--italic {
   font-style: italic;
-  line-height: 1.5;
+  color: var(--peat-light);
 }
 .cp-stars {
   display: flex;
@@ -233,6 +280,5 @@ const { t } = useI18n()
   padding: 3px 9px;
   border-radius: 20px;
   line-height: 1.4;
-  align-self: flex-start;
 }
 </style>
