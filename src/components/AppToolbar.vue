@@ -13,13 +13,19 @@
           @click="$emit('setList', 'wishlist')"
         >✦ <span class="tab-label">{{ t.wishlist }}</span></button>
       </div>
-      <span v-if="selectedCount > 0" class="compare-badge">{{ selectedCount }} {{ t.selected }}</span>
+      <span
+        v-if="selectedCount > 0"
+        class="compare-badge compare-badge--clear"
+        @click="$emit('clearSelected')"
+        :title="t.clearSelected"
+      >{{ selectedCount }} {{ t.selected }} ✕</span>
     </div>
     <div class="toolbar-right">
       <button
         v-if="activeList === 'journal'"
         class="btn-t btn-compare"
-        :class="{ ready: selectedCount > 0, active: compareOpen }"
+        :class="{ ready: selectedCount >= 2, active: compareOpen }"
+        :disabled="selectedCount < 2"
         @click="$emit('compare')"
       >{{ t.compare }}</button>
       <button
@@ -38,7 +44,7 @@
 import { useI18n } from '../composables/useI18n.js'
 const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String })
-defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
+defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'clearSelected'])
 </script>
 
 <style scoped>
@@ -89,5 +95,14 @@ defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
 .btn-share-wl:hover {
   background: rgba(200,130,42,0.1);
   border-color: var(--amber);
+}
+.compare-badge--clear {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.compare-badge--clear:hover {
+  background: rgba(226,75,74,0.15);
+  color: #E08888;
+  border-color: rgba(226,75,74,0.4);
 }
 </style>

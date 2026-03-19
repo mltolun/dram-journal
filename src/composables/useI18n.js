@@ -54,8 +54,9 @@ const TRANSLATIONS = {
     share: 'Share',
     scan: 'Scan',
     add: 'Add',
-    selectFirst: 'Select a card first to compare',
+    selectFirst: 'Select at least 2 whiskies to compare',
     maxWhiskies: 'Maximum 3 whiskies for comparison',
+    clearSelected: 'Clear selection',
 
     // WhiskyCard
     moveToJournal: '↑ Move to Journal',
@@ -262,8 +263,9 @@ const TRANSLATIONS = {
     share: 'Compartir',
     scan: 'Escanear',
     add: 'Añadir',
-    selectFirst: 'Selecciona una tarjeta primero para comparar',
+    selectFirst: 'Selecciona al menos 2 whiskies para comparar',
     maxWhiskies: 'Máximo 3 whiskies para comparar',
+    clearSelected: 'Limpiar selección',
 
     // WhiskyCard
     moveToJournal: '↑ Mover al Diario',
