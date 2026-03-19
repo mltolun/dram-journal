@@ -13,12 +13,13 @@
           @click="$emit('setList', 'wishlist')"
         >✦ <span class="tab-label">{{ t.wishlist }}</span></button>
       </div>
-      <span
+      <button
         v-if="selectedCount > 0"
         class="compare-badge compare-badge--clear"
-        @click="$emit('clearSelected')"
+        @click.stop="$emit('clearSelected')"
         :title="t.clearSelected"
-      >{{ selectedCount }} {{ t.selected }} ✕</span>
+        type="button"
+      >{{ selectedCount }} {{ t.selected }} ✕</button>
     </div>
     <div class="toolbar-right">
       <button
@@ -95,14 +96,5 @@ defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'clearSelecte
 .btn-share-wl:hover {
   background: rgba(200,130,42,0.1);
   border-color: var(--amber);
-}
-.compare-badge--clear {
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-.compare-badge--clear:hover {
-  background: rgba(226,75,74,0.15);
-  color: #E08888;
-  border-color: rgba(226,75,74,0.4);
 }
 </style>

@@ -103,7 +103,9 @@ header::after { content:''; position:absolute; bottom:0; left:0; right:0; height
 .toolbar { padding:1.2rem 2.5rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-bottom:0.5px solid var(--border); }
 .toolbar-left { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .toolbar-title { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--peat-light); }
-.compare-badge { font-family:'DM Mono',monospace; font-size:0.58rem; padding:3px 10px; border-radius:20px; background:rgba(200,130,42,0.12); color:var(--amber-light); border:0.5px solid rgba(200,130,42,0.3); }
+.compare-badge { font-family:'DM Mono',monospace; font-size:0.58rem; padding:3px 10px; border-radius:20px; background:rgba(200,130,42,0.12); color:var(--amber-light); border:0.5px solid rgba(200,130,42,0.3); cursor:default; }
+.compare-badge--clear { cursor:pointer; transition:background 0.15s, color 0.15s, border-color 0.15s; }
+.compare-badge--clear:hover { background:rgba(226,75,74,0.15); color:#E08888; border-color:rgba(226,75,74,0.4); }
 .toolbar-right { display:flex; gap:8px; }
 .btn-t { padding:7px 14px; border-radius:7px; font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
 .btn-primary { background:transparent; color:var(--amber-light); border:0.5px solid rgba(200,130,42,0.35); font-weight:500; }
