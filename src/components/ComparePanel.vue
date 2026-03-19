@@ -51,21 +51,22 @@
               <div class="cp-val cp-val--italic">{{ w.palate || '—' }}</div>
             </div>
 
-            <!-- ── Flavour profile ── -->
-            <div class="cp-row-lbl cp-row-lbl--section">{{ t.flavourProfileSection }}</div>
-            <div v-for="(w, i) in whiskies" :key="`flavour-header-${w.id}`" class="cp-cell cp-cell--section"></div>
-
-            <template v-for="a in ATTRS" :key="a">
-              <div class="cp-row-lbl cp-row-lbl--attr">{{ t.attrs[a] }}</div>
-              <div v-for="(w, i) in whiskies" :key="`${a}-${w.id}`" class="cp-cell cp-cell--attr">
-                <div class="flavor-bar-row">
-                  <div class="flavor-track">
-                    <div class="flavor-fill" :style="{ width: (w[a] || 0) * 20 + '%', background: COLOR_HEX[i] }"></div>
+            <!-- ── Flavour profile — full-width merged section ── -->
+            <div class="cp-flavour-block" :style="{ gridColumn: `1 / span ${whiskies.length + 1}` }">
+              <div class="cp-flavour-title">{{ t.flavourProfileSection }}</div>
+              <div class="cp-flavour-attrs">
+                <div v-for="a in ATTRS" :key="a" class="cp-flavour-attr">
+                  <div class="cp-flavour-attr-lbl">{{ t.attrs[a] }}</div>
+                  <div v-for="(w, i) in whiskies" :key="w.id" class="flavor-bar-row">
+                    <div class="cp-whisky-dot" :style="{ background: COLOR_HEX[i] }"></div>
+                    <div class="flavor-track">
+                      <div class="flavor-fill" :style="{ width: (w[a] || 0) * 20 + '%', background: COLOR_HEX[i] }"></div>
+                    </div>
+                    <div class="flavor-val">{{ w[a] || 0 }}</div>
                   </div>
-                  <div class="flavor-val">{{ w[a] || 0 }}</div>
                 </div>
               </div>
-            </template>
+            </div>
 
             <!-- ── Rating ── -->
             <div class="cp-row-lbl">{{ t.rating }}</div>
@@ -280,5 +281,50 @@ const { t } = useI18n()
   padding: 3px 9px;
   border-radius: 20px;
   line-height: 1.4;
+}
+
+/* ── Merged flavour block ── */
+.cp-flavour-block {
+  background: rgba(200,130,42,0.04);
+  border-bottom: 0.5px solid var(--border);
+  padding: 16px 14px 12px;
+}
+.cp-flavour-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 14px;
+}
+.cp-flavour-attrs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.cp-flavour-attr {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cp-flavour-attr-lbl {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--peat-light);
+  margin-bottom: 2px;
+}
+.cp-whisky-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .cp-flavour-attrs {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>
