@@ -11,6 +11,7 @@
       :selected-count="selected.length"
       :compare-open="compareOpen"
       :active-list="activeList"
+      :on-clear-selected="clearSelected"
       @add="openAddModal"
       @compare="toggleCompare"
       @scan="scanOpen = true"
@@ -150,8 +151,13 @@ function toggleSelect(id) {
 }
 
 function toggleCompare() {
-  if (selected.value.length === 0) { toast(t.value.selectFirst); return }
+  if (selected.value.length < 2) { toast(t.value.selectFirst); return }
   compareOpen.value = !compareOpen.value
+}
+
+function clearSelected() {
+  selected.value = []
+  compareOpen.value = false
 }
 
 function openAddModal() {

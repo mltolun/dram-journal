@@ -16,7 +16,7 @@
       <button
         v-if="selectedCount > 0"
         class="compare-badge compare-badge--clear"
-        @click.stop="$emit('clearSelected')"
+        @click.prevent.stop="onClearSelected"
         :title="t.clearSelected"
         type="button"
       >{{ selectedCount }} {{ t.selected }} ✕</button>
@@ -44,8 +44,8 @@
 <script setup>
 import { useI18n } from '../composables/useI18n.js'
 const { t } = useI18n()
-defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String })
-defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'clearSelected'])
+defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function })
+defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
 </script>
 
 <style scoped>
