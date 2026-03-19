@@ -58,11 +58,11 @@
             <template v-for="a in ATTRS" :key="a">
               <div class="cp-row-lbl cp-row-lbl--attr">{{ t.attrs[a] }}</div>
               <div v-for="(w, i) in whiskies" :key="`${a}-${w.id}`" class="cp-cell cp-cell--attr">
-                <div class="flavor-bar-row">
-                  <div class="flavor-track">
-                    <div class="flavor-fill" :style="{ width: (w[a] || 0) * 20 + '%', background: COLOR_HEX[i] }"></div>
+                <div class="cp-bar-row">
+                  <div class="cp-bar-track">
+                    <div class="cp-bar-fill" :style="{ width: (w[a] || 0) * 20 + '%', background: COLOR_HEX[i] }"></div>
                   </div>
-                  <div class="flavor-val">{{ w[a] || 0 }}</div>
+                  <div class="cp-bar-val">{{ w[a] || 0 }}</div>
                 </div>
               </div>
             </template>
@@ -280,5 +280,33 @@ const { t } = useI18n()
   padding: 3px 9px;
   border-radius: 20px;
   line-height: 1.4;
+}
+
+/* Flavour bars — defined locally to avoid scoping issues */
+.cp-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.cp-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-bar-track);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cp-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(.23, 1, .32, 1);
+}
+.cp-bar-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--peat-light);
+  width: 14px;
+  text-align: right;
+  flex-shrink: 0;
 }
 </style>
