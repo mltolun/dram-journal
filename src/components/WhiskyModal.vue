@@ -369,6 +369,19 @@ async function save() {
   opacity: 0.88;
 }
 
+@media (max-width: 540px) {
+  .view-layout-split {
+    grid-template-columns: 1fr;
+  }
+  .view-photo-col {
+    position: static;
+  }
+  .view-photo {
+    max-height: 260px;
+    object-fit: contain;
+  }
+}
+
 /* Lightbox */
 .lightbox {
   position: fixed;
