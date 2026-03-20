@@ -85,7 +85,7 @@ Respond ONLY with a valid JSON array — no explanation, no markdown, no backtic
     "origin": "region and country e.g. Speyside, Scotland",
     "type": one of: "scotch" | "irish" | "bourbon" | "japanese" | "other",
     "age": "age statement e.g. 12 Years Old",
-    "price": "approximate price range e.g. £35-50",
+    "price": "approximate price range e.g. 35-50",
     "reason": "1-2 sentences explaining why this suits their taste profile",
     "dulzor": sweetness score 0-5 integer,
     "ahumado": smokiness score 0-5 integer,
