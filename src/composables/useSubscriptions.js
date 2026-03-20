@@ -49,10 +49,13 @@ export function useSubscriptions() {
   async function requestFollowByEmail(email) {
     const uid = currentUser.value?.id
     if (!uid) throw new Error('Not authenticated')
-    if (email === currentUser.value?.email) throw new Error('You cannot follow yourself')
+
+    const normalized = email.trim().toLowerCase()
+
+    if (normalized === currentUser.value?.email?.toLowerCase()) throw new Error('You cannot follow yourself')
 
     const { data: targetId, error: rpcError } = await sb
-      .rpc('get_user_id_by_email', { p_email: email })
+      .rpc('get_user_id_by_email', { p_email: normalized })
 
     if (rpcError || !targetId) throw new Error('No user found with that email address')
 
@@ -62,8 +65,8 @@ export function useSubscriptions() {
         follower_id:     uid,
         following_id:    targetId,
         status:          'pending',
-        follower_email:  currentUser.value.email,
-        following_email: email,
+        follower_email:  currentUser.value.email?.toLowerCase(),
+        following_email: normalized,
       })
 
     if (error) {
@@ -74,7 +77,7 @@ export function useSubscriptions() {
     await loadSubscriptions()
 
     // Queue notification — daily Action will send the email
-    queueNotification('follow_request', email, currentUser.value.email)
+    queueNotification('follow_request', normalized, currentUser.value.email)
   }
 
   // ── Accept a pending request ──────────────────────────────────────────────
