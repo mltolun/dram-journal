@@ -33,7 +33,7 @@
         <div class="sub-row" v-for="req in pendingRequests" :key="req.id">
           <span class="sub-email">{{ emailsByUserId[req.follower_id] || req.follower_id.slice(0, 8) + '…' }}</span>
           <div class="sub-actions">
-            <button class="sub-btn sub-btn--accept" @click="doAccept(req.id)">Accept</button>
+            <button class="sub-btn sub-btn--accept" @click="doAccept(req.id, req.follower_id)">Accept</button>
             <button class="sub-btn sub-btn--remove" @click="doRemove(req.id)">Decline</button>
           </div>
         </div>
@@ -129,8 +129,9 @@ async function doFollow() {
   }
 }
 
-async function doAccept(id) {
-  await acceptRequest(id)
+async function doAccept(id, followerUserId) {
+  const requesterEmail = emailsByUserId.value[followerUserId]
+  await acceptRequest(id, requesterEmail)
   await loadEmails()
 }
 
