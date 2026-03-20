@@ -208,7 +208,7 @@ function buildEmailHtml(recs, generatedAt) {
           <!-- ── CTA ── -->
           <tr>
             <td align="center" style="padding:12px 32px 28px;">
-              <a href="https://dramjournal.com"
+              <a href="https://dramjournal.online"
                  style="display:inline-block;background:${AMBER};color:${PEAT};
                         font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
                         text-transform:uppercase;text-decoration:none;padding:12px 28px;
@@ -280,7 +280,7 @@ Based on your tasting journal, here are 5 personalised whisky recommendations:
 ${lines}
 
 Generated on ${dateStr}
-Open your journal at https://dramjournal.com
+Open your journal at https://dramjournal.online
 
 Sláinte 🥃`
 }
