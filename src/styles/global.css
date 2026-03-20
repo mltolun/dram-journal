@@ -84,7 +84,7 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 .forgot-link:hover { color:var(--amber-light); }
 
 /* ── HEADER ── */
-header { padding:1.4rem 2.5rem; padding-top: calc(env(safe-area-inset-top, 0px) + 1.4rem); border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:relative; }
+header { padding:1.4rem 2.5rem; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:relative; }
 header::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(to right,transparent,var(--amber),transparent); opacity:0.35; }
 .brand-title { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:400; letter-spacing:-0.02em; line-height:1; }
 .brand-title span { color:var(--amber-light); font-style:italic; }

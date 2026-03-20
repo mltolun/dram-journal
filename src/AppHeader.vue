@@ -1,5 +1,5 @@
 <template>
-  <header>
+  <header :style="headerStyle">
     <div class="header-top">
       <div class="header-brand">
         <div class="brand-title">The <span>Dram</span> Journal</div>
@@ -76,6 +76,32 @@ const menuOpen = ref(false)
 const avatarWrap = ref(null)
 const subsOpen = ref(false)
 const inboxOpen = ref(false)
+
+// Read the actual safe-area-inset-top value from the browser
+const safeAreaTop = ref(0)
+
+onMounted(() => {
+  document.addEventListener('click', onClickOutside, true)
+  loadSubscriptions()
+  loadInbox()
+
+  // Detect standalone PWA mode (iOS uses window.navigator.standalone)
+  const isStandalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches
+
+  if (isStandalone) {
+    // Measure env(safe-area-inset-top) in pixels using a temporary element
+    const el = document.createElement('div')
+    el.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top,44px);pointer-events:none;opacity:0;'
+    document.documentElement.appendChild(el)
+    safeAreaTop.value = el.offsetHeight || 44
+    document.documentElement.removeChild(el)
+  }
+})
+
+const headerStyle = computed(() => ({
+  paddingTop: safeAreaTop.value > 0 ? `calc(${safeAreaTop.value}px + 1.4rem)` : undefined
+}))
 
 const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()
