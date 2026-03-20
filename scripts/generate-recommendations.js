@@ -141,9 +141,14 @@ async function fetchFollowerActivity(userId) {
     .eq('follower_id', userId)
     .eq('status', 'accepted')
 
-  if (subsError || !subs?.length) return []
+  if (subsError) {
+    console.warn(`     ⚠ Could not fetch subscriptions: ${subsError.message}`)
+    return []
+  }
+  if (!subs?.length) return []
 
   const followingIds = subs.map(s => s.following_id)
+  console.log(`     👁 Following ${followingIds.length} user(s), checking their activity...`)
 
   // Fetch activity from those users in the last 7 days
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -156,7 +161,12 @@ async function fetchFollowerActivity(userId) {
     .order('created_at', { ascending: false })
     .limit(20)
 
-  if (actError) return []
+  if (actError) {
+    console.warn(`     ⚠ Could not fetch activity_feed: ${actError.message}`)
+    return []
+  }
+
+  console.log(`     👁 Found ${activity?.length ?? 0} activity item(s) in the last 7 days`)
   return activity || []
 }
 
