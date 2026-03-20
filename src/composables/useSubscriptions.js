@@ -114,10 +114,14 @@ export function useSubscriptions() {
     const uid = currentUser.value?.id
     if (!uid) return
 
+    // whisky_id is a uuid column — only pass it if it looks like a real UUID,
+    // not a Date.now() timestamp fallback from WhiskyModal
+    const isUuid = typeof whiskyId === 'string' && /^[0-9a-f-]{36}$/.test(whiskyId)
+
     const { error } = await sb.from('activity_feed').insert({
       user_id:           uid,
       type,
-      whisky_id:         whiskyId   ?? null,
+      whisky_id:         isUuid ? whiskyId : null,
       whisky_name:       whiskyName,
       whisky_distillery: distillery ?? null,
       rating:            rating     ?? null,
