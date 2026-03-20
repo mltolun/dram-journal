@@ -29,13 +29,13 @@ const ATTR_LABELS = {
 const ATTRS = ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']
 
 // Amber colour used for filled bars — matches --amber-light
-const AMBER      = '#C8822A'
-const AMBER_LIGHT = '#E8A84C'
-const PEAT       = '#2A1F14'
-const PEAT_MID   = '#4A3728'
-const PEAT_LIGHT = '#7A6255'
-const CREAM      = '#FAF5EC'
-const CREAM_DARK = '#F0E6D0'
+const AMBER      = '#A8620A'
+const AMBER_LIGHT = '#C07820'
+const PEAT       = '#F8F4EE'
+const PEAT_MID   = '#EDE5D8'
+const PEAT_LIGHT = '#8A7060;'
+const CREAM      = '#2C1F10;'
+const CREAM_DARK = '#4A3525'
 const BORDER     = 'rgba(200,130,42,0.35)'
 
 // ─── Bar HTML helper ──────────────────────────────────────────────────────────
