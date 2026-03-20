@@ -18,7 +18,7 @@ const SUPABASE_URL        = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY          = process.env.GEMINI_KEY
 
-const GEMINI_MODEL = 'Gemini 3.1 Flash Lite'
+const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview'
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3  // minimum entries before generating recommendations
