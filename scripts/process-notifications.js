@@ -174,6 +174,57 @@ Open your journal: ${APP_URL}
 Sláinte 🥃`
 }
 
+// ── Direct message ────────────────────────────────────────────────────────────
+
+function directMessageHtml(fromEmail, whiskyName, distillery) {
+  const name = fromEmail.split('@')[0]
+  const sub  = distillery ? `<div style="font-family:'DM Mono',monospace;font-size:10px;color:${PEAT_LIGHT};margin-bottom:14px;">${distillery}</div>` : ''
+  return shell(`
+    <tr>
+      <td style="padding:28px 32px 8px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+                    text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
+          ✦ A friend shared a dram
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};
+                    line-height:1.6;margin-bottom:16px;">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>
+          &nbsp;thinks you'd enjoy this:
+        </div>
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:20px;
+                    font-weight:400;color:${CREAM};line-height:1.2;margin-bottom:4px;">
+          ${whiskyName}
+        </div>
+        ${sub}
+        <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">
+          Open the app to see the full tasting profile and add it to your wishlist.
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:20px 32px 28px;">
+        <a href="${APP_URL}"
+           style="display:inline-block;background:${AMBER};color:${PEAT};
+                  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  text-transform:uppercase;text-decoration:none;padding:11px 26px;
+                  border-radius:7px;font-weight:500;">
+          Open My Inbox →
+        </a>
+      </td>
+    </tr>`)
+}
+
+function directMessageText(fromEmail, whiskyName, distillery) {
+  const name = fromEmail.split('@')[0]
+  return `THE DRAM JOURNAL — A friend shared a dram
+
+${name} thinks you'd enjoy: ${whiskyName}${distillery ? ' (' + distillery + ')' : ''}
+
+Open the app to see the full tasting profile: ${APP_URL}
+
+Sláinte 🥃`
+}
+
 // ── Send via Resend ───────────────────────────────────────────────────────────
 
 async function sendEmail(to, subject, html, text) {
@@ -232,6 +283,15 @@ async function main() {
           followAcceptedText(n.from_email),
         )
         console.log(`   ✉ follow_accepted → ${n.to_email}`)
+      } else if (n.type === 'direct_message') {
+        const meta = n.meta ? JSON.parse(n.meta) : {}
+        await sendEmail(
+          n.to_email,
+          `🥃 ${n.from_email.split('@')[0]} shared a whisky with you — The Dram Journal`,
+          directMessageHtml(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || ''),
+          directMessageText(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || ''),
+        )
+        console.log(`   ✉ direct_message → ${n.to_email} (${meta.whisky_name})`)
       } else {
         console.warn(`   ⚠ Unknown notification type: ${n.type} — skipping`)
       }
