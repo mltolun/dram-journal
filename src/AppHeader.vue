@@ -1,7 +1,7 @@
 <template>
   <header :style="headerStyle">
-    <div style="position:fixed;top:0;left:0;background:red;color:white;font-size:10px;z-index:9999;padding:2px 6px;">
-      standalone:{{ isStandalone }} | safeArea:{{ safeAreaTop }}px | style:{{ headerStyle }}
+    <div style="position:fixed;top:60px;left:0;right:0;background:red;color:white;font-size:11px;z-index:9999;padding:4px 8px;word-break:break-all;">
+      standalone:{{ isStandalone }} | safeArea:{{ safeAreaTop }}px
     </div>
     <div class="header-top">
       <div class="header-brand">
