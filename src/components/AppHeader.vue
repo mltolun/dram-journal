@@ -2,7 +2,7 @@
   <header>
     <div class="header-top">
       <div class="header-brand">
-        <div class="brand-title">The <span>Dram</span> Journal</div>
+        <div class="brand-title">The <span>Dram</span> Journal v2</div>
         <div class="brand-sub">{{ t.brandSub }}</div>
       </div>
       <div class="header-right">
