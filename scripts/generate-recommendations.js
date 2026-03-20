@@ -303,6 +303,21 @@ async function main() {
 
   console.log('')
   console.log(`✓ Done — ${processed} processed, ${skipped} skipped, ${errors} errors`)
+
+  // Clean up activity_feed rows that have now been included in this week's emails.
+  // We delete anything older than 7 days — by the time the next Monday run fires,
+  // all recipients will have received these items already.
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { error: cleanupError } = await sb
+    .from('activity_feed')
+    .delete()
+    .lt('created_at', cutoff)
+
+  if (cleanupError) {
+    console.warn(`⚠ activity_feed cleanup failed: ${cleanupError.message}`)
+  } else {
+    console.log('🗑 activity_feed: old rows cleared')
+  }
 }
 
 main().catch(err => {
