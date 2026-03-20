@@ -105,8 +105,7 @@ async function addToWishlist(rec, index) {
 
 <style scoped>
 .recs-section {
-  padding: 2rem 2.5rem 0;
-  border-top: 0.5px solid var(--border);
+  padding: 1.5rem 2.5rem 0;
 }
 .recs-header {
   margin-bottom: 1.2rem;
@@ -132,17 +131,18 @@ async function addToWishlist(rec, index) {
   margin-bottom: 1rem;
 }
 .rec-card {
-  background: var(--bg-card);
-  border: 0.5px solid var(--border);
+  background: rgba(200, 130, 42, 0.08);
+  border: 0.5px solid var(--border-hi);
   border-radius: 14px;
   padding: 1.2rem;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 .rec-card:hover {
-  border-color: var(--border-hi);
+  border-color: var(--amber);
+  background: rgba(200, 130, 42, 0.13);
 }
 .rec-card-top {
   display: flex;
@@ -204,7 +204,7 @@ async function addToWishlist(rec, index) {
 }
 
 @media (max-width: 600px) {
-  .recs-section { padding: 1.5rem 1.2rem 0; }
+  .recs-section { padding: 1.2rem 1.2rem 0; }
   .recs-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 400px) {

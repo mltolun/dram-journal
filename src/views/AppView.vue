@@ -19,6 +19,7 @@
       @share-wishlist="wishlistShareOpen = true"
     />
     <div class="grid-area">
+      <RecommendationsPanel v-if="activeList === 'wishlist'" />
       <div class="whisky-grid">
         <template v-if="activeItems.length === 0">
           <div class="empty-grid">
@@ -42,8 +43,6 @@
         />
       </div>
     </div>
-
-    <RecommendationsPanel v-if="activeList === 'journal'" />
 
     <ComparePanel
       v-if="compareOpen && selected.length > 0"
