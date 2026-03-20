@@ -38,6 +38,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         // Cache the app shell and static assets
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,woff2}'],
         // Network-first for API calls — never serve Supabase from cache
