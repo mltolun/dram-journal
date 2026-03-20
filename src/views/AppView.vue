@@ -20,6 +20,7 @@
     />
     <div class="grid-area">
       <RecommendationsPanel v-if="activeList === 'wishlist'" />
+      <div v-if="activeList === 'wishlist'" class="wishlist-section-lbl">✦ {{ t.wishlist }}</div>
       <div class="whisky-grid">
         <template v-if="activeItems.length === 0">
           <div class="empty-grid">

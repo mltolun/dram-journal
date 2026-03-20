@@ -1,23 +1,25 @@
 <template>
   <div v-if="recommendations.length > 0" class="recs-section">
+
     <div class="recs-header">
       <div class="recs-title">✦ {{ t.recsTitle }}</div>
       <div class="recs-sub">{{ t.recsSub }}</div>
     </div>
 
-    <div class="recs-grid">
-      <div v-for="(rec, i) in recommendations" :key="i" class="rec-card">
-        <div class="rec-card-top">
-          <div>
+    <div class="whisky-grid">
+      <div v-for="(rec, i) in recommendations" :key="i" class="wcard rec-card">
+
+        <div>
+          <div class="wcard-meta-row">
             <span class="wcard-type" :class="`type-${rec.type}`">{{ t.types[rec.type] || rec.type }}</span>
-            <div class="rec-distillery">{{ rec.distillery || '—' }}</div>
-            <div class="rec-name">{{ rec.name }}</div>
-            <div v-if="rec.age" class="rec-age">{{ rec.age }}</div>
-            <div v-if="rec.price" class="rec-price">{{ rec.price }}</div>
           </div>
+          <div class="wcard-distillery">{{ rec.distillery || '—' }}</div>
+          <div class="wcard-name">{{ rec.name }}</div>
+          <div v-if="rec.age" class="wcard-age">{{ rec.age }}</div>
+          <div v-if="rec.price" class="rec-price">{{ rec.price }}</div>
         </div>
 
-        <div class="rec-bars">
+        <div class="wcard-bars">
           <div v-for="a in ATTRS" :key="a" class="bar-row-s">
             <div class="bar-lbl-s">{{ t.attrs[a] }}</div>
             <div class="bar-track-s">
@@ -29,17 +31,17 @@
 
         <div v-if="rec.reason" class="rec-reason">{{ rec.reason }}</div>
 
-        <div class="rec-actions">
-          <button class="wcard-btn rec-btn-wishlist" @click="addToWishlist(rec)">
+        <div class="wcard-actions">
+          <button class="wcard-btn" @click="addToWishlist(rec, i)" :disabled="addedIds.has(i)">
             {{ addedIds.has(i) ? '✓ ' + t.added : '✦ ' + t.addToWishlistBtn }}
           </button>
         </div>
+
       </div>
     </div>
 
-    <div class="recs-footer">
-      {{ t.recsGenerated }} {{ generatedDate }}
-    </div>
+    <div class="recs-footer">{{ t.recsGenerated }} {{ generatedDate }}</div>
+
   </div>
 </template>
 
@@ -105,10 +107,10 @@ async function addToWishlist(rec, index) {
 
 <style scoped>
 .recs-section {
-  padding: 1.5rem 2.5rem 0;
+  padding: 1.8rem 2.5rem 0;
 }
 .recs-header {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 }
 .recs-title {
   font-family: 'DM Mono', monospace;
@@ -124,51 +126,13 @@ async function addToWishlist(rec, index) {
   color: var(--peat-light);
   font-style: italic;
 }
-.recs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 1rem;
-}
 .rec-card {
-  background: rgba(200, 130, 42, 0.08);
-  border: 0.5px solid var(--border-hi);
-  border-radius: 14px;
-  padding: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: border-color 0.2s, background 0.2s;
+  background: rgba(200, 130, 42, 0.07) !important;
+  border-color: var(--border-hi) !important;
 }
 .rec-card:hover {
-  border-color: var(--amber);
-  background: rgba(200, 130, 42, 0.13);
-}
-.rec-card-top {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.rec-distillery {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.58rem;
-  color: var(--peat-light);
-  margin-top: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.rec-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.25;
-  color: var(--cream);
-}
-.rec-age {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.56rem;
-  color: var(--peat-light);
-  margin-top: 2px;
+  background: rgba(200, 130, 42, 0.12) !important;
+  border-color: var(--amber) !important;
 }
 .rec-price {
   font-family: 'DM Mono', monospace;
@@ -183,31 +147,15 @@ async function addToWishlist(rec, index) {
   font-style: italic;
   line-height: 1.5;
 }
-.rec-actions {
-  margin-top: auto;
-}
-.rec-btn-wishlist {
-  width: 100%;
-  padding: 6px 0;
-}
-.rec-btn-wishlist:hover {
-  border-color: var(--amber);
-  color: var(--amber-light);
-}
 .recs-footer {
   font-family: 'DM Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.08em;
   color: var(--peat-light);
   text-align: right;
-  padding-bottom: 1.5rem;
+  padding: 0.5rem 0;
 }
-
 @media (max-width: 600px) {
   .recs-section { padding: 1.2rem 1.2rem 0; }
-  .recs-grid { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 400px) {
-  .recs-grid { grid-template-columns: 1fr; }
 }
 </style>

@@ -18,7 +18,7 @@ const SUPABASE_URL        = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY          = process.env.GEMINI_KEY
 
-const GEMINI_MODEL = 'gemini-2.0-flash-lite'
+const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview'
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3  // minimum entries before generating recommendations
@@ -85,7 +85,7 @@ Respond ONLY with a valid JSON array — no explanation, no markdown, no backtic
     "origin": "region and country e.g. Speyside, Scotland",
     "type": one of: "scotch" | "irish" | "bourbon" | "japanese" | "other",
     "age": "age statement e.g. 12 Years Old",
-    "price": "approximate price range e.g. 35-50",
+    "price": "approximate price range in local currency e.g. 35-50 USD, 30-45 EUR, 35-50 GBP",
     "reason": "1-2 sentences explaining why this suits their taste profile",
     "dulzor": sweetness score 0-5 integer,
     "ahumado": smokiness score 0-5 integer,
