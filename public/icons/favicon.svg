@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#1C1408"/>
+  <!-- Glass body -->
+  <path d="M196 140 h120 l-20 160 q-40 60 -80 0 Z" fill="none" stroke="#C07820" stroke-width="14" stroke-linejoin="round"/>
+  <!-- Whisky liquid fill -->
+  <path d="M210 240 q46 20 92 0 l-12 60 q-40 60 -80 0 Z" fill="#A8620A" opacity="0.85"/>
+  <!-- Glass stem -->
+  <line x1="256" y1="300" x2="256" y2="360" stroke="#C07820" stroke-width="14" stroke-linecap="round"/>
+  <!-- Glass base -->
+  <line x1="210" y1="360" x2="302" y2="360" stroke="#C07820" stroke-width="14" stroke-linecap="round"/>
+  <!-- Shine -->
+  <line x1="218" y1="160" x2="210" y2="220" stroke="rgba(255,255,255,0.2)" stroke-width="8" stroke-linecap="round"/>
+</svg>
