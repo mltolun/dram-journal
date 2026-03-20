@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from './useAuth.js'
+import { useSubscriptions } from './useSubscriptions.js'
 
 export const whiskies = ref([])
 export const syncStatus = ref('ok') // 'loading' | 'saving' | 'ok' | 'error'
@@ -9,6 +10,8 @@ export const journal   = computed(() => whiskies.value.filter(w => (w.list || 'j
 export const wishlist  = computed(() => whiskies.value.filter(w => w.list === 'wishlist'))
 
 export function useWhiskies() {
+  const { logActivity } = useSubscriptions()
+
   function setSync(s) { syncStatus.value = s }
 
   async function loadWhiskies() {
@@ -27,6 +30,19 @@ export function useWhiskies() {
     if (error) { setSync('error'); throw error }
     whiskies.value.push(data)
     setSync('ok')
+
+    // Log activity for followers — only journal entries (not wishlist)
+    if ((fields.list || 'journal') === 'journal') {
+      await logActivity({
+        type:       'journal_add',
+        whiskyId:   data.id,
+        whiskyName: data.name,
+        distillery: data.distillery,
+        rating:     data.rating ?? null,
+        notes:      data.notes  ?? null,
+      })
+    }
+
     return data
   }
 
@@ -37,6 +53,19 @@ export function useWhiskies() {
     const idx = whiskies.value.findIndex(w => w.id === id)
     if (idx >= 0) whiskies.value[idx] = { ...whiskies.value[idx], ...data }
     setSync('ok')
+
+    // Log activity when a rating is explicitly set/changed
+    if (fields.rating != null) {
+      await logActivity({
+        type:       'rating',
+        whiskyId:   data.id,
+        whiskyName: data.name,
+        distillery: data.distillery,
+        rating:     data.rating,
+        notes:      data.notes ?? null,
+      })
+    }
+
     return data
   }
 

@@ -1,13 +1,13 @@
 /**
  * send-recommendations-email.js
  *
- * Sends a branded HTML email to a user with their whisky recommendations.
- * Called from generate-recommendations.js after upsert.
+ * Sends a branded HTML "Weekly Update" email combining:
+ *   - Personalised whisky recommendations (from Gemini)
+ *   - Activity digest from followed users (new journal entries & ratings)
  *
- * Required environment variable:
+ * Required environment variables:
  *   RESEND_API_KEY — your Resend API key
  *   EMAIL_FROM     — sender address e.g. "Dram Journal <hello@yourdomain.com>"
- *                    (must be a verified domain in Resend)
  */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
@@ -28,20 +28,20 @@ const ATTR_LABELS = {
 
 const ATTRS = ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']
 
-// Amber colour used for filled bars — matches --amber-light
-const AMBER      = '#A8620A'
+// Colour palette
+const AMBER       = '#A8620A'
 const AMBER_LIGHT = '#C07820'
-const PEAT       = '#F8F4EE'
-const PEAT_MID   = '#EDE5D8'
-const PEAT_LIGHT = '#8A7060;'
-const CREAM      = '#2C1F10;'
-const CREAM_DARK = '#4A3525'
-const BORDER     = 'rgba(200,130,42,0.35)'
+const PEAT        = '#F8F4EE'
+const PEAT_MID    = '#EDE5D8'
+const PEAT_LIGHT  = '#8A7060'
+const CREAM       = '#2C1F10'
+const CREAM_DARK  = '#4A3525'
+const BORDER      = 'rgba(200,130,42,0.35)'
 
-// ─── Bar HTML helper ──────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function barRow(label, value) {
-  const pct = (value || 0) * 20  // 0-5 → 0-100%
+  const pct = (value || 0) * 20
   return `
     <tr>
       <td style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;
@@ -65,7 +65,7 @@ function barRow(label, value) {
     </tr>`
 }
 
-// ─── Single recommendation card ───────────────────────────────────────────────
+// ─── Recommendation card ──────────────────────────────────────────────────────
 
 function recCard(rec) {
   const typeLabel = TYPE_LABELS[rec.type] || rec.type || ''
@@ -77,77 +77,148 @@ function recCard(rec) {
                 border-radius:12px;margin-bottom:16px;overflow:hidden;">
     <tr>
       <td style="padding:18px 20px;">
-
-        <!-- Type badge -->
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:6px;">
           ${typeLabel}
         </div>
-
-        <!-- Distillery -->
         <div style="font-family:'DM Sans',sans-serif;font-size:11px;
                     color:${PEAT_LIGHT};margin-bottom:2px;">
           ${rec.distillery || ''}
         </div>
-
-        <!-- Name -->
         <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:400;
                     color:${CREAM};line-height:1.2;margin-bottom:4px;">
           ${rec.name}
         </div>
-
-        <!-- Age + Price row -->
         <div style="margin-bottom:14px;">
-          ${rec.age   ? `<span style="font-family:'DM Mono',monospace;font-size:10px;
-                                     color:${CREAM_DARK};">${rec.age}</span>` : ''}
+          ${rec.age   ? `<span style="font-family:'DM Mono',monospace;font-size:10px;color:${CREAM_DARK};">${rec.age}</span>` : ''}
           ${rec.age && rec.price ? `<span style="color:${PEAT_LIGHT};margin:0 6px;">·</span>` : ''}
-          ${rec.price ? `<span style="font-family:'DM Mono',monospace;font-size:10px;
-                                     color:${AMBER_LIGHT};">${rec.price}</span>` : ''}
+          ${rec.price ? `<span style="font-family:'DM Mono',monospace;font-size:10px;color:${AMBER_LIGHT};">${rec.price}</span>` : ''}
         </div>
-
-        <!-- Flavour bars -->
         <table cellpadding="0" cellspacing="0" border="0" width="100%"
                style="margin-bottom:14px;">
           ${bars}
         </table>
-
-        <!-- Reason -->
         ${rec.reason ? `
         <div style="font-family:'DM Sans',sans-serif;font-size:12px;font-style:italic;
                     color:${PEAT_LIGHT};line-height:1.55;border-top:1px solid rgba(200,130,42,0.2);
                     padding-top:12px;">
           ${rec.reason}
         </div>` : ''}
-
       </td>
     </tr>
   </table>`
 }
 
+// ─── Activity item ────────────────────────────────────────────────────────────
+
+function activityItem(event, authorEmailMap) {
+  const authorEmail = authorEmailMap[event.user_id] || 'a friend'
+  // Show only the part before @ for privacy
+  const authorName = authorEmail.split('@')[0]
+
+  const dateStr = new Date(event.created_at).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'short',
+  })
+
+  const icon   = event.type === 'rating' ? '⭐' : '📖'
+  const action = event.type === 'rating'
+    ? `rated <strong>${event.whisky_name}</strong> ${event.rating}/5`
+    : `added <strong>${event.whisky_name}</strong> to their journal`
+
+  const notesHtml = event.notes
+    ? `<div style="font-family:'DM Sans',sans-serif;font-size:11px;font-style:italic;
+                   color:${PEAT_LIGHT};margin-top:6px;line-height:1.5;
+                   padding-left:10px;border-left:2px solid rgba(200,130,42,0.3);">
+         "${event.notes}"
+       </div>`
+    : ''
+
+  return `
+  <tr>
+    <td style="padding:10px 0;border-bottom:1px solid rgba(200,130,42,0.1);">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="width:24px;vertical-align:top;padding-top:2px;font-size:14px;">${icon}</td>
+          <td style="padding-left:8px;">
+            <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${CREAM_DARK};line-height:1.5;">
+              <span style="font-family:'DM Mono',monospace;font-size:10px;
+                           color:${AMBER_LIGHT};">${authorName}</span>
+              &nbsp;${action}
+              ${event.distillery ? `<span style="color:${PEAT_LIGHT};"> · ${event.distillery}</span>` : ''}
+            </div>
+            ${notesHtml}
+          </td>
+          <td style="white-space:nowrap;font-family:'DM Mono',monospace;font-size:9px;
+                     color:${PEAT_LIGHT};vertical-align:top;padding-top:2px;padding-left:8px;">
+            ${dateStr}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`
+}
+
 // ─── Full email HTML ──────────────────────────────────────────────────────────
 
-function buildEmailHtml(recs, generatedAt) {
+function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
   const dateStr = new Date(generatedAt).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
-  const cards = recs.map(recCard).join('')
+  const cards         = recs.map(recCard).join('')
+  const hasActivity   = followerActivity && followerActivity.length > 0
+  const activityRows  = hasActivity
+    ? followerActivity.map(e => activityItem(e, authorEmailMap)).join('')
+    : ''
+
+  const activitySection = hasActivity ? `
+          <!-- ── ACTIVITY DIVIDER ── -->
+          <tr>
+            <td style="padding:8px 32px 0;">
+              <div style="border-top:1px solid rgba(200,130,42,0.2);"></div>
+            </td>
+          </tr>
+
+          <!-- ── ACTIVITY HEADER ── -->
+          <tr>
+            <td style="padding:24px 32px 8px;">
+              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+                          text-transform:uppercase;color:${AMBER};margin-bottom:8px;">
+                ✦ Friends this week
+              </div>
+              <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;
+                          font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:6px;">
+                What your friends are tasting
+              </div>
+              <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${PEAT_LIGHT};
+                          line-height:1.6;">
+                Updates from people you follow in The Dram Journal.
+              </div>
+            </td>
+          </tr>
+
+          <!-- ── ACTIVITY ROWS ── -->
+          <tr>
+            <td style="padding:0 32px 8px;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                ${activityRows}
+              </table>
+            </td>
+          </tr>` : ''
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your weekly whisky picks — The Dram Journal</title>
+  <title>Your weekly dram update — The Dram Journal</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital@0;1&family=DM+Sans:ital@0;1&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:#1C1408;font-family:'DM Sans',Arial,sans-serif;">
 
-  <!-- Outer wrapper -->
   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#1C1408;">
     <tr>
       <td align="center" style="padding:32px 16px 48px;">
 
-        <!-- Card -->
         <table cellpadding="0" cellspacing="0" border="0" width="600"
                style="max-width:600px;background:${PEAT};border-radius:16px;
                       overflow:hidden;border:1px solid rgba(200,130,42,0.2);">
@@ -159,7 +230,6 @@ function buildEmailHtml(recs, generatedAt) {
               <table cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td>
-                    <!-- Logo -->
                     <div style="font-family:'Playfair Display',Georgia,serif;font-size:26px;
                                 font-weight:400;color:${CREAM};letter-spacing:-0.02em;line-height:1;">
                       The <span style="color:${AMBER_LIGHT};font-style:italic;">Dram</span> Journal
@@ -170,7 +240,6 @@ function buildEmailHtml(recs, generatedAt) {
                     </div>
                   </td>
                   <td align="right" valign="top">
-                    <!-- Whisky glass emoji badge -->
                     <div style="font-size:28px;line-height:1;">🥃</div>
                   </td>
                 </tr>
@@ -183,31 +252,42 @@ function buildEmailHtml(recs, generatedAt) {
             <td style="padding:28px 32px 20px;">
               <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
                           text-transform:uppercase;color:${AMBER};margin-bottom:8px;">
-                ✦ Weekly Picks
+                ✦ Weekly Update
               </div>
               <div style="font-family:'Playfair Display',Georgia,serif;font-size:20px;
                           font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:10px;">
-                Your personalised whisky recommendations
+                Your picks &amp; what's new with friends
               </div>
               <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};
                           line-height:1.6;">
-                Based on your tasting journal, our sommelier AI has handpicked five whiskies
-                that match your flavour preferences. Open the app to add any of them to
-                your wishlist.
+                Your AI sommelier has selected five whiskies matched to your palate,
+                plus a roundup of what your friends have been tasting this week.
               </div>
             </td>
           </tr>
 
-          <!-- ── CARDS ── -->
+          <!-- ── RECOMMENDATION SUBHEADING ── -->
+          <tr>
+            <td style="padding:0 32px 12px;">
+              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+                          text-transform:uppercase;color:${AMBER};margin-bottom:4px;">
+                ✦ Your picks this week
+              </div>
+            </td>
+          </tr>
+
+          <!-- ── REC CARDS ── -->
           <tr>
             <td style="padding:0 32px 8px;">
               ${cards}
             </td>
           </tr>
 
+          ${activitySection}
+
           <!-- ── CTA ── -->
           <tr>
-            <td align="center" style="padding:12px 32px 28px;">
+            <td align="center" style="padding:16px 32px 28px;">
               <a href="https://dramjournal.online"
                  style="display:inline-block;background:${AMBER};color:${PEAT};
                         font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
@@ -231,7 +311,7 @@ function buildEmailHtml(recs, generatedAt) {
                     </div>
                     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.06em;
                                 color:rgba(122,98,85,0.6);margin-top:4px;">
-                      Recommendations refresh every Monday · Unsubscribe in app settings
+                      Sent every Monday · Manage followers in app settings
                     </div>
                   </td>
                   <td align="right">
@@ -246,7 +326,6 @@ function buildEmailHtml(recs, generatedAt) {
           </tr>
 
         </table>
-        <!-- /Card -->
 
       </td>
     </tr>
@@ -258,11 +337,12 @@ function buildEmailHtml(recs, generatedAt) {
 
 // ─── Plain-text fallback ──────────────────────────────────────────────────────
 
-function buildEmailText(recs, generatedAt) {
+function buildEmailText(recs, followerActivity, authorEmailMap, generatedAt) {
   const dateStr = new Date(generatedAt).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
-  const lines = recs.map((rec, i) => {
+
+  const recLines = recs.map((rec, i) => {
     const attrs = ATTRS.map(a => `${ATTR_LABELS[a]}: ${rec[a] || 0}/5`).join(' · ')
     return [
       `${i + 1}. ${rec.name}`,
@@ -272,12 +352,26 @@ function buildEmailText(recs, generatedAt) {
     ].filter(Boolean).join('\n')
   }).join('\n\n')
 
-  return `THE DRAM JOURNAL — YOUR WEEKLY PICKS
-=====================================
+  let activityText = ''
+  if (followerActivity && followerActivity.length > 0) {
+    const actLines = followerActivity.map(e => {
+      const author = (authorEmailMap[e.user_id] || 'a friend').split('@')[0]
+      const action = e.type === 'rating'
+        ? `rated "${e.whisky_name}" ${e.rating}/5`
+        : `added "${e.whisky_name}" to their journal`
+      return `• ${author} ${action}${e.distillery ? ' (' + e.distillery + ')' : ''}`
+    }).join('\n')
 
+    activityText = `\n\nFRIENDS THIS WEEK\n-----------------\n${actLines}`
+  }
+
+  return `THE DRAM JOURNAL — WEEKLY UPDATE
+==================================
+
+YOUR PICKS THIS WEEK
 Based on your tasting journal, here are 5 personalised whisky recommendations:
 
-${lines}
+${recLines}${activityText}
 
 Generated on ${dateStr}
 Open your journal at https://dramjournal.online
@@ -288,17 +382,24 @@ Sláinte 🥃`
 // ─── Resend API call ──────────────────────────────────────────────────────────
 
 /**
- * Sends the recommendations email via Resend.
+ * Sends the weekly combined email via Resend.
  *
- * @param {string} toEmail   - recipient email address
- * @param {Array}  recs      - array of recommendation objects from Gemini
- * @param {string} generatedAt - ISO timestamp
+ * @param {string} toEmail          - recipient email address
+ * @param {Array}  recs             - recommendation objects from Gemini
+ * @param {Array}  followerActivity - activity_feed rows from followed users
+ * @param {Object} authorEmailMap   - map of user_id → email for activity authors
+ * @param {string} generatedAt      - ISO timestamp
  */
-export async function sendRecommendationsEmail(toEmail, recs, generatedAt) {
+export async function sendWeeklyEmail(toEmail, recs, followerActivity, authorEmailMap, generatedAt) {
   if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY env var is not set')
 
-  const html = buildEmailHtml(recs, generatedAt)
-  const text = buildEmailText(recs, generatedAt)
+  const html = buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt)
+  const text = buildEmailText(recs, followerActivity, authorEmailMap, generatedAt)
+
+  const hasActivity = followerActivity && followerActivity.length > 0
+  const subject = hasActivity
+    ? '🥃 Your weekly dram update — picks & friends — The Dram Journal'
+    : '🥃 Your weekly whisky picks — The Dram Journal'
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -306,13 +407,7 @@ export async function sendRecommendationsEmail(toEmail, recs, generatedAt) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${RESEND_API_KEY}`,
     },
-    body: JSON.stringify({
-      from:    EMAIL_FROM,
-      to:      [toEmail],
-      subject: '🥃 Your weekly whisky picks — The Dram Journal',
-      html,
-      text,
-    }),
+    body: JSON.stringify({ from: EMAIL_FROM, to: [toEmail], subject, html, text }),
   })
 
   const data = await res.json()
@@ -321,5 +416,9 @@ export async function sendRecommendationsEmail(toEmail, recs, generatedAt) {
     throw new Error(`Resend API error ${res.status}: ${data.message || JSON.stringify(data)}`)
   }
 
-  return data  // { id: "...", ... }
+  return data
 }
+
+// Keep the old export name as an alias for any tooling that calls it directly
+export const sendRecommendationsEmail = (toEmail, recs, generatedAt) =>
+  sendWeeklyEmail(toEmail, recs, [], {}, generatedAt)

@@ -1,29 +1,34 @@
 /**
  * generate-recommendations.js
  *
- * Weekly cron script — run via GitHub Actions.
- * For each user with >= 3 journal entries, calls Gemini to generate
- * 5 personalised whisky recommendations and upserts them into
- * the `recommendations` table in Supabase.
+ * Weekly cron script — run via GitHub Actions every Monday.
+ *
+ * For each user with >= 3 journal entries:
+ *   1. Calls Gemini to generate 5 personalised whisky recommendations.
+ *   2. Upserts them into the `recommendations` table.
+ *   3. Fetches activity from people the user follows (last 7 days).
+ *   4. Sends a combined "Weekly Update" email: recommendations + follower activity.
  *
  * Required environment variables:
- *   SUPABASE_URL        — your project URL (same as VITE_SUPABASE_URL)
+ *   SUPABASE_URL         — your project URL
  *   SUPABASE_SERVICE_KEY — service role key (NOT the anon key)
- *   GEMINI_KEY          — Google Gemini API key (same as VITE_GEMINI_KEY)
+ *   GEMINI_KEY           — Google Gemini API key
+ *   RESEND_API_KEY       — Resend API key
+ *   EMAIL_FROM           — verified sender address
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { sendRecommendationsEmail } from './send-recommendations-email.js'
+import { sendWeeklyEmail } from './send-recommendations-email.js'
 
-const SUPABASE_URL        = process.env.SUPABASE_URL
+const SUPABASE_URL         = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
-const GEMINI_KEY          = process.env.GEMINI_KEY
-const SEND_EMAILS         = process.env.SEND_EMAILS !== 'false'  // opt-out with SEND_EMAILS=false
+const GEMINI_KEY           = process.env.GEMINI_KEY
+const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
 const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview'
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 
-const MIN_JOURNAL_ENTRIES = 3  // minimum entries before generating recommendations
+const MIN_JOURNAL_ENTRIES = 3
 
 // ─── Supabase client (service role — bypasses RLS) ────────────────────────────
 
@@ -31,7 +36,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: { persistSession: false }
 })
 
-// ─── Attr labels (mirrors constants.js) ──────────────────────────────────────
+// ─── Attr labels ─────────────────────────────────────────────────────────────
 
 const ATTR_LABELS = {
   dulzor:    'Sweetness',
@@ -111,14 +116,9 @@ async function callGemini(prompt) {
   })
 
   const data = await res.json()
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${data.error?.message || 'API error'}`)
 
-  if (!res.ok) {
-    const msg = data.error?.message || 'Gemini API error'
-    throw new Error(`Gemini ${res.status}: ${msg}`)
-  }
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  return text
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
 function parseGeminiResponse(text) {
@@ -131,16 +131,59 @@ function parseGeminiResponse(text) {
   }
 }
 
+// ─── Follower activity (last 7 days) ─────────────────────────────────────────
+
+async function fetchFollowerActivity(userId) {
+  // Find accepted subscriptions where this user is the follower
+  const { data: subs, error: subsError } = await sb
+    .from('subscriptions')
+    .select('following_id')
+    .eq('follower_id', userId)
+    .eq('status', 'accepted')
+
+  if (subsError || !subs?.length) return []
+
+  const followingIds = subs.map(s => s.following_id)
+
+  // Fetch activity from those users in the last 7 days
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: activity, error: actError } = await sb
+    .from('activity_feed')
+    .select('*')
+    .in('user_id', followingIds)
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (actError) return []
+  return activity || []
+}
+
+// ─── Build email map: user_id → email ────────────────────────────────────────
+
+async function buildEmailMap(userIds) {
+  if (!userIds.length) return {}
+  const { data: { users }, error } = await sb.auth.admin.listUsers({ perPage: 1000 })
+  if (error) throw new Error(`Failed to fetch users: ${error.message}`)
+
+  const map = {}
+  for (const u of users) {
+    if (u.email && userIds.includes(u.id)) map[u.id] = u.email
+  }
+  return map
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🥃 Starting weekly recommendations generation...')
+  console.log('🥃 Starting weekly update generation...')
   console.log(`   Model: ${GEMINI_MODEL}`)
   console.log(`   Min journal entries required: ${MIN_JOURNAL_ENTRIES}`)
   console.log(`   Emails enabled: ${SEND_EMAILS}`)
   console.log('')
 
-  // 1. Fetch all auth users to get email addresses (requires service role key)
+  // 1. Fetch all auth users to get email addresses
   const { data: { users: allUsers }, error: usersError } = await sb.auth.admin.listUsers({ perPage: 1000 })
   if (usersError) throw new Error(`Failed to fetch users: ${usersError.message}`)
 
@@ -191,6 +234,7 @@ async function main() {
     console.log(`   ◎ User ${userId.slice(0, 8)}… — ${journal.length} journal, ${wishlist.length} wishlist`)
 
     try {
+      // 5. Generate recommendations via Gemini
       const prompt = buildPrompt(journal, wishlist)
       const raw    = await callGemini(prompt)
       const recs   = parseGeminiResponse(raw)
@@ -199,7 +243,7 @@ async function main() {
         throw new Error('Gemini returned empty or non-array recommendations')
       }
 
-      // 5. Upsert into recommendations table
+      // 6. Upsert recommendations
       const generatedAt = new Date().toISOString()
 
       const { error: upsertError } = await sb
@@ -211,16 +255,25 @@ async function main() {
         }, { onConflict: 'user_id' })
 
       if (upsertError) throw new Error(`Supabase upsert failed: ${upsertError.message}`)
-
       console.log(`     ✓ ${recs.length} recommendations saved`)
 
-      // 6. Send email if we have the user's address
+      // 7. Fetch follower activity for this user (last 7 days)
+      const followerActivity = await fetchFollowerActivity(userId)
+
+      // Build author email map for display names in the email
+      const authorIds = [...new Set(followerActivity.map(a => a.user_id))]
+      const authorEmailMap = await buildEmailMap(authorIds)
+
+      if (followerActivity.length > 0) {
+        console.log(`     👁 ${followerActivity.length} follower activity items`)
+      }
+
+      // 8. Send combined weekly email
       if (SEND_EMAILS && userEmail) {
         try {
-          await sendRecommendationsEmail(userEmail, recs, generatedAt)
+          await sendWeeklyEmail(userEmail, recs, followerActivity, authorEmailMap, generatedAt)
           console.log(`     ✉ Email sent to ${userEmail}`)
         } catch (emailErr) {
-          // Non-fatal — recommendations are already saved
           console.error(`     ⚠ Email failed for ${userEmail}: ${emailErr.message}`)
         }
       } else if (SEND_EMAILS && !userEmail) {

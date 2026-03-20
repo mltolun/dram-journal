@@ -22,6 +22,11 @@
                 <span class="menu-item-icon">↓</span> {{ t.exportCsv }}
               </button>
               <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item" @click="openSubscriptions">
+                <span class="menu-item-icon">👁</span> Friends &amp; Followers
+                <span v-if="pendingRequests.length" class="menu-badge">{{ pendingRequests.length }}</span>
+              </button>
+              <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doToggleLocale">
                 <span class="menu-item-icon">🌐</span> {{ locale === 'en' ? 'Español' : 'English' }}
               </button>
@@ -36,6 +41,8 @@
       </div>
     </div>
   </header>
+
+  <SubscriptionsPanel v-if="subsOpen" @close="subsOpen = false" />
 </template>
 
 <script setup>
@@ -46,14 +53,18 @@ import { useTheme } from '../composables/useTheme.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
 import { exportCSV } from '../utils/csv.js'
+import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
+import SubscriptionsPanel from './SubscriptionsPanel.vue'
 
 const { signOut } = useAuth()
 const { theme, cycleTheme } = useTheme()
 const { toast } = useToast()
 const { locale, t, toggleLocale } = useI18n()
+const { loadSubscriptions } = useSubscriptions()
 
 const menuOpen = ref(false)
 const avatarWrap = ref(null)
+const subsOpen = ref(false)
 
 const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()
@@ -75,8 +86,16 @@ function onClickOutside(e) {
   }
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside, true))
+onMounted(() => {
+  document.addEventListener('click', onClickOutside, true)
+  loadSubscriptions()
+})
 onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
+
+function openSubscriptions() {
+  menuOpen.value = false
+  subsOpen.value = true
+}
 
 function doExport() {
   menuOpen.value = false
@@ -211,6 +230,16 @@ async function doSignOut() {
 .menu-item-icon {
   font-size: 0.75rem;
   opacity: 0.7;
+}
+.menu-badge {
+  margin-left: auto;
+  background: var(--amber, #A8620A);
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 1px 6px;
+  line-height: 1.5;
 }
 
 /* Transition */
