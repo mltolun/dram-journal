@@ -43,6 +43,8 @@
       </div>
     </div>
 
+    <RecommendationsPanel v-if="activeList === 'journal'" />
+
     <ComparePanel
       v-if="compareOpen && selected.length > 0"
       :whiskies="selectedWhiskies"
@@ -100,6 +102,7 @@ import ComparePanel from '../components/ComparePanel.vue'
 import ShareModal          from '../components/ShareModal.vue'
 import ScanModal           from '../components/ScanModal.vue'
 import WishlistShareModal  from '../components/WishlistShareModal.vue'
+import RecommendationsPanel from '../components/RecommendationsPanel.vue'
 
 const { getSession } = useAuth()
 const { loadWhiskies, deleteWhisky, moveToJournal } = useWhiskies()

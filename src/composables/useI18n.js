@@ -227,6 +227,12 @@ const TRANSLATIONS = {
     // Empty states
     emptyWishlist: 'Your wishlist is empty\nPress "＋ Add" to start one',
     emptyJournal: 'No whiskies yet\nPress "＋ Add" to get started',
+
+    // Recommendations
+    recsTitle: 'Weekly Recommendations',
+    recsSub: 'Personalised picks based on your journal — refreshed every Monday',
+    recsGenerated: 'Generated on',
+    added: 'Added',
   },
 
   es: {
@@ -436,5 +442,11 @@ const TRANSLATIONS = {
     // Empty states
     emptyWishlist: 'Tu lista está vacía\nPulsa "＋ Añadir" para empezar',
     emptyJournal: 'Aún no hay whiskies\nPulsa "＋ Añadir" para comenzar',
+
+    // Recommendations
+    recsTitle: 'Recomendaciones Semanales',
+    recsSub: 'Selecciones personalizadas basadas en tu diario — actualizadas cada lunes',
+    recsGenerated: 'Generado el',
+    added: 'Añadido',
   },
 }
