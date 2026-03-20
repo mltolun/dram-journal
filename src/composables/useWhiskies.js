@@ -78,7 +78,17 @@ export function useWhiskies() {
   }
 
   async function moveToJournal(id) {
-    return updateWhisky(id, { list: 'journal' })
+    const result = await updateWhisky(id, { list: 'journal' })
+    // Log as a journal_add — the whisky is now in the journal for the first time
+    await logActivity({
+      type:       'journal_add',
+      whiskyId:   result.id,
+      whiskyName: result.name,
+      distillery: result.distillery,
+      rating:     result.rating ?? null,
+      notes:      result.notes  ?? null,
+    })
+    return result
   }
 
   return { whiskies, journal, wishlist, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToJournal }
