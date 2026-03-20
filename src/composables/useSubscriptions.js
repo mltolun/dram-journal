@@ -114,7 +114,7 @@ export function useSubscriptions() {
     const uid = currentUser.value?.id
     if (!uid) return
 
-    await sb.from('activity_feed').insert({
+    const { error } = await sb.from('activity_feed').insert({
       user_id:           uid,
       type,
       whisky_id:         whiskyId   ?? null,
@@ -123,6 +123,8 @@ export function useSubscriptions() {
       rating:            rating     ?? null,
       notes:             notes      ?? null,
     })
+
+    if (error) console.error('activity_feed insert failed:', error.message)
   }
 
   return {
