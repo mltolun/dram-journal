@@ -31,9 +31,9 @@
       <div class="subs-section" v-if="pendingRequests.length">
         <div class="subs-section-label">⏳ Pending requests</div>
         <div class="sub-row" v-for="req in pendingRequests" :key="req.id">
-          <span class="sub-email">{{ emailsByUserId[req.follower_id] || req.follower_id.slice(0, 8) + '…' }}</span>
+          <span class="sub-email">{{ req.follower_email || req.follower_id.slice(0, 8) + '…' }}</span>
           <div class="sub-actions">
-            <button class="sub-btn sub-btn--accept" @click="doAccept(req.id, req.follower_id)">Accept</button>
+            <button class="sub-btn sub-btn--accept" @click="doAccept(req.id, req.follower_email)">Accept</button>
             <button class="sub-btn sub-btn--remove" @click="doRemove(req.id)">Decline</button>
           </div>
         </div>
@@ -44,7 +44,7 @@
         <div class="subs-section-label">👁 Following ({{ myFollowing.length }})</div>
         <div v-if="myFollowing.length === 0" class="sub-empty">Not following anyone yet.</div>
         <div class="sub-row" v-for="sub in myFollowing" :key="sub.id">
-          <span class="sub-email">{{ emailsByUserId[sub.following_id] || sub.following_id.slice(0, 8) + '…' }}</span>
+          <span class="sub-email">{{ sub.following_email || sub.following_id.slice(0, 8) + '…' }}</span>
           <button class="sub-btn sub-btn--remove" @click="doRemove(sub.id)">Unfollow</button>
         </div>
       </div>
@@ -54,7 +54,7 @@
         <div class="subs-section-label">🥃 Followers ({{ myFollowers.length }})</div>
         <div v-if="myFollowers.length === 0" class="sub-empty">No followers yet.</div>
         <div class="sub-row" v-for="sub in myFollowers" :key="sub.id">
-          <span class="sub-email">{{ emailsByUserId[sub.follower_id] || sub.follower_id.slice(0, 8) + '…' }}</span>
+          <span class="sub-email">{{ sub.follower_email || sub.follower_id.slice(0, 8) + '…' }}</span>
           <button class="sub-btn sub-btn--remove" @click="doRemove(sub.id)">Remove</button>
         </div>
       </div>
@@ -67,8 +67,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { sb } from '../lib/supabase.js'
+import { onMounted } from 'vue'
+import { ref } from 'vue'
 import {
   useSubscriptions,
   pendingRequests,
@@ -80,37 +80,14 @@ defineEmits(['close'])
 
 const { loadSubscriptions, requestFollowByEmail, acceptRequest, removeSubscription } = useSubscriptions()
 
-const emailInput   = ref('')
-const following    = ref(false)
-const followError  = ref('')
+const emailInput    = ref('')
+const following     = ref(false)
+const followError   = ref('')
 const followSuccess = ref('')
-
-// Map user_id → email for display (loaded from subscriptions meta)
-const emailsByUserId = ref({})
 
 onMounted(async () => {
   await loadSubscriptions()
-  await loadEmails()
 })
-
-async function loadEmails() {
-  // Collect all foreign user IDs we need to display
-  const ids = new Set()
-  ;[...pendingRequests.value, ...myFollowing.value, ...myFollowers.value].forEach(s => {
-    ids.add(s.follower_id)
-    ids.add(s.following_id)
-  })
-  if (ids.size === 0) return
-
-  // Fetch display emails via the RPC (reuses the same SECURITY DEFINER approach)
-  // Since we only need emails we're already in a relationship with, this is acceptable.
-  const { data } = await sb.rpc('get_emails_by_ids', { p_ids: [...ids] })
-  if (data) {
-    for (const row of data) {
-      emailsByUserId.value[row.id] = row.email
-    }
-  }
-}
 
 async function doFollow() {
   const email = emailInput.value.trim()
@@ -129,15 +106,12 @@ async function doFollow() {
   }
 }
 
-async function doAccept(id, followerUserId) {
-  const requesterEmail = emailsByUserId.value[followerUserId]
+async function doAccept(id, requesterEmail) {
   await acceptRequest(id, requesterEmail)
-  await loadEmails()
 }
 
 async function doRemove(id) {
   await removeSubscription(id)
-  await loadEmails()
 }
 </script>
 

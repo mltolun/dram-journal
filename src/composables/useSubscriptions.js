@@ -58,7 +58,13 @@ export function useSubscriptions() {
 
     const { error } = await sb
       .from('subscriptions')
-      .insert({ follower_id: uid, following_id: targetId, status: 'pending' })
+      .insert({
+        follower_id:     uid,
+        following_id:    targetId,
+        status:          'pending',
+        follower_email:  currentUser.value.email,
+        following_email: email,
+      })
 
     if (error) {
       if (error.code === '23505') throw new Error('You already sent a request to this user')
