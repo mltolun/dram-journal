@@ -13,10 +13,12 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { sendRecommendationsEmail } from './send-recommendations-email.js'
 
 const SUPABASE_URL        = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY          = process.env.GEMINI_KEY
+const SEND_EMAILS         = process.env.SEND_EMAILS !== 'false'  // opt-out with SEND_EMAILS=false
 
 const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview'
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
@@ -135,9 +137,20 @@ async function main() {
   console.log('🥃 Starting weekly recommendations generation...')
   console.log(`   Model: ${GEMINI_MODEL}`)
   console.log(`   Min journal entries required: ${MIN_JOURNAL_ENTRIES}`)
+  console.log(`   Emails enabled: ${SEND_EMAILS}`)
   console.log('')
 
-  // 1. Fetch all journal entries grouped by user
+  // 1. Fetch all auth users to get email addresses (requires service role key)
+  const { data: { users: allUsers }, error: usersError } = await sb.auth.admin.listUsers({ perPage: 1000 })
+  if (usersError) throw new Error(`Failed to fetch users: ${usersError.message}`)
+
+  const emailByUserId = {}
+  for (const u of allUsers) {
+    if (u.email) emailByUserId[u.id] = u.email
+  }
+  console.log(`   Fetched emails for ${Object.keys(emailByUserId).length} users`)
+
+  // 2. Fetch all journal entries grouped by user
   const { data: allWhiskies, error: whiskiesError } = await sb
     .from('whiskies')
     .select('*')
@@ -145,7 +158,7 @@ async function main() {
 
   if (whiskiesError) throw new Error(`Failed to fetch whiskies: ${whiskiesError.message}`)
 
-  // 2. Group by user_id
+  // 3. Group by user_id
   const byUser = {}
   for (const w of allWhiskies) {
     if (!byUser[w.user_id]) byUser[w.user_id] = { journal: [], wishlist: [] }
@@ -157,15 +170,17 @@ async function main() {
   }
 
   const userIds = Object.keys(byUser)
-  console.log(`   Found ${userIds.length} users total`)
+  console.log(`   Found ${userIds.length} users with journal entries`)
+  console.log('')
 
   let processed = 0
   let skipped   = 0
   let errors    = 0
 
-  // 3. Process each user
+  // 4. Process each user
   for (const userId of userIds) {
     const { journal, wishlist } = byUser[userId]
+    const userEmail = emailByUserId[userId]
 
     if (journal.length < MIN_JOURNAL_ENTRIES) {
       console.log(`   ⊘ User ${userId.slice(0, 8)}… — only ${journal.length} journal entries, skipping`)
@@ -184,18 +199,34 @@ async function main() {
         throw new Error('Gemini returned empty or non-array recommendations')
       }
 
-      // 4. Upsert into recommendations table
+      // 5. Upsert into recommendations table
+      const generatedAt = new Date().toISOString()
+
       const { error: upsertError } = await sb
         .from('recommendations')
         .upsert({
           user_id:      userId,
           payload:      recs,
-          generated_at: new Date().toISOString(),
+          generated_at: generatedAt,
         }, { onConflict: 'user_id' })
 
       if (upsertError) throw new Error(`Supabase upsert failed: ${upsertError.message}`)
 
       console.log(`     ✓ ${recs.length} recommendations saved`)
+
+      // 6. Send email if we have the user's address
+      if (SEND_EMAILS && userEmail) {
+        try {
+          await sendRecommendationsEmail(userEmail, recs, generatedAt)
+          console.log(`     ✉ Email sent to ${userEmail}`)
+        } catch (emailErr) {
+          // Non-fatal — recommendations are already saved
+          console.error(`     ⚠ Email failed for ${userEmail}: ${emailErr.message}`)
+        }
+      } else if (SEND_EMAILS && !userEmail) {
+        console.log(`     ⚠ No email address found for user ${userId.slice(0, 8)}…`)
+      }
+
       processed++
 
       // Small delay between users to avoid rate limiting
