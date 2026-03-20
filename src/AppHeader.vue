@@ -91,12 +91,12 @@ onMounted(() => {
   isStandalone.value = window.navigator.standalone === true ||
     window.matchMedia('(display-mode: standalone)').matches
 
-  // Always measure — even outside standalone, so we can see the value in debug
-  const el = document.createElement('div')
-  el.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top,44px);pointer-events:none;opacity:0;'
-  document.documentElement.appendChild(el)
-  safeAreaTop.value = el.offsetHeight
-  document.documentElement.removeChild(el)
+  if (isStandalone.value) {
+    // iOS status bar is 44px on older iPhones, 47px on newer with Dynamic Island
+    // screen.height - window.innerHeight gives us the actual chrome height in standalone
+    const barHeight = window.screen.height - window.innerHeight
+    safeAreaTop.value = barHeight > 0 ? barHeight : 44
+  }
 })
 
 const headerStyle = computed(() => ({
