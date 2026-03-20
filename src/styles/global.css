@@ -86,6 +86,11 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 /* ── HEADER ── */
 header { padding:1.4rem 2.5rem; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:relative; }
 header::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(to right,transparent,var(--amber),transparent); opacity:0.35; }
+
+/* Push header below the iOS status bar when installed as a PWA */
+@media all and (display-mode: standalone) {
+  header { padding-top: calc(env(safe-area-inset-top) + 1.4rem); }
+}
 .brand-title { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:400; letter-spacing:-0.02em; line-height:1; }
 .brand-title span { color:var(--amber-light); font-style:italic; }
 .brand-sub { font-family:'DM Mono',monospace; font-size:0.56rem; letter-spacing:0.2em; color:var(--peat-light); text-transform:uppercase; margin-top:3px; }
