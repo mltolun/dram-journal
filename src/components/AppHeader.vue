@@ -1,7 +1,7 @@
 <template>
   <header :style="headerStyle">
     <div style="position:fixed;top:60px;left:0;right:0;background:red;color:white;font-size:16px;font-weight:bold;z-index:9999;padding:12px 8px;word-break:break-all;border:4px solid yellow;">
-      SA:{{ safeAreaTop }} | SW:{{ screenW }} | SH:{{ screenH }} | IH:{{ innerH }} | STD:{{ isStandalone }}
+      SA:{{ safeAreaTop }} | SW:{{ screenW }} | SH:{{ screenH }} | IH:{{ innerH }} | STD:{{ isStandalone }} | PT:{{ headerStyle.paddingTop }}
     </div>
     <div class="header-top">
       <div class="header-brand">
