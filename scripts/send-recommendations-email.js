@@ -168,9 +168,12 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
   const hasActivity   = followerActivity && followerActivity.length > 0
   const activityRows  = hasActivity
     ? followerActivity.map(e => activityItem(e, authorEmailMap)).join('')
-    : ''
+    : `<tr><td style="padding:16px 0;font-family:'DM Sans',sans-serif;font-size:12px;
+                      font-style:italic;color:${PEAT_LIGHT};line-height:1.6;">
+         Your friends had no new activity this week — check back next Monday.
+       </td></tr>`
 
-  const activitySection = hasActivity ? `
+  const activitySection = `
           <!-- ── ACTIVITY DIVIDER ── -->
           <tr>
             <td style="padding:8px 32px 0;">
@@ -203,7 +206,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
                 ${activityRows}
               </table>
             </td>
-          </tr>` : ''
+          </tr>`
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -396,10 +399,7 @@ export async function sendWeeklyEmail(toEmail, recs, followerActivity, authorEma
   const html = buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt)
   const text = buildEmailText(recs, followerActivity, authorEmailMap, generatedAt)
 
-  const hasActivity = followerActivity && followerActivity.length > 0
-  const subject = hasActivity
-    ? '🥃 Your weekly dram update — picks & friends — The Dram Journal'
-    : '🥃 Your weekly whisky picks — The Dram Journal'
+  const subject = '🥃 Your weekly dram update — The Dram Journal'
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
