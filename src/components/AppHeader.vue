@@ -1,5 +1,8 @@
 <template>
-  <header>
+  <header :style="headerStyle">
+    <div style="position:fixed;top:60px;left:0;right:0;background:red;color:white;font-size:16px;font-weight:bold;z-index:9999;padding:12px 8px;word-break:break-all;border:4px solid yellow;">
+      SA:{{ safeAreaTop }} | SW:{{ screenW }} | SH:{{ screenH }} | IH:{{ innerH }} | STD:{{ isStandalone }}
+    </div>
     <div class="header-top">
       <div class="header-brand">
         <div class="brand-title">The <span>Dram</span> Journal</div>
@@ -76,6 +79,34 @@ const menuOpen = ref(false)
 const avatarWrap = ref(null)
 const subsOpen = ref(false)
 const inboxOpen = ref(false)
+
+const safeAreaTop  = ref(0)
+const isStandalone = ref(false)
+const screenW      = ref(0)
+const screenH      = ref(0)
+const innerH       = ref(0)
+
+onMounted(() => {
+  document.addEventListener('click', onClickOutside, true)
+  loadSubscriptions()
+  loadInbox()
+
+  screenW.value = window.screen.width
+  screenH.value = window.screen.height
+  innerH.value  = window.innerHeight
+
+  isStandalone.value = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches
+
+  if (isStandalone.value) {
+    const barHeight = window.screen.height - window.innerHeight
+    safeAreaTop.value = barHeight > 0 ? barHeight : 44
+  }
+})
+
+const headerStyle = computed(() => ({
+  paddingTop: safeAreaTop.value > 0 ? `calc(${safeAreaTop.value}px + 1.4rem)` : undefined
+}))
 
 const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()
