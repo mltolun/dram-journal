@@ -24,31 +24,18 @@
 
 <script setup>
 import { ref } from 'vue'
-import { compressImage } from '../utils/compressImage.js'
-import { removeBackground } from '../utils/removeBackground.js'
 
+// PhotoUpload is a dumb file-picker only.
+// All processing (bg removal + compression) lives in usePhoto → selectPhoto().
 const props = defineProps({ previewSrc: String, kb: Number, processing: Boolean })
-const emit  = defineEmits(['selected', 'remove'])
+const emit  = defineEmits(['picked', 'remove'])
 const fileInput = ref(null)
 
-async function onFile(e) {
+function onFile(e) {
   const file = e.target.files[0]
   if (!file) return
-  // Reset so the same file can be re-selected after a remove
-  e.target.value = ''
-
-  emit('processing', true)
-  try {
-    const bgRemovedBlob = await removeBackground(file)
-    const result = await compressImage(bgRemovedBlob, 600, 0.78)
-    emit('selected', result)
-  } catch (err) {
-    console.error('Background removal failed, using original:', err)
-    const result = await compressImage(file, 600, 0.78)
-    emit('selected', result)
-  } finally {
-    emit('processing', false)
-  }
+  e.target.value = '' // allow re-selecting the same file after remove
+  emit('picked', file)
 }
 </script>
 

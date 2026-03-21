@@ -121,7 +121,8 @@
           <PhotoUpload
             :preview-src="previewUrl"
             :kb="compressedKb"
-            @selected="onPhotoSelected"
+            :processing="removingBg"
+            @picked="selectPhoto"
             @remove="onPhotoRemove"
           />
         </div>
@@ -229,7 +230,7 @@ const props = defineProps({
 const emit  = defineEmits(['saved', 'close'])
 
 const { insertWhisky, updateWhisky } = useWhiskies()
-const { pendingBlob, previewUrl, compressedKb, clearPhoto, loadExisting, uploadPhoto } = usePhoto()
+const { pendingBlob, previewUrl, compressedKb, removingBg, selectPhoto, clearPhoto, loadExisting, uploadPhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
 
@@ -262,12 +263,6 @@ onMounted(() => {
     }
   }
 })
-
-function onPhotoSelected({ blob, dataUrl, kb }) {
-  pendingBlob.value  = blob
-  previewUrl.value   = dataUrl
-  compressedKb.value = kb
-}
 
 function onPhotoRemove() {
   clearPhoto()

@@ -20,8 +20,7 @@ export function usePhoto() {
       previewUrl.value   = dataUrl
       compressedKb.value = kb
     } catch (err) {
-      console.error('Background removal failed, falling back to original:', err)
-      // Graceful fallback: compress original without background removal
+      console.error('[usePhoto] Background removal failed, falling back to original:', err)
       const { blob, dataUrl, kb } = await compressImage(file, 600, 0.78)
       pendingBlob.value  = blob
       previewUrl.value   = dataUrl
