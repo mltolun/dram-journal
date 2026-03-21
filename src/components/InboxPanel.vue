@@ -128,7 +128,7 @@ import { useI18n } from '../composables/useI18n.js'
 
 defineEmits(['close'])
 
-const { load{{ t.inbox }}, markRead, markAllRead, deleteMessage } = useMessages()
+const { loadInbox, markRead, markAllRead, deleteMessage } = useMessages()
 const { loadSubscriptions, acceptRequest, removeSubscription } = useSubscriptions()
 const { t } = useI18n()
 
@@ -152,7 +152,7 @@ const allItems = computed(() =>
 )
 
 onMounted(async () => {
-  await Promise.all([load{{ t.inbox }}(), loadSubscriptions()])
+  await Promise.all([loadInbox(), loadSubscriptions()])
 })
 
 function expand(msg) {
