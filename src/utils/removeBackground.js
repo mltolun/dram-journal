@@ -1,7 +1,11 @@
 /**
  * Remove the background from an image File/Blob using @imgly/background-removal.
- * The model (~30 MB) is downloaded once and cached by the browser.
+ * The model is downloaded once and cached by the browser.
  * Returns a PNG Blob with a transparent background.
+ *
+ * publicPath is intentionally omitted — the library defaults to its own
+ * versioned CDN (staticimgly.com) which always matches the installed version.
+ * Hardcoding a URL here causes a version mismatch and silent fallback.
  */
 
 let _removeBackgroundFn = null
@@ -16,11 +20,11 @@ async function getRemoveFn() {
 
 export async function removeBackground(file) {
   const removeFn = await getRemoveFn()
-  // Do NOT set publicPath — the library defaults to its own CDN
-  // (staticimgly.com) keyed to the exact installed version.
-  // Hardcoding a path (e.g. an unpkg URL) causes a version mismatch
-  // that makes resources.json fail to load and silently falls back.
   const resultBlob = await removeFn(file, {
+    // 'large' (isnet) gives the best edge retention for full product shots
+    // including bottles alongside boxes/tubes. 'medium' clips translucent
+    // or light-coloured packaging.
+    model: 'large',
     output: {
       format: 'image/png',
       quality: 1,

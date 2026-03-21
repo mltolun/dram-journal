@@ -1,8 +1,12 @@
 /**
- * Compress an image File to a JPEG blob, max `maxPx` on longest side.
+ * Resize an image File/Blob, max `maxPx` on longest side.
+ *
+ * format: 'image/jpeg' — white-fills transparent areas, outputs JPEG
+ * format: 'image/png'  — preserves transparency, outputs PNG
+ *
  * Returns { blob, dataUrl, kb }
  */
-export function compressImage(file, maxPx = 600, quality = 0.78) {
+export function compressImage(file, maxPx = 600, quality = 0.78, format = 'image/png') {
   return new Promise((resolve) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
@@ -15,10 +19,16 @@ export function compressImage(file, maxPx = 600, quality = 0.78) {
       const canvas = document.createElement('canvas')
       canvas.width = w; canvas.height = h
       const ctx = canvas.getContext('2d')
-      // Fill white so transparent PNGs (e.g. after background removal)
-      // don't render with a black background when converted to JPEG.
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, w, h)
+
+      if (format === 'image/jpeg') {
+        // JPEG has no alpha channel — fill white so transparency
+        // doesn't render as black.
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, w, h)
+      }
+      // For PNG, leave the canvas transparent so the removed background
+      // stays transparent in the stored file.
+
       ctx.drawImage(img, 0, 0, w, h)
       canvas.toBlob((blob) => {
         URL.revokeObjectURL(url)
@@ -29,7 +39,7 @@ export function compressImage(file, maxPx = 600, quality = 0.78) {
           kb: Math.round(blob.size / 1024),
         })
         reader.readAsDataURL(blob)
-      }, 'image/jpeg', quality)
+      }, format, quality)
     }
     img.src = url
   })
