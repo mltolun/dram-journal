@@ -28,6 +28,9 @@
           <transition name="menu">
             <div class="avatar-menu" v-if="menuOpen">
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
+              <div class="avatar-menu-debug" v-if="!isAdmin">
+                not admin · {{ currentUser?.email?.toLowerCase() }}
+              </div>
 
               <!-- Theme picker -->
               <div class="avatar-menu-divider"></div>
@@ -61,7 +64,7 @@
               <button class="avatar-menu-item" @click="openFeatureRequests">
                 <span class="menu-item-icon">💡</span> Feature Requests
               </button>
-              <template v-if="isAdmin()">
+              <template v-if="isAdmin">
                 <div class="avatar-menu-divider"></div>
                 <button class="avatar-menu-item avatar-menu-item--admin" @click="openAdminPanel">
                   <span class="menu-item-icon">🛠</span> Admin · Requests
@@ -122,7 +125,10 @@ const inboxOpen   = ref(false)
 const featureOpen = ref(false)
 const adminOpen   = ref(false)
 
-const { isAdmin } = useFeatureRequests()
+const { isAdmin: isAdminFn } = useFeatureRequests()
+
+// Must be a computed so Vue re-evaluates when currentUser resolves after auth
+const isAdmin = computed(() => isAdminFn())
 
 const openRequestCount = computed(() =>
   featureRequests.value.filter(r => r.status === 'open').length
@@ -404,6 +410,15 @@ async function doSignOut() {
   line-height: 1.4;
   min-width: 14px;
   text-align: center;
+}
+
+/* ── Debug (remove once admin menu confirmed working) ── */
+.avatar-menu-debug {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.52rem;
+  color: #e08888;
+  padding: 0 14px 6px;
+  opacity: 0.8;
 }
 
 /* ── Transition ── */
