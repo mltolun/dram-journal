@@ -1,14 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <!-- Background -->
-  <rect width="512" height="512" rx="96" fill="#1C1408"/>
-  <!-- Glass body -->
-  <path d="M196 140 h120 l-20 160 q-40 60 -80 0 Z" fill="none" stroke="#C07820" stroke-width="14" stroke-linejoin="round"/>
-  <!-- Whisky liquid fill -->
-  <path d="M210 240 q46 20 92 0 l-12 60 q-40 60 -80 0 Z" fill="#A8620A" opacity="0.85"/>
-  <!-- Glass stem -->
-  <line x1="256" y1="300" x2="256" y2="360" stroke="#C07820" stroke-width="14" stroke-linecap="round"/>
+  <rect width="512" height="512" rx="112" fill="#1C1408"/>
+
+  <!-- Glass body - tumbler shape -->
+  <path d="M160 120 L352 120 L320 340 L192 340 Z" fill="none" stroke="#C07820" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- Whisky liquid -->
+  <path d="M178 240 L334 240 L320 340 L192 340 Z" fill="#A8620A" opacity="0.9"/>
+
+  <!-- Liquid surface shine -->
+  <ellipse cx="256" cy="240" rx="78" ry="8" fill="#D4891A" opacity="0.6"/>
+
+  <!-- Ice cube -->
+  <rect x="218" y="252" width="46" height="46" rx="6" fill="rgba(200,230,255,0.25)" stroke="rgba(200,230,255,0.5)" stroke-width="2"/>
+  <line x1="218" y1="268" x2="264" y2="268" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <line x1="234" y1="252" x2="234" y2="298" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+
+  <!-- Glass shine left -->
+  <path d="M178 135 L172 220" stroke="rgba(255,255,255,0.18)" stroke-width="7" stroke-linecap="round"/>
+
   <!-- Glass base -->
-  <line x1="210" y1="360" x2="302" y2="360" stroke="#C07820" stroke-width="14" stroke-linecap="round"/>
-  <!-- Shine -->
-  <line x1="218" y1="160" x2="210" y2="220" stroke="rgba(255,255,255,0.2)" stroke-width="8" stroke-linecap="round"/>
+  <rect x="182" y="340" width="148" height="16" rx="8" fill="#C07820"/>
+
+  <!-- Amber dot accent -->
+  <circle cx="362" cy="148" r="12" fill="#A8620A" opacity="0.7"/>
 </svg>
