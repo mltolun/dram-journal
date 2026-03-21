@@ -4,14 +4,14 @@
 
       <!-- Header -->
       <div class="subs-header">
-        <div class="subs-title">💡 Feature Requests</div>
+        <div class="subs-title">{{ t.frTitle }}</div>
         <button class="subs-close" @click="$emit('close')">✕</button>
       </div>
 
       <!-- Submit form -->
       <div class="fr-form-section" :class="{ collapsed: formCollapsed }">
         <button class="fr-section-toggle" @click="formCollapsed = !formCollapsed">
-          <span class="fr-section-label">✦ Submit a new request</span>
+          <span class="fr-section-label">{{ t.frSubmitSection }}</span>
           <span class="fr-toggle-icon">{{ formCollapsed ? '▼' : '▲' }}</span>
         </button>
 
@@ -19,11 +19,11 @@
           <div v-if="!formCollapsed" class="fr-form">
             <!-- Title -->
             <div class="fr-field">
-              <label class="fr-label">Feature title <span class="fr-required">*</span></label>
+              <label class="fr-label">{{ t.frTitleLabel }} <span class="fr-required">*</span></label>
               <input
                 v-model="form.title"
                 class="fr-input"
-                placeholder="Short, descriptive name…"
+                :placeholder="t.frTitlePlaceholder"
                 maxlength="120"
                 :disabled="submitting"
               />
@@ -32,12 +32,12 @@
 
             <!-- Description -->
             <div class="fr-field">
-              <label class="fr-label">Problem & description <span class="fr-required">*</span></label>
-              <div class="fr-label-hint">What are you trying to achieve? Describe the problem, not just the solution.</div>
+              <label class="fr-label">{{ t.frDescLabel }} <span class="fr-required">*</span></label>
+              <div class="fr-label-hint">{{ t.frDescHint }}</div>
               <textarea
                 v-model="form.description"
                 class="fr-textarea"
-                placeholder="Describe the underlying problem you're facing…"
+                :placeholder="t.frDescPlaceholder"
                 rows="4"
                 :disabled="submitting"
               ></textarea>
@@ -45,26 +45,26 @@
 
             <!-- Impact -->
             <div class="fr-field">
-              <label class="fr-label">User impact <span class="fr-required">*</span></label>
-              <div class="fr-label-hint">How will this improve your experience? (e.g. "saves 20 min/week", "removes need for spreadsheet")</div>
+              <label class="fr-label">{{ t.frImpactLabel }} <span class="fr-required">*</span></label>
+              <div class="fr-label-hint">{{ t.frImpactHint }}</div>
               <textarea
                 v-model="form.impact"
                 class="fr-textarea"
-                placeholder="Why does this matter to you?"
+                :placeholder="t.frImpactPlaceholder"
                 rows="3"
                 :disabled="submitting"
               ></textarea>
             </div>
 
             <div v-if="submitError" class="fr-error">{{ submitError }}</div>
-            <div v-if="submitSuccess" class="fr-success">✓ Request submitted! We'll review it soon.</div>
+            <div v-if="submitSuccess" class="fr-success">{{ t.frSubmitSuccess }}</div>
 
             <button
               class="fr-submit-btn"
               @click="doSubmit"
               :disabled="submitting || !canSubmit"
             >
-              {{ submitting ? 'Submitting…' : 'Submit request' }}
+              {{ submitting ? t.frSubmitting : t.frSubmitBtn }}
             </button>
           </div>
         </transition>
@@ -75,13 +75,13 @@
 
       <!-- My requests list -->
       <div class="fr-list-section">
-        <div class="fr-section-label" style="padding: 0 0 12px;">✦ My requests ({{ myFeatureRequests.length }})</div>
+        <div class="fr-section-label" style="padding: 0 0 12px;">{{ t.frMyRequests }} ({{ myFeatureRequests.length }})</div>
 
-        <div v-if="loading" class="fr-loading">Loading…</div>
+        <div v-if="loading" class="fr-loading">{{ t.frLoading }}</div>
 
         <div v-else-if="myFeatureRequests.length === 0" class="fr-empty">
           <div class="fr-empty-icon">💡</div>
-          <div>No requests yet. Share an idea above!</div>
+          <div>{{ t.frEmpty }}</div>
         </div>
 
         <div v-else class="fr-list">
@@ -97,30 +97,30 @@
             </div>
 
             <div class="fr-item-meta">
-              Submitted {{ formatDate(req.created_at) }}
+              {{ t.frSubmitted }} {{ formatDate(req.created_at) }}
               <template v-if="req.priority">
-                · Priority: <span class="fr-priority">{{ req.priority }}</span>
+                · {{ t.frPriority }}: <span class="fr-priority">{{ req.priority }}</span>
               </template>
               <template v-if="req.due_date">
-                · Due {{ formatDate(req.due_date) }}
+                · {{ t.frDue }} {{ formatDate(req.due_date) }}
               </template>
             </div>
 
             <!-- Admin note shown when done -->
             <div v-if="req.status === 'done' && req.admin_note" class="fr-admin-note">
-              <span class="fr-admin-note-label">🥃 From the team:</span> {{ req.admin_note }}
+              <span class="fr-admin-note-label">{{ t.frFromTeam }}</span> {{ req.admin_note }}
             </div>
 
             <!-- Expandable description -->
             <div v-if="expanded === req.id" class="fr-item-body">
-              <div class="fr-item-field-label">Problem statement</div>
+              <div class="fr-item-field-label">{{ t.frProblemStatement }}</div>
               <div class="fr-item-field-value">{{ req.description }}</div>
-              <div class="fr-item-field-label" style="margin-top:10px;">User impact</div>
+              <div class="fr-item-field-label" style="margin-top:10px;">{{ t.frUserImpact }}</div>
               <div class="fr-item-field-value">{{ req.impact }}</div>
             </div>
 
             <button class="fr-expand-btn" @click="expanded = expanded === req.id ? null : req.id">
-              {{ expanded === req.id ? '▲ less' : '▼ details' }}
+              {{ expanded === req.id ? t.frLess : t.frDetails }}
             </button>
           </div>
         </div>
@@ -133,18 +133,20 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useFeatureRequests, myFeatureRequests } from '../composables/useFeatureRequests.js'
+import { useI18n } from '../composables/useI18n.js'
 
 const emit = defineEmits(['close'])
 
 const { submitRequest, loadMyRequests } = useFeatureRequests()
+const { t } = useI18n()
 
-const STATUS_LABELS = {
-  open:        'Open',
-  accepted:    'Accepted',
-  in_progress: 'In Progress',
-  done:        'Done',
-  declined:    'Declined',
-}
+const STATUS_LABELS = computed(() => ({
+  open:        t.value.frStatusOpen,
+  accepted:    t.value.frStatusAccepted,
+  in_progress: t.value.frStatusInProgress,
+  done:        t.value.frStatusDone,
+  declined:    t.value.frStatusDeclined,
+}))
 
 const form = ref({ title: '', description: '', impact: '' })
 const submitting  = ref(false)

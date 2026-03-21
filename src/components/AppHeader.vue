@@ -54,17 +54,17 @@
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="openSubscriptions">
-                <span class="menu-item-icon">👁</span> Friends &amp; Followers
+                <span class="menu-item-icon">👁</span> {{ t.friendsFollowers }}
                 <span v-if="pendingRequests.length" class="menu-badge">{{ pendingRequests.length }}</span>
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="openFeatureRequests">
-                <span class="menu-item-icon">💡</span> Feature Requests
+                <span class="menu-item-icon">💡</span> {{ t.featureRequests }}
               </button>
               <template v-if="isAdmin">
                 <div class="avatar-menu-divider"></div>
                 <button class="avatar-menu-item avatar-menu-item--admin" @click="openAdminPanel">
-                  <span class="menu-item-icon">🛠</span> Admin · Requests
+                  <span class="menu-item-icon">🛠</span> {{ t.adminRequests }}
                   <span v-if="openRequestCount" class="menu-badge">{{ openRequestCount }}</span>
                 </button>
               </template>

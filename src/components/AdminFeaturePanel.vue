@@ -4,7 +4,7 @@
 
       <!-- Header -->
       <div class="subs-header">
-        <div class="subs-title">🛠 Feature Requests <span class="admin-badge">Admin</span></div>
+        <div class="subs-title">{{ t.frAdminTitle }} <span class="admin-badge">{{ t.frAdminBadge }}</span></div>
         <button class="subs-close" @click="$emit('close')">✕</button>
       </div>
 
@@ -24,11 +24,11 @@
 
       <!-- List -->
       <div class="admin-list">
-        <div v-if="loading" class="fr-loading">Loading…</div>
+        <div v-if="loading" class="fr-loading">{{ t.frLoading }}</div>
 
         <div v-else-if="accessDenied" class="fr-empty access-denied">
           <div class="fr-empty-icon">🔒</div>
-          <div class="access-denied-title">Access denied</div>
+          <div class="access-denied-title">{{ t.frAdminAccessDenied }}</div>
           <div class="access-denied-body">
             Your account (<strong>{{ currentUser?.email }}</strong>) is not recognised as an admin.<br><br>
             Check that <code>VITE_ADMIN_EMAILS</code> in your <code>.env</code> matches exactly,
@@ -39,7 +39,7 @@
 
         <div v-else-if="filtered.length === 0" class="fr-empty">
           <div class="fr-empty-icon">✓</div>
-          <div>No requests in this category.</div>
+          <div>{{ t.frAdminEmpty }}</div>
         </div>
 
         <div
@@ -57,14 +57,14 @@
             <div class="fr-status-badge" :class="`badge--${req.status}`">{{ STATUS_LABELS[req.status] }}</div>
           </div>
 
-          <!-- Detail (always visible for admin) -->
+          <!-- Detail -->
           <div class="admin-item-body" v-if="expanded === req.id">
             <div class="admin-field-group">
-              <div class="admin-field-label">Problem statement</div>
+              <div class="admin-field-label">{{ t.frProblemStatement }}</div>
               <div class="admin-field-value">{{ req.description }}</div>
             </div>
             <div class="admin-field-group">
-              <div class="admin-field-label">User impact</div>
+              <div class="admin-field-label">{{ t.frUserImpact }}</div>
               <div class="admin-field-value">{{ req.impact }}</div>
             </div>
 
@@ -72,7 +72,7 @@
             <div class="admin-controls">
               <!-- Status -->
               <div class="admin-control-row">
-                <label class="admin-ctrl-label">Status</label>
+                <label class="admin-ctrl-label">{{ t.frAdminStatusLabel }}</label>
                 <div class="admin-select-wrap">
                   <select v-model="drafts[req.id].status" class="admin-select">
                     <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
@@ -82,10 +82,10 @@
 
               <!-- Priority -->
               <div class="admin-control-row">
-                <label class="admin-ctrl-label">Priority</label>
+                <label class="admin-ctrl-label">{{ t.frAdminPriorityLabel }}</label>
                 <div class="admin-select-wrap">
                   <select v-model="drafts[req.id].priority" class="admin-select">
-                    <option value="">— none —</option>
+                    <option value="">{{ t.frAdminPriorityNone }}</option>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -96,7 +96,7 @@
 
               <!-- Due date -->
               <div class="admin-control-row">
-                <label class="admin-ctrl-label">Due date</label>
+                <label class="admin-ctrl-label">{{ t.frAdminDueDateLabel }}</label>
                 <input
                   type="date"
                   v-model="drafts[req.id].due_date"
@@ -104,16 +104,16 @@
                 />
               </div>
 
-              <!-- Admin note (shown to user when done) -->
+              <!-- Admin note -->
               <div class="admin-control-row admin-control-row--col">
                 <label class="admin-ctrl-label">
-                  Note to user
-                  <span class="admin-ctrl-hint">(shown when status → Done)</span>
+                  {{ t.frAdminNoteLabel }}
+                  <span class="admin-ctrl-hint">{{ t.frAdminNoteHint }}</span>
                 </label>
                 <textarea
                   v-model="drafts[req.id].admin_note"
                   class="admin-note-input"
-                  placeholder="Briefly describe what was built, or link to the release…"
+                  :placeholder="t.frAdminNotePlaceholder"
                   rows="2"
                 ></textarea>
               </div>
@@ -125,18 +125,18 @@
                   @click="doSave(req)"
                   :disabled="saving === req.id"
                 >
-                  {{ saving === req.id ? 'Saving…' : 'Save changes' }}
+                  {{ saving === req.id ? t.frAdminSaving : t.frAdminSave }}
                 </button>
-                <button class="admin-delete-btn" @click="confirmDelete(req)">Delete</button>
+                <button class="admin-delete-btn" @click="confirmDelete(req)">{{ t.frAdminDelete }}</button>
               </div>
 
-              <div v-if="saveSuccess === req.id" class="admin-save-ok">✓ Saved</div>
-              <div v-if="saveError === req.id" class="admin-save-err">Failed to save</div>
+              <div v-if="saveSuccess === req.id" class="admin-save-ok">{{ t.frAdminSaved }}</div>
+              <div v-if="saveError === req.id" class="admin-save-err">{{ t.frAdminSaveFailed }}</div>
             </div>
           </div>
 
           <button class="fr-expand-btn" @click="toggleExpand(req)">
-            {{ expanded === req.id ? '▲ collapse' : '▼ manage' }}
+            {{ expanded === req.id ? t.frAdminCollapse : t.frAdminManage }}
           </button>
         </div>
       </div>
@@ -144,11 +144,11 @@
       <!-- Delete confirm modal -->
       <div v-if="deleteTarget" class="admin-confirm-overlay" @click.self="deleteTarget = null">
         <div class="admin-confirm-box">
-          <div class="admin-confirm-title">Delete this request?</div>
+          <div class="admin-confirm-title">{{ t.frAdminDeleteConfirm }}</div>
           <div class="admin-confirm-sub">{{ deleteTarget.title }}</div>
           <div class="admin-confirm-actions">
-            <button class="admin-delete-confirm-btn" @click="doDelete">Yes, delete</button>
-            <button class="admin-cancel-btn" @click="deleteTarget = null">Cancel</button>
+            <button class="admin-delete-confirm-btn" @click="doDelete">{{ t.frAdminDeleteYes }}</button>
+            <button class="admin-cancel-btn" @click="deleteTarget = null">{{ t.frAdminCancel }}</button>
           </div>
         </div>
       </div>
@@ -161,28 +161,32 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
 import { currentUser } from '../composables/useAuth.js'
+import { useI18n } from '../composables/useI18n.js'
 
 const emit = defineEmits(['close'])
 const { loadAllRequests, loadAdminStatus, updateRequest, deleteRequest } = useFeatureRequests()
+const { t } = useI18n()
 
-const STATUS_LABELS = {
-  open:        'Open',
-  accepted:    'Accepted',
-  in_progress: 'In Progress',
-  done:        'Done',
-  declined:    'Declined',
-}
+const STATUS_LABELS = computed(() => ({
+  open:        t.value.frStatusOpen,
+  accepted:    t.value.frStatusAccepted,
+  in_progress: t.value.frStatusInProgress,
+  done:        t.value.frStatusDone,
+  declined:    t.value.frStatusDeclined,
+}))
 
-const STATUSES = Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }))
+const STATUSES = computed(() =>
+  Object.entries(STATUS_LABELS.value).map(([value, label]) => ({ value, label }))
+)
 
-const FILTERS = [
-  { label: 'All',         value: 'all' },
-  { label: 'Open',        value: 'open' },
-  { label: 'Accepted',    value: 'accepted' },
-  { label: 'In Progress', value: 'in_progress' },
-  { label: 'Done',        value: 'done' },
-  { label: 'Declined',    value: 'declined' },
-]
+const FILTERS = computed(() => [
+  { label: t.value.frAdminFilterAll, value: 'all' },
+  { label: t.value.frStatusOpen,        value: 'open' },
+  { label: t.value.frStatusAccepted,    value: 'accepted' },
+  { label: t.value.frStatusInProgress,  value: 'in_progress' },
+  { label: t.value.frStatusDone,        value: 'done' },
+  { label: t.value.frStatusDeclined,    value: 'declined' },
+])
 
 const activeFilter  = ref('all')
 const expanded      = ref(null)

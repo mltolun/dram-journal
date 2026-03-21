@@ -5,12 +5,12 @@
       <!-- Header -->
       <div class="subs-header">
         <div class="subs-title">
-          Inbox
+          {{ t.inbox }}
           <span v-if="totalCount" class="inbox-unread-badge">{{ totalCount }}</span>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button v-if="unreadCount" class="mark-all-btn" @click="markAllRead">
-            Mark all read
+            {{ t.markAllRead }}
           </button>
           <button class="subs-close" @click="$emit('close')">✕</button>
         </div>
@@ -19,7 +19,7 @@
       <!-- Empty state -->
       <div v-if="allItems.length === 0" class="inbox-empty">
         <div class="empty-icon">📬</div>
-        <div>All clear. Whisky recommendations and follow requests will appear here.</div>
+        <div>{{ t.inboxEmpty }}</div>
       </div>
 
       <div v-else class="inbox-list">
@@ -32,7 +32,7 @@
         >
           <div class="inbox-item-header">
             <div class="inbox-meta">
-              <span class="inbox-type-pill inbox-type-pill--follow">👁 Follow request</span>
+              <span class="inbox-type-pill inbox-type-pill--follow">{{ t.followRequest }}</span>
               <span class="inbox-dot">·</span>
               <span class="inbox-date">{{ formatDate(req.created_at) }}</span>
             </div>
@@ -40,7 +40,7 @@
 
           <div class="inbox-follow-from">
             <span class="inbox-follow-email">{{ req.follower_email || req.follower_id }}</span>
-            wants to follow you
+            {{ t.wantsToFollow }}
           </div>
 
           <div class="inbox-follow-actions">
@@ -49,14 +49,14 @@
               @click="doAccept(req.id, req.follower_email)"
               :disabled="actioning === req.id"
             >
-              {{ actioning === req.id ? '…' : 'Accept' }}
+              {{ actioning === req.id ? '…' : t.accept }}
             </button>
             <button
               class="follow-decline-btn"
               @click="doDecline(req.id)"
               :disabled="actioning === req.id"
             >
-              Decline
+              {{ t.decline }}
             </button>
           </div>
         </div>
@@ -71,7 +71,7 @@
         >
           <div class="inbox-item-header">
             <div class="inbox-meta">
-              <span class="inbox-type-pill inbox-type-pill--whisky">🥃 Shared dram</span>
+              <span class="inbox-type-pill inbox-type-pill--whisky">{{ t.sharedDram }}</span>
               <span class="inbox-dot">·</span>
               <span class="inbox-from">{{ msg.sender_email }}</span>
               <span class="inbox-dot">·</span>
@@ -106,12 +106,12 @@
             </div>
 
             <div v-if="msg.whisky_payload.rating" class="inbox-rating">
-              ★ {{ msg.whisky_payload.rating }} / 5 rated by sender
+              ★ {{ msg.whisky_payload.rating }} / 5
             </div>
           </div>
 
           <div class="inbox-expand-hint">
-            {{ expanded === msg.id ? '▲ less' : '▼ more' }}
+            {{ expanded === msg.id ? t.frLess : t.frDetails }}
           </div>
         </div>
 
@@ -124,11 +124,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useMessages, inbox, unreadCount } from '../composables/useMessages.js'
 import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
+import { useI18n } from '../composables/useI18n.js'
 
 defineEmits(['close'])
 
-const { loadInbox, markRead, markAllRead, deleteMessage } = useMessages()
+const { load{{ t.inbox }}, markRead, markAllRead, deleteMessage } = useMessages()
 const { loadSubscriptions, acceptRequest, removeSubscription } = useSubscriptions()
+const { t } = useI18n()
 
 const ATTRS = ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']
 const ATTR_LABELS = {
@@ -150,7 +152,7 @@ const allItems = computed(() =>
 )
 
 onMounted(async () => {
-  await Promise.all([loadInbox(), loadSubscriptions()])
+  await Promise.all([load{{ t.inbox }}(), loadSubscriptions()])
 })
 
 function expand(msg) {
