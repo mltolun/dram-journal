@@ -258,11 +258,57 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.admin-panel {
-  max-height: 92dvh;
+/* ── Modal shell (must be defined locally — scoped styles don't inherit) ── */
+.subs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(20, 12, 4, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.subs-panel {
+  background: var(--bg-modal, #1e1408);
+  border: 0.5px solid var(--border-hi, rgba(200,130,42,0.35));
+  border-radius: 16px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.subs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 0.5px solid var(--border, rgba(200,130,42,0.15));
+  flex-shrink: 0;
+}
+.subs-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.15rem;
+  color: var(--text-primary, #F8F4EE);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.subs-close {
+  background: none;
+  border: none;
+  color: var(--peat-light);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.subs-close:hover { color: var(--text-primary); }
+
+/* ── Admin panel sizing ── */
+.admin-panel {
+  max-height: 92dvh;
   max-width: 560px;
 }
 
