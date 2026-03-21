@@ -121,8 +121,7 @@
           <PhotoUpload
             :preview-src="previewUrl"
             :kb="compressedKb"
-            :processing="removingBg"
-            @picked="selectPhoto"
+            @picked="onPhotoSelected"
             @remove="onPhotoRemove"
           />
         </div>
@@ -218,6 +217,7 @@ import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
 import { ATTRS, DEFAULTS, TYPE_LABELS } from '../lib/constants.js'
+import { compressImage } from '../utils/compressImage.js'
 import Autocomplete from './Autocomplete.vue'
 import PhotoUpload  from './PhotoUpload.vue'
 
@@ -230,7 +230,7 @@ const props = defineProps({
 const emit  = defineEmits(['saved', 'close'])
 
 const { insertWhisky, updateWhisky } = useWhiskies()
-const { pendingBlob, previewUrl, compressedKb, removingBg, selectPhoto, clearPhoto, loadExisting, uploadPhoto } = usePhoto()
+const { pendingBlob, previewUrl, compressedKb, clearPhoto, loadExisting, uploadPhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
 
@@ -263,6 +263,13 @@ onMounted(() => {
     }
   }
 })
+
+async function onPhotoSelected(file) {
+  const { blob, dataUrl, kb } = await compressImage(file, 600, 0.78)
+  pendingBlob.value  = blob
+  previewUrl.value   = dataUrl
+  compressedKb.value = kb
+}
 
 function onPhotoRemove() {
   clearPhoto()
