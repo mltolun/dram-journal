@@ -28,10 +28,6 @@
           <transition name="menu">
             <div class="avatar-menu" v-if="menuOpen">
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
-              <div class="avatar-menu-debug" v-if="!isAdmin">
-                not admin · email: "{{ currentUser?.email?.toLowerCase() }}"<br>
-                VITE_ADMIN_EMAILS: "{{ adminEmailsDebug }}"
-              </div>
 
               <!-- Theme picker -->
               <div class="avatar-menu-divider"></div>
@@ -130,9 +126,6 @@ const { isAdmin: isAdminFn } = useFeatureRequests()
 
 // Must be a computed so Vue re-evaluates when currentUser resolves after auth
 const isAdmin = computed(() => isAdminFn())
-
-// Debug — exposes the raw env var so we can see exactly what Vite baked in
-const adminEmailsDebug = import.meta.env.VITE_ADMIN_EMAILS ?? '(undefined)'
 
 const openRequestCount = computed(() =>
   featureRequests.value.filter(r => r.status === 'open').length
@@ -414,15 +407,6 @@ async function doSignOut() {
   line-height: 1.4;
   min-width: 14px;
   text-align: center;
-}
-
-/* ── Debug (remove once admin menu confirmed working) ── */
-.avatar-menu-debug {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.52rem;
-  color: #e08888;
-  padding: 0 14px 6px;
-  opacity: 0.8;
 }
 
 /* ── Transition ── */
