@@ -26,6 +26,17 @@
       <div class="admin-list">
         <div v-if="loading" class="fr-loading">Loading…</div>
 
+        <div v-else-if="accessDenied" class="fr-empty access-denied">
+          <div class="fr-empty-icon">🔒</div>
+          <div class="access-denied-title">Access denied</div>
+          <div class="access-denied-body">
+            Your account (<strong>{{ currentUser?.email }}</strong>) is not recognised as an admin.<br><br>
+            Check that <code>VITE_ADMIN_EMAILS</code> in your <code>.env</code> matches exactly,
+            and that the Supabase RLS policy for <em>"Admins can read all feature requests"</em>
+            uses the same email. Then restart the dev server.
+          </div>
+        </div>
+
         <div v-else-if="filtered.length === 0" class="fr-empty">
           <div class="fr-empty-icon">✓</div>
           <div>No requests in this category.</div>
@@ -149,9 +160,10 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
+import { currentUser } from '../composables/useAuth.js'
 
 const emit = defineEmits(['close'])
-const { loadAllRequests, updateRequest, deleteRequest } = useFeatureRequests()
+const { loadAllRequests, loadAdminStatus, updateRequest, deleteRequest } = useFeatureRequests()
 
 const STATUS_LABELS = {
   open:        'Open',
@@ -172,13 +184,14 @@ const FILTERS = [
   { label: 'Declined',    value: 'declined' },
 ]
 
-const activeFilter = ref('all')
-const expanded     = ref(null)
-const loading      = ref(false)
-const saving       = ref(null)
-const saveSuccess  = ref(null)
-const saveError    = ref(null)
-const deleteTarget = ref(null)
+const activeFilter  = ref('all')
+const expanded      = ref(null)
+const loading       = ref(false)
+const accessDenied  = ref(false)
+const saving        = ref(null)
+const saveSuccess   = ref(null)
+const saveError     = ref(null)
+const deleteTarget  = ref(null)
 
 // Per-row editable drafts
 const drafts = reactive({})
@@ -252,6 +265,12 @@ async function doDelete() {
 
 onMounted(async () => {
   loading.value = true
+  const ok = await loadAdminStatus()
+  if (!ok) {
+    accessDenied.value = true
+    loading.value = false
+    return
+  }
   await loadAllRequests()
   loading.value = false
 })
@@ -629,4 +648,32 @@ onMounted(async () => {
   color: var(--text-secondary);
   cursor: pointer;
 }
+
+.access-denied {
+  padding: 32px 24px;
+}
+.access-denied-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e08888;
+  margin-bottom: 12px;
+}
+.access-denied-body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.76rem;
+  color: var(--peat-light);
+  line-height: 1.7;
+  text-align: left;
+}
+.access-denied-body strong { color: var(--amber-light); }
+.access-denied-body code {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  background: rgba(200,130,42,0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--amber);
+}
+.access-denied-body em { color: var(--text-secondary); font-style: normal; }
 </style>

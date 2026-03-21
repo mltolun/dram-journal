@@ -2,19 +2,40 @@ import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from './useAuth.js'
 
-export const featureRequests = ref([])        // all requests (admin view)
-export const myFeatureRequests = ref([])       // current user's requests
+export const featureRequests   = ref([])    // all requests (admin view)
+export const myFeatureRequests = ref([])    // current user's own requests
+export const isAdminUser       = ref(false) // set after loadAdminStatus()
 
-// Admin emails — add yours here or drive from env/supabase metadata
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean)
+// Case-insensitive list from env var (optional — RLS is the real enforcer)
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean)
 
 export function useFeatureRequests() {
 
+  // Sync check used in template v-if — case-insensitive, falls back to
+  // the reactive isAdminUser flag if no env var is configured.
   function isAdmin() {
-    return ADMIN_EMAILS.includes(currentUser.value?.email)
+    const email = currentUser.value?.email?.toLowerCase()
+    if (!email) return false
+    if (ADMIN_EMAILS.length > 0) return ADMIN_EMAILS.includes(email)
+    return isAdminUser.value
   }
 
-  // ── User: submit a new feature request ──────────────────────────────────────
+  // Async probe — does a lightweight HEAD query. If RLS allows it → admin.
+  // Called by AdminFeaturePanel on mount so the panel self-validates
+  // without depending on the env var being set correctly.
+  async function loadAdminStatus() {
+    const { error } = await sb
+      .from('feature_requests')
+      .select('id', { count: 'exact', head: true })
+
+    isAdminUser.value = !error
+    return isAdminUser.value
+  }
+
+  // ── User: submit ─────────────────────────────────────────────────────────────
 
   async function submitRequest({ title, description, impact }) {
     const { data, error } = await sb
@@ -49,10 +70,9 @@ export function useFeatureRequests() {
     myFeatureRequests.value = data || []
   }
 
-  // ── Admin: load all requests ─────────────────────────────────────────────────
+  // ── Admin: load all requests (no isAdmin() guard — RLS enforces it) ──────────
 
   async function loadAllRequests() {
-    if (!isAdmin()) return
     const { data, error } = await sb
       .from('feature_requests')
       .select('*')
@@ -62,7 +82,7 @@ export function useFeatureRequests() {
     featureRequests.value = data || []
   }
 
-  // ── Admin: update a request (status, priority, due_date, admin_note) ─────────
+  // ── Admin: update ────────────────────────────────────────────────────────────
 
   async function updateRequest(id, patch) {
     const { data, error } = await sb
@@ -74,11 +94,9 @@ export function useFeatureRequests() {
 
     if (error) throw error
 
-    // Patch local admin list
     const idx = featureRequests.value.findIndex(r => r.id === id)
     if (idx !== -1) featureRequests.value[idx] = data
 
-    // If admin closes the request, notify the requester via pending_notifications
     if (patch.status === 'done') {
       await sb.from('pending_notifications').insert({
         type:       'feature_request_done',
@@ -88,13 +106,13 @@ export function useFeatureRequests() {
           feature_title: data.title,
           admin_note:    patch.admin_note || '',
         }),
-      }).maybeSingle()  // fire-and-forget; ignore insert errors
+      }).maybeSingle()
     }
 
     return data
   }
 
-  // ── Admin: delete a request ──────────────────────────────────────────────────
+  // ── Admin: delete ────────────────────────────────────────────────────────────
 
   async function deleteRequest(id) {
     const { error } = await sb
@@ -108,6 +126,8 @@ export function useFeatureRequests() {
 
   return {
     isAdmin,
+    isAdminUser,
+    loadAdminStatus,
     featureRequests,
     myFeatureRequests,
     submitRequest,
