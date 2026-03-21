@@ -109,50 +109,106 @@ function recCard(rec) {
   </table>`
 }
 
-// ─── Activity item ────────────────────────────────────────────────────────────
+// ─── Activity rendering (grouped by user → type) ─────────────────────────────
 
-function activityItem(event, authorEmailMap) {
-  const authorEmail = authorEmailMap[event.user_id] || 'a friend'
-  // Show only the part before @ for privacy
-  const authorName = authorEmail.split('@')[0]
+/**
+ * Groups a flat activity array first by user_id, then by type ('rating'|'entry').
+ * Returns an array of user-groups, each containing type-sub-groups:
+ *   [ { userId, authorName, groups: [ { type, icon, label, events: [...] } ] } ]
+ */
+function groupActivity(events, authorEmailMap) {
+  const userOrder = []
+  const byUser = {}
 
+  for (const event of events) {
+    if (!byUser[event.user_id]) {
+      const email = authorEmailMap[event.user_id] || 'a friend'
+      byUser[event.user_id] = {
+        userId: event.user_id,
+        authorName: email.split('@')[0],
+        byType: {},
+      }
+      userOrder.push(event.user_id)
+    }
+    const u = byUser[event.user_id]
+    if (!u.byType[event.type]) u.byType[event.type] = []
+    u.byType[event.type].push(event)
+  }
+
+  return userOrder.map(uid => {
+    const u = byUser[uid]
+    // Preferred order: ratings first, then journal entries
+    const typeOrder = ['rating', 'entry'].filter(t => u.byType[t])
+    const groups = typeOrder.map(type => ({
+      type,
+      icon:   type === 'rating' ? '⭐' : '📖',
+      label:  type === 'rating' ? 'Rated' : 'Added to journal',
+      events: u.byType[type],
+    }))
+    return { userId: uid, authorName: u.authorName, groups }
+  })
+}
+
+function activityEventRow(event) {
   const dateStr = new Date(event.created_at).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'short',
   })
 
-  const icon   = event.type === 'rating' ? '⭐' : '📖'
-  const action = event.type === 'rating'
-    ? `rated <strong>${event.whisky_name}</strong> ${event.rating}/5`
-    : `added <strong>${event.whisky_name}</strong> to their journal`
+  const detail = event.type === 'rating'
+    ? `<strong>${event.whisky_name}</strong>${event.distillery ? ` <span style="color:${PEAT_LIGHT};">· ${event.distillery}</span>` : ''} — ${event.rating}/5`
+    : `<strong>${event.whisky_name}</strong>${event.distillery ? ` <span style="color:${PEAT_LIGHT};">· ${event.distillery}</span>` : ''}`
 
   const notesHtml = event.notes
     ? `<div style="font-family:'DM Sans',sans-serif;font-size:11px;font-style:italic;
-                   color:${PEAT_LIGHT};margin-top:6px;line-height:1.5;
+                   color:${PEAT_LIGHT};margin-top:4px;line-height:1.5;
                    padding-left:10px;border-left:2px solid rgba(200,130,42,0.3);">
          "${event.notes}"
        </div>`
     : ''
 
   return `
+    <tr>
+      <td style="padding:6px 0 6px 16px;border-bottom:1px solid rgba(200,130,42,0.07);">
+        <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${CREAM_DARK};line-height:1.5;">
+          ${detail}
+          <span style="white-space:nowrap;font-family:'DM Mono',monospace;font-size:9px;
+                       color:${PEAT_LIGHT};margin-left:8px;">${dateStr}</span>
+        </div>
+        ${notesHtml}
+      </td>
+    </tr>`
+}
+
+function activityUserBlock(userGroup) {
+  const typeBlocks = userGroup.groups.map(g => {
+    const rows = g.events.map(activityEventRow).join('')
+    return `
   <tr>
-    <td style="padding:10px 0;border-bottom:1px solid rgba(200,130,42,0.1);">
+    <td style="padding:4px 0 2px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;
+                  text-transform:uppercase;color:${PEAT_LIGHT};">
+        ${g.icon}&nbsp;${g.label}
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
-        <tr>
-          <td style="width:24px;vertical-align:top;padding-top:2px;font-size:14px;">${icon}</td>
-          <td style="padding-left:8px;">
-            <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${CREAM_DARK};line-height:1.5;">
-              <span style="font-family:'DM Mono',monospace;font-size:10px;
-                           color:${AMBER_LIGHT};">${authorName}</span>
-              &nbsp;${action}
-              ${event.distillery ? `<span style="color:${PEAT_LIGHT};"> · ${event.distillery}</span>` : ''}
-            </div>
-            ${notesHtml}
-          </td>
-          <td style="white-space:nowrap;font-family:'DM Mono',monospace;font-size:9px;
-                     color:${PEAT_LIGHT};vertical-align:top;padding-top:2px;padding-left:8px;">
-            ${dateStr}
-          </td>
-        </tr>
+        ${rows}
+      </table>
+    </td>
+  </tr>`
+  }).join('')
+
+  return `
+  <tr>
+    <td style="padding:14px 0 4px;border-bottom:1px solid rgba(200,130,42,0.18);">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+                  color:${AMBER_LIGHT};margin-bottom:4px;">
+        ${userGroup.authorName}
+      </div>
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        ${typeBlocks}
       </table>
     </td>
   </tr>`
@@ -167,7 +223,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
   const cards         = recs.map(recCard).join('')
   const hasActivity   = followerActivity && followerActivity.length > 0
   const activityRows  = hasActivity
-    ? followerActivity.map(e => activityItem(e, authorEmailMap)).join('')
+    ? groupActivity(followerActivity, authorEmailMap).map(activityUserBlock).join('')
     : `<tr><td style="padding:16px 0;font-family:'DM Sans',sans-serif;font-size:12px;
                       font-style:italic;color:${PEAT_LIGHT};line-height:1.6;">
          Your friends had no new activity this week — check back next Monday.
@@ -357,13 +413,20 @@ function buildEmailText(recs, followerActivity, authorEmailMap, generatedAt) {
 
   let activityText = ''
   if (followerActivity && followerActivity.length > 0) {
-    const actLines = followerActivity.map(e => {
-      const author = (authorEmailMap[e.user_id] || 'a friend').split('@')[0]
-      const action = e.type === 'rating'
-        ? `rated "${e.whisky_name}" ${e.rating}/5`
-        : `added "${e.whisky_name}" to their journal`
-      return `• ${author} ${action}${e.distillery ? ' (' + e.distillery + ')' : ''}`
-    }).join('\n')
+    const userGroups = groupActivity(followerActivity, authorEmailMap)
+    const actLines = userGroups.map(ug => {
+      const typeLines = ug.groups.map(g => {
+        const label = g.type === 'rating' ? 'Rated' : 'Added to journal'
+        const items = g.events.map(e => {
+          const detail = g.type === 'rating'
+            ? `"${e.whisky_name}" ${e.rating}/5${e.distillery ? ' (' + e.distillery + ')' : ''}`
+            : `"${e.whisky_name}"${e.distillery ? ' (' + e.distillery + ')' : ''}`
+          return `    • ${detail}`
+        }).join('\n')
+        return `  ${label}:\n${items}`
+      }).join('\n')
+      return `${ug.authorName}\n${typeLines}`
+    }).join('\n\n')
 
     activityText = `\n\nFRIENDS THIS WEEK\n-----------------\n${actLines}`
   }
