@@ -14,7 +14,12 @@ export function compressImage(file, maxPx = 600, quality = 0.78) {
       }
       const canvas = document.createElement('canvas')
       canvas.width = w; canvas.height = h
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      const ctx = canvas.getContext('2d')
+      // Fill white so transparent PNGs (e.g. after background removal)
+      // don't render with a black background when converted to JPEG.
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, w, h)
+      ctx.drawImage(img, 0, 0, w, h)
       canvas.toBlob((blob) => {
         URL.revokeObjectURL(url)
         const reader = new FileReader()

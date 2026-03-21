@@ -2,18 +2,33 @@ import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from './useAuth.js'
 import { compressImage } from '../utils/compressImage.js'
+import { removeBackground } from '../utils/removeBackground.js'
 
 export function usePhoto() {
   const pendingBlob   = ref(null)
   const previewUrl    = ref(null)
   const currentUrl    = ref(null)
   const compressedKb  = ref(null)
+  const removingBg    = ref(false)
 
   async function selectPhoto(file) {
-    const { blob, dataUrl, kb } = await compressImage(file, 600, 0.78)
-    pendingBlob.value  = blob
-    previewUrl.value   = dataUrl
-    compressedKb.value = kb
+    removingBg.value = true
+    try {
+      const bgRemovedBlob = await removeBackground(file)
+      const { blob, dataUrl, kb } = await compressImage(bgRemovedBlob, 600, 0.78)
+      pendingBlob.value  = blob
+      previewUrl.value   = dataUrl
+      compressedKb.value = kb
+    } catch (err) {
+      console.error('Background removal failed, falling back to original:', err)
+      // Graceful fallback: compress original without background removal
+      const { blob, dataUrl, kb } = await compressImage(file, 600, 0.78)
+      pendingBlob.value  = blob
+      previewUrl.value   = dataUrl
+      compressedKb.value = kb
+    } finally {
+      removingBg.value = false
+    }
   }
 
   function clearPhoto() {
@@ -50,5 +65,5 @@ export function usePhoto() {
     await sb.storage.from('whisky-photos').remove([path])
   }
 
-  return { pendingBlob, previewUrl, currentUrl, compressedKb, selectPhoto, clearPhoto, loadExisting, uploadPhoto, deletePhoto }
+  return { pendingBlob, previewUrl, currentUrl, compressedKb, removingBg, selectPhoto, clearPhoto, loadExisting, uploadPhoto, deletePhoto }
 }
