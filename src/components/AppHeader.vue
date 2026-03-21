@@ -6,16 +6,21 @@
         <div class="brand-sub">{{ t.brandSub }}</div>
       </div>
       <div class="header-right">
-        <button class="btn-theme" @click="cycleTheme" :title="`Theme: ${theme}`">{{ themeIcon }}</button>
 
         <!-- Inbox button -->
         <button class="btn-inbox" @click="inboxOpen = true" title="Inbox">
           📬
-          <span v-if="unreadCount" class="inbox-dot-badge">{{ unreadCount }}</span>
+          <span v-if="totalInboxCount" class="inbox-dot-badge">{{ totalInboxCount }}</span>
         </button>
 
+        <!-- Avatar -->
         <div class="avatar-wrap" ref="avatarWrap">
-          <div class="user-avatar" :title="currentUser?.email" @click="menuOpen = !menuOpen" :class="{ active: menuOpen }">
+          <div
+            class="user-avatar"
+            :title="currentUser?.email"
+            @click="menuOpen = !menuOpen"
+            :class="{ active: menuOpen }"
+          >
             <span class="avatar-letter">{{ avatarLetter }}</span>
             <span class="avatar-sync-dot" :style="{ background: syncColor }"></span>
           </div>
@@ -23,6 +28,26 @@
           <transition name="menu">
             <div class="avatar-menu" v-if="menuOpen">
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
+
+              <!-- Theme picker -->
+              <div class="avatar-menu-divider"></div>
+              <div class="theme-row">
+                <span class="theme-row-label">Theme</span>
+                <div class="theme-options">
+                  <button
+                    v-for="th in THEMES"
+                    :key="th"
+                    class="theme-option"
+                    :class="{ active: theme === th }"
+                    @click="setTheme(th)"
+                    :title="th"
+                  >
+                    <span class="theme-option-icon">{{ THEME_ICONS[th] }}</span>
+                    <span class="theme-option-label">{{ th }}</span>
+                  </button>
+                </div>
+              </div>
+
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doExport">
                 <span class="menu-item-icon">↓</span> {{ t.exportCsv }}
@@ -32,6 +57,17 @@
                 <span class="menu-item-icon">👁</span> Friends &amp; Followers
                 <span v-if="pendingRequests.length" class="menu-badge">{{ pendingRequests.length }}</span>
               </button>
+              <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item" @click="openFeatureRequests">
+                <span class="menu-item-icon">💡</span> Feature Requests
+              </button>
+              <template v-if="isAdmin()">
+                <div class="avatar-menu-divider"></div>
+                <button class="avatar-menu-item avatar-menu-item--admin" @click="openAdminPanel">
+                  <span class="menu-item-icon">🛠</span> Admin · Requests
+                  <span v-if="openRequestCount" class="menu-badge">{{ openRequestCount }}</span>
+                </button>
+              </template>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doToggleLocale">
                 <span class="menu-item-icon">🌐</span> {{ locale === 'en' ? 'Español' : 'English' }}
@@ -50,6 +86,8 @@
 
   <SubscriptionsPanel v-if="subsOpen" @close="subsOpen = false" />
   <InboxPanel v-if="inboxOpen" @close="inboxOpen = false" />
+  <FeatureRequestPanel v-if="featureOpen" @close="featureOpen = false" />
+  <AdminFeaturePanel v-if="adminOpen" @close="adminOpen = false" />
 </template>
 
 <script setup>
@@ -64,18 +102,36 @@ import { useSubscriptions, pendingRequests } from '../composables/useSubscriptio
 import { useMessages, unreadCount } from '../composables/useMessages.js'
 import SubscriptionsPanel from './SubscriptionsPanel.vue'
 import InboxPanel from './InboxPanel.vue'
+import FeatureRequestPanel from './FeatureRequestPanel.vue'
+import AdminFeaturePanel from './AdminFeaturePanel.vue'
+import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
 
 const { signOut } = useAuth()
-const { theme, cycleTheme } = useTheme()
+const { theme, THEMES } = useTheme()
 const { toast } = useToast()
 const { locale, t, toggleLocale } = useI18n()
 const { loadSubscriptions } = useSubscriptions()
 const { loadInbox } = useMessages()
 
-const menuOpen = ref(false)
-const avatarWrap = ref(null)
-const subsOpen = ref(false)
-const inboxOpen = ref(false)
+const THEME_ICONS = { whisky: '🥃', light: '☀️', dark: '🌑' }
+
+const menuOpen    = ref(false)
+const avatarWrap  = ref(null)
+const subsOpen    = ref(false)
+const inboxOpen   = ref(false)
+const featureOpen = ref(false)
+const adminOpen   = ref(false)
+
+const { isAdmin } = useFeatureRequests()
+
+const openRequestCount = computed(() =>
+  featureRequests.value.filter(r => r.status === 'open').length
+)
+
+// Inbox badge = unread whisky messages + pending follow requests
+const totalInboxCount = computed(() =>
+  unreadCount.value + pendingRequests.value.length
+)
 
 const safeAreaTop  = ref(0)
 const isStandalone = ref(false)
@@ -89,12 +145,10 @@ onMounted(() => {
     window.matchMedia('(display-mode: standalone)').matches
 
   if (isStandalone.value) {
-    // iOS status bar is 44px on most iPhones, 47px on Dynamic Island models.
-    // We can't reliably measure it in JS, so use 44px as a safe default.
-    // screen.height - innerHeight includes the bottom home bar too, so don't use that.
     safeAreaTop.value = 44
   }
 })
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
 
 const headerStyle = computed(() => ({
   paddingTop: safeAreaTop.value > 0 ? `calc(${safeAreaTop.value}px + 1.4rem)` : undefined
@@ -103,12 +157,6 @@ const headerStyle = computed(() => ({
 const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()
 )
-
-const themeIcon = computed(() => ({
-  whisky: '🥃',
-  dark: '🌑',
-  light: '☀️'
-})[theme.value] || '🥃')
 
 const syncColor = computed(() => ({
   loading: '#7A6255', saving: '#E8A84C', ok: '#1D9E75', error: '#E24B4A'
@@ -120,12 +168,20 @@ function onClickOutside(e) {
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', onClickOutside, true)
-  loadSubscriptions()
-  loadInbox()
-})
-onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
+function setTheme(t) {
+  theme.value = t
+  // intentionally keep menu open so user sees the live preview
+}
+
+function openFeatureRequests() {
+  menuOpen.value = false
+  featureOpen.value = true
+}
+
+function openAdminPanel() {
+  menuOpen.value = false
+  adminOpen.value = true
+}
 
 function openSubscriptions() {
   menuOpen.value = false
@@ -141,7 +197,6 @@ function doExport() {
 
 function doToggleLocale() {
   toggleLocale()
-  // keep menu open so user sees the change
 }
 
 async function doSignOut() {
@@ -151,22 +206,6 @@ async function doSignOut() {
 </script>
 
 <style scoped>
-.btn-theme {
-  background: none;
-  border: 0.5px solid var(--border);
-  border-radius: 5px;
-  font-size: 0.85rem;
-  padding: 2px 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-.btn-theme:hover {
-  border-color: var(--amber);
-  transform: scale(1.1);
-}
-
 /* Avatar */
 .avatar-wrap {
   position: relative;
@@ -214,7 +253,7 @@ async function doSignOut() {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 200px;
+  min-width: 220px;
   background: var(--bg-modal);
   border: 0.5px solid var(--border-hi);
   border-radius: 10px;
@@ -237,6 +276,59 @@ async function doSignOut() {
   background: var(--border);
   margin: 0;
 }
+
+/* ── Theme picker ── */
+.theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  gap: 10px;
+}
+.theme-row-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.theme-options {
+  display: flex;
+  gap: 5px;
+}
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 8px;
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.theme-option:hover {
+  border-color: var(--amber);
+  background: rgba(200, 130, 42, 0.08);
+}
+.theme-option.active {
+  border-color: var(--amber);
+  background: rgba(200, 130, 42, 0.15);
+}
+.theme-option-icon { font-size: 0.9rem; }
+.theme-option-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--peat-light);
+}
+.theme-option.active .theme-option-label { color: var(--amber-light); }
+
+/* ── Menu items ── */
 .avatar-menu-item {
   display: flex;
   align-items: center;
@@ -262,6 +354,10 @@ async function doSignOut() {
   background: rgba(226, 75, 74, 0.1);
   color: #e08888;
 }
+.avatar-menu-item--admin:hover {
+  background: rgba(200, 130, 42, 0.1);
+  color: var(--amber-light);
+}
 .menu-item-icon {
   font-size: 0.75rem;
   opacity: 0.7;
@@ -277,6 +373,7 @@ async function doSignOut() {
   line-height: 1.5;
 }
 
+/* ── Inbox button ── */
 .btn-inbox {
   position: relative;
   background: none;
@@ -293,7 +390,6 @@ async function doSignOut() {
   border-color: var(--amber);
   transform: scale(1.1);
 }
-
 .inbox-dot-badge {
   position: absolute;
   top: -4px;
@@ -310,16 +406,9 @@ async function doSignOut() {
   text-align: center;
 }
 
-/* Transition */
-.menu-enter-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.menu-leave-active {
-  transition: opacity 0.1s ease, transform 0.1s ease;
-}
+/* ── Transition ── */
+.menu-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.menu-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
 .menu-enter-from,
-.menu-leave-to {
-  opacity: 0;
-  transform: scale(0.95) translateY(-4px);
-}
+.menu-leave-to { opacity: 0; transform: scale(0.95) translateY(-4px); }
 </style>

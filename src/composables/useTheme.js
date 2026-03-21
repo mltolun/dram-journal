@@ -1,8 +1,9 @@
 import { ref, watch } from 'vue'
 
-const THEMES = ['whisky', 'light', 'dark']
+export const THEMES = ['whisky', 'light', 'dark']
+
 const stored = localStorage.getItem('dram-theme') || 'whisky'
-const theme = ref(THEMES.includes(stored) ? stored : 'whisky')
+export const theme = ref(THEMES.includes(stored) ? stored : 'whisky')
 
 function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t)
@@ -21,5 +22,5 @@ export function useTheme() {
     theme.value = THEMES[(idx + 1) % THEMES.length]
   }
 
-  return { theme, cycleTheme, THEMES }
+  return { theme, THEMES, cycleTheme }
 }

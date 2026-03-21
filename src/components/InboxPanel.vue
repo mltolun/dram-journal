@@ -1,11 +1,12 @@
 <template>
   <div class="subs-overlay" @click.self="$emit('close')">
-    <div class="subs-panel">
+    <div class="subs-panel inbox-panel">
 
+      <!-- Header -->
       <div class="subs-header">
         <div class="subs-title">
           Inbox
-          <span v-if="unreadCount" class="inbox-unread-badge">{{ unreadCount }}</span>
+          <span v-if="totalCount" class="inbox-unread-badge">{{ totalCount }}</span>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button v-if="unreadCount" class="mark-all-btn" @click="markAllRead">
@@ -15,21 +16,63 @@
         </div>
       </div>
 
-      <div v-if="inbox.length === 0" class="inbox-empty">
+      <!-- Empty state -->
+      <div v-if="allItems.length === 0" class="inbox-empty">
         <div class="empty-icon">📬</div>
-        <div>No messages yet. When a friend sends you a whisky recommendation it'll appear here.</div>
+        <div>All clear. Whisky recommendations and follow requests will appear here.</div>
       </div>
 
       <div v-else class="inbox-list">
+
+        <!-- ── Follow request items ── -->
+        <div
+          v-for="req in pendingRequests"
+          :key="`follow-${req.id}`"
+          class="inbox-item inbox-item--follow"
+        >
+          <div class="inbox-item-header">
+            <div class="inbox-meta">
+              <span class="inbox-type-pill inbox-type-pill--follow">👁 Follow request</span>
+              <span class="inbox-dot">·</span>
+              <span class="inbox-date">{{ formatDate(req.created_at) }}</span>
+            </div>
+          </div>
+
+          <div class="inbox-follow-from">
+            <span class="inbox-follow-email">{{ req.follower_email || req.follower_id }}</span>
+            wants to follow you
+          </div>
+
+          <div class="inbox-follow-actions">
+            <button
+              class="follow-accept-btn"
+              @click="doAccept(req.id, req.follower_email)"
+              :disabled="actioning === req.id"
+            >
+              {{ actioning === req.id ? '…' : 'Accept' }}
+            </button>
+            <button
+              class="follow-decline-btn"
+              @click="doDecline(req.id)"
+              :disabled="actioning === req.id"
+            >
+              Decline
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Whisky message items ── -->
         <div
           v-for="msg in inbox"
-          :key="msg.id"
+          :key="`msg-${msg.id}`"
           class="inbox-item"
           :class="{ unread: !msg.read }"
           @click="expand(msg)"
         >
           <div class="inbox-item-header">
             <div class="inbox-meta">
+              <span class="inbox-type-pill inbox-type-pill--whisky">🥃 Shared dram</span>
+              <span class="inbox-dot">·</span>
               <span class="inbox-from">{{ msg.sender_email }}</span>
               <span class="inbox-dot">·</span>
               <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
@@ -38,7 +81,7 @@
           </div>
 
           <div class="inbox-whisky-name">
-            🥃 {{ msg.whisky_payload.name }}
+            {{ msg.whisky_payload.name }}
           </div>
 
           <div v-if="msg.whisky_payload.distillery" class="inbox-whisky-sub">
@@ -71,19 +114,21 @@
             {{ expanded === msg.id ? '▲ less' : '▼ more' }}
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useMessages, inbox, unreadCount } from '../composables/useMessages.js'
+import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
 
 defineEmits(['close'])
 
 const { loadInbox, markRead, markAllRead, deleteMessage } = useMessages()
+const { loadSubscriptions, acceptRequest, removeSubscription } = useSubscriptions()
 
 const ATTRS = ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']
 const ATTR_LABELS = {
@@ -91,9 +136,22 @@ const ATTR_LABELS = {
   frutado: 'Fruitiness', especiado: 'Spiciness',
 }
 
-const expanded = ref(null)
+const expanded  = ref(null)
+const actioning = ref(null)   // id of the follow request currently being actioned
 
-onMounted(loadInbox)
+// Total badge count: unread messages + pending follow requests
+const totalCount = computed(() =>
+  unreadCount.value + pendingRequests.value.length
+)
+
+// Used to check empty state
+const allItems = computed(() =>
+  [...pendingRequests.value, ...inbox.value]
+)
+
+onMounted(async () => {
+  await Promise.all([loadInbox(), loadSubscriptions()])
+})
 
 function expand(msg) {
   if (expanded.value === msg.id) {
@@ -101,6 +159,24 @@ function expand(msg) {
   } else {
     expanded.value = msg.id
     if (!msg.read) markRead(msg.id)
+  }
+}
+
+async function doAccept(id, email) {
+  actioning.value = id
+  try {
+    await acceptRequest(id, email)
+  } finally {
+    actioning.value = null
+  }
+}
+
+async function doDecline(id) {
+  actioning.value = id
+  try {
+    await removeSubscription(id)
+  } finally {
+    actioning.value = null
   }
 }
 
@@ -139,6 +215,10 @@ function formatDate(iso) {
   justify-content: space-between;
   padding: 20px 24px 16px;
   border-bottom: 0.5px solid var(--border, rgba(200,130,42,0.15));
+  position: sticky;
+  top: 0;
+  background: var(--bg-modal, #1e1408);
+  z-index: 2;
 }
 
 .subs-title {
@@ -187,6 +267,7 @@ function formatDate(iso) {
 }
 .mark-all-btn:hover { color: var(--amber); border-color: var(--amber); }
 
+/* Empty */
 .inbox-empty {
   padding: 40px 24px;
   text-align: center;
@@ -197,11 +278,13 @@ function formatDate(iso) {
 }
 .empty-icon { font-size: 2rem; margin-bottom: 12px; }
 
+/* List */
 .inbox-list {
   display: flex;
   flex-direction: column;
 }
 
+/* ── Base item ── */
 .inbox-item {
   padding: 16px 24px;
   border-bottom: 0.5px solid var(--border, rgba(200,130,42,0.1));
@@ -223,30 +306,50 @@ function formatDate(iso) {
   background: var(--amber);
 }
 
+/* ── Follow-request item variant ── */
+.inbox-item--follow {
+  cursor: default;
+  background: rgba(100, 180, 255, 0.04);
+  border-left: 2px solid rgba(100, 180, 255, 0.3);
+}
+.inbox-item--follow:hover { background: rgba(100, 180, 255, 0.07); }
+
+/* Type pills */
 .inbox-item-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
-
 .inbox-meta {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+}
+.inbox-type-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+.inbox-type-pill--follow {
+  background: rgba(100,180,255,0.15);
+  color: #88bef5;
+}
+.inbox-type-pill--whisky {
+  background: rgba(200,130,42,0.15);
+  color: var(--amber-light);
 }
 
 .inbox-from {
   font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--amber-light);
 }
-
-.inbox-dot {
-  color: var(--peat-light);
-  font-size: 0.7rem;
-}
-
+.inbox-dot { color: var(--peat-light); font-size: 0.7rem; }
 .inbox-date {
   font-family: 'DM Mono', monospace;
   font-size: 0.62rem;
@@ -265,6 +368,62 @@ function formatDate(iso) {
 }
 .inbox-delete:hover { opacity: 1; color: #E24B4A; }
 
+/* Follow request body */
+.inbox-follow-from {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.inbox-follow-email {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 2px;
+}
+.inbox-follow-actions {
+  display: flex;
+  gap: 8px;
+}
+.follow-accept-btn {
+  padding: 7px 18px;
+  background: rgba(29,158,117,0.15);
+  border: 0.5px solid rgba(29,158,117,0.5);
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1D9E75;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.follow-accept-btn:hover:not(:disabled) { background: rgba(29,158,117,0.25); }
+.follow-accept-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.follow-decline-btn {
+  padding: 7px 14px;
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--peat-light);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.follow-decline-btn:hover:not(:disabled) {
+  background: rgba(226,75,74,0.08);
+  color: #e08888;
+  border-color: rgba(226,75,74,0.35);
+}
+.follow-decline-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Whisky message body */
 .inbox-whisky-name {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 1rem;
@@ -272,14 +431,12 @@ function formatDate(iso) {
   line-height: 1.3;
   margin-bottom: 2px;
 }
-
 .inbox-whisky-sub {
   font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
   color: var(--peat-light);
   margin-bottom: 4px;
 }
-
 .inbox-expand-hint {
   font-family: 'DM Mono', monospace;
   font-size: 0.58rem;
@@ -289,12 +446,12 @@ function formatDate(iso) {
   letter-spacing: 0.05em;
 }
 
+/* Expanded detail */
 .inbox-detail {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 0.5px solid var(--border);
 }
-
 .inbox-notes {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.78rem;
@@ -305,16 +462,13 @@ function formatDate(iso) {
   padding-left: 10px;
   border-left: 2px solid rgba(200,130,42,0.3);
 }
-
 .inbox-bars { margin-bottom: 8px; }
-
 .inbox-bar-row {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 4px;
 }
-
 .inbox-bar-lbl {
   font-family: 'DM Mono', monospace;
   font-size: 0.58rem;
@@ -324,7 +478,6 @@ function formatDate(iso) {
   width: 68px;
   flex-shrink: 0;
 }
-
 .inbox-bar-track {
   flex: 1;
   height: 4px;
@@ -332,14 +485,12 @@ function formatDate(iso) {
   border-radius: 4px;
   overflow: hidden;
 }
-
 .inbox-bar-fill {
   height: 100%;
   background: var(--amber-light);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
-
 .inbox-bar-val {
   font-family: 'DM Mono', monospace;
   font-size: 0.6rem;
@@ -347,7 +498,6 @@ function formatDate(iso) {
   width: 12px;
   text-align: right;
 }
-
 .inbox-rating {
   font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
