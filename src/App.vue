@@ -1,6 +1,6 @@
 <template>
   <RouterView />
-  <IOSInstallPrompt />
+  <InstallPrompt />
   <Teleport to="body">
     <Transition name="toast">
       <div v-if="toastVisible" class="toast">{{ toastMsg }}</div>
@@ -14,7 +14,7 @@ import { useRouter } from 'vue-router'
 import { sb } from './lib/supabase.js'
 import { currentUser } from './composables/useAuth.js'
 import { useToast } from './composables/useToast.js'
-import IOSInstallPrompt from './components/IOSInstallPrompt.vue'
+import InstallPrompt from './components/InstallPrompt.vue'
 
 const router = useRouter()
 const { toastMsg, toastVisible } = useToast()
