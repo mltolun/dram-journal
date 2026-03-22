@@ -44,6 +44,8 @@ async function blobToDataUrl(blob) {
   })
 }
 
+const MAX_PNG_PX = 600 // match compressImage maxPx — keeps file size under ~100 KB
+
 async function applyMask(dataUrl, mask) {
   const img = await new Promise((resolve, reject) => {
     const el = new Image()
@@ -52,18 +54,45 @@ async function applyMask(dataUrl, mask) {
     el.src = dataUrl
   })
 
+  // Resize to the same cap used for the JPEG so the PNG stays small
+  let w = img.width, h = img.height
+  if (w > MAX_PNG_PX || h > MAX_PNG_PX) {
+    if (w > h) { h = Math.round(h * MAX_PNG_PX / w); w = MAX_PNG_PX }
+    else       { w = Math.round(w * MAX_PNG_PX / h); h = MAX_PNG_PX }
+  }
+
   const canvas  = document.createElement('canvas')
-  canvas.width  = img.width
-  canvas.height = img.height
+  canvas.width  = w
+  canvas.height = h
   const ctx     = canvas.getContext('2d')
-  ctx.drawImage(img, 0, 0)
+  ctx.drawImage(img, 0, 0, w, h)
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const imageData = ctx.getImageData(0, 0, w, h)
   const pixels    = imageData.data
-  const maskData  = mask.data
 
-  for (let i = 0; i < maskData.length; i++) {
-    pixels[i * 4 + 3] = maskData[i]
+  // Resize the mask to match the output dimensions using a temporary canvas
+  const maskCanvas  = document.createElement('canvas')
+  maskCanvas.width  = w
+  maskCanvas.height = h
+  const maskCtx     = maskCanvas.getContext('2d')
+  const rawMask     = document.createElement('canvas')
+  rawMask.width     = mask.width
+  rawMask.height    = mask.height
+  const rawCtx      = rawMask.getContext('2d')
+  const rawData     = rawCtx.createImageData(mask.width, mask.height)
+  for (let i = 0; i < mask.data.length; i++) {
+    const v = Math.round(mask.data[i] * 255)
+    rawData.data[i * 4]     = v
+    rawData.data[i * 4 + 1] = v
+    rawData.data[i * 4 + 2] = v
+    rawData.data[i * 4 + 3] = 255
+  }
+  rawCtx.putImageData(rawData, 0, 0)
+  maskCtx.drawImage(rawMask, 0, 0, w, h)
+  const scaledMask = maskCtx.getImageData(0, 0, w, h)
+
+  for (let i = 0; i < pixels.length / 4; i++) {
+    pixels[i * 4 + 3] = scaledMask.data[i * 4] // red channel = grayscale mask value
   }
   ctx.putImageData(imageData, 0, 0)
 
