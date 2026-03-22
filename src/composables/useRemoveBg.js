@@ -75,8 +75,7 @@ function gaussianBlurAlpha(alpha, w, h, radius) {
 }
 
 /**
- * Erode the alpha mask by `px` pixels — pulls edges inward to remove fringe/halo pixels
- * that were contaminated by the original background colour.
+ * Erode alpha by `px` pixels using a circular kernel.
  */
 function erodeAlpha(alpha, w, h, px) {
   const out = new Float32Array(alpha.length)
@@ -85,10 +84,8 @@ function erodeAlpha(alpha, w, h, px) {
       let minVal = alpha[y * w + x]
       for (let dy = -px; dy <= px; dy++) {
         for (let dx = -px; dx <= px; dx++) {
-          if (dx * dx + dy * dy > px * px) continue // circular kernel
-          const sx = Math.min(Math.max(x + dx, 0), w - 1)
-          const sy = Math.min(Math.max(y + dy, 0), h - 1)
-          minVal = Math.min(minVal, alpha[sy * w + sx])
+          if (dx * dx + dy * dy > px * px) continue
+          minVal = Math.min(minVal, alpha[Math.min(Math.max(y + dy, 0), h - 1) * w + Math.min(Math.max(x + dx, 0), w - 1)])
         }
       }
       out[y * w + x] = minVal
@@ -98,34 +95,49 @@ function erodeAlpha(alpha, w, h, px) {
 }
 
 /**
- * Despill: for semi-transparent edge pixels, subtract the estimated background
- * colour contribution so the fringe doesn't tint the subject's edges.
- * Assumes background is roughly the average colour of fully-transparent border pixels.
+ * Sample the background colour from pixels just OUTSIDE the mask boundary
+ * (alpha < 0.05 within a 6px band of the edge), not from the whole transparent region.
+ * This avoids sampling the dark app UI as the background colour.
  */
-function despillEdges(pixels, alpha, w, h) {
-  // Estimate background colour from pixels where alpha < 0.1
+function estimateBgColour(pixels, alpha, w, h) {
+  // Build a dilated mask — pixels that are near the edge from outside
+  const BAND = 6
   let rSum = 0, gSum = 0, bSum = 0, count = 0
-  for (let i = 0; i < w * h; i++) {
-    if (alpha[i] < 0.1) {
-      rSum += pixels[i * 4]
-      gSum += pixels[i * 4 + 1]
-      bSum += pixels[i * 4 + 2]
-      count++
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x
+      if (alpha[i] >= 0.05) continue // only look at transparent pixels
+      // Check if any neighbour within BAND is opaque (inside the mask)
+      let nearEdge = false
+      outer: for (let dy = -BAND; dy <= BAND; dy++) {
+        for (let dx = -BAND; dx <= BAND; dx++) {
+          if (dx * dx + dy * dy > BAND * BAND) continue
+          const ni = Math.min(Math.max(y + dy, 0), h - 1) * w + Math.min(Math.max(x + dx, 0), w - 1)
+          if (alpha[ni] > 0.5) { nearEdge = true; break outer }
+        }
+      }
+      if (nearEdge) {
+        rSum += pixels[i * 4]; gSum += pixels[i * 4 + 1]; bSum += pixels[i * 4 + 2]
+        count++
+      }
     }
   }
-  if (count === 0) return // no transparent region to sample from
-  const bgR = rSum / count
-  const bgG = gSum / count
-  const bgB = bSum / count
+  if (count === 0) return null
+  return { r: rSum / count, g: gSum / count, b: bSum / count }
+}
 
-  // For edge pixels (0.05 < alpha < 0.95), subtract the background contribution
+/**
+ * Despill: remove background colour contamination from semi-transparent edge pixels.
+ */
+function despillEdges(pixels, alpha, w, h) {
+  const bg = estimateBgColour(pixels, alpha, w, h)
+  if (!bg) return
   for (let i = 0; i < w * h; i++) {
     const a = alpha[i]
     if (a <= 0.05 || a >= 0.95) continue
-    // Un-premultiply background: foreground ≈ (composite - bg*(1-a)) / a
-    pixels[i * 4]     = Math.min(255, Math.max(0, Math.round((pixels[i * 4]     - bgR * (1 - a)) / a)))
-    pixels[i * 4 + 1] = Math.min(255, Math.max(0, Math.round((pixels[i * 4 + 1] - bgG * (1 - a)) / a)))
-    pixels[i * 4 + 2] = Math.min(255, Math.max(0, Math.round((pixels[i * 4 + 2] - bgB * (1 - a)) / a)))
+    pixels[i * 4]     = Math.min(255, Math.max(0, Math.round((pixels[i * 4]     - bg.r * (1 - a)) / a)))
+    pixels[i * 4 + 1] = Math.min(255, Math.max(0, Math.round((pixels[i * 4 + 1] - bg.g * (1 - a)) / a)))
+    pixels[i * 4 + 2] = Math.min(255, Math.max(0, Math.round((pixels[i * 4 + 2] - bg.b * (1 - a)) / a)))
   }
 }
 
@@ -152,7 +164,7 @@ async function applyMask(dataUrl, mask) {
   const pixels    = imageData.data
   const mw = mask.width, mh = mask.height
 
-  // 1 — bilinear-sample mask into float alpha buffer
+  // 1 — bilinear-sample mask into float alpha buffer at output resolution
   const alpha = new Float32Array(w * h)
   for (let y = 0; y < h; y++) {
     const srcY = (y / (h - 1)) * (mh - 1)
@@ -161,14 +173,25 @@ async function applyMask(dataUrl, mask) {
     }
   }
 
-  // 2 — erode by 2px to strip halo/fringe pixels from the border
-  erodeAlpha(alpha, w, h, 2)
-
-  // 3 — Gaussian blur to re-smooth the now-hard eroded edge
-  gaussianBlurAlpha(alpha, w, h, 1.5)
-
-  // 4 — despill background colour from semi-transparent edge pixels
+  // 2 — despill BEFORE erosion so we sample the original background pixels while they're still present
   despillEdges(pixels, alpha, w, h)
+
+  // 3 — adaptive erosion: stronger where edge pixels are bright (halo-prone), lighter elsewhere
+  //     Pass 1: light erosion (1px) on all edges
+  erodeAlpha(alpha, w, h, 1)
+  //     Pass 2: extra 2px erosion only on pixels whose colour brightness suggests bg contamination
+  const brightAlpha = new Float32Array(alpha)
+  for (let i = 0; i < w * h; i++) {
+    const a = alpha[i]
+    if (a < 0.05 || a > 0.95) continue
+    const brightness = (pixels[i * 4] * 0.299 + pixels[i * 4 + 1] * 0.587 + pixels[i * 4 + 2] * 0.114) / 255
+    if (brightness > 0.75) brightAlpha[i] = 0 // treat very bright edge pixels as background
+  }
+  // Blend: use the aggressive mask where brightness suggests contamination
+  for (let i = 0; i < w * h; i++) alpha[i] = Math.min(alpha[i], brightAlpha[i])
+
+  // 4 — Gaussian blur to smooth the eroded edge
+  gaussianBlurAlpha(alpha, w, h, 1.5)
 
   // 5 — write alpha
   for (let i = 0; i < w * h; i++) {
