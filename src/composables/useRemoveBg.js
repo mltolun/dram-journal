@@ -181,43 +181,81 @@ async function applyMask(dataUrl, mask) {
   })
 }
 
-export function removeBgInBackground(whiskyId, jpegBlob, photoUrl = null) {
+// Queue of pending jobs — processed one at a time to keep memory pressure low
+const bgQueue = []
+let bgRunning = false
+
+async function drainQueue() {
+  if (bgRunning) return
+  bgRunning = true
+  while (bgQueue.length > 0) {
+    const job = bgQueue.shift()
+    await runBgRemoval(job)
+    // Yield between jobs so the browser can GC before the next model run
+    await new Promise(r => setTimeout(r, 500))
+  }
+  bgRunning = false
+}
+
+async function runBgRemoval({ whiskyId, userId, sourceBlob }) {
+  try {
+    const { updateWhisky } = useWhiskies()
+
+    const seg     = await loadModel()
+    const dataUrl = await blobToDataUrl(sourceBlob)
+    const results = await seg(dataUrl, { return_mask: true })
+    const pngBlob = await applyMask(dataUrl, results[0].mask)
+
+    const path = `${userId}/${whiskyId}.png`
+    const { error: uploadError } = await sb.storage
+      .from('whisky-photos')
+      .upload(path, pngBlob, { contentType: 'image/png', cacheControl: '3600', upsert: true })
+    if (uploadError) throw uploadError
+
+    const { data: urlData } = sb.storage.from('whisky-photos').getPublicUrl(path)
+    const newUrl = urlData.publicUrl + '?t=' + Date.now()
+
+    await sb.storage.from('whisky-photos').remove([`${userId}/${whiskyId}.jpg`])
+    await updateWhisky(whiskyId, { photo_url: newUrl })
+
+  } catch (err) {
+    console.warn(`BG removal failed for ${whiskyId}:`, err)
+  } finally {
+    const next = new Set(processingIds.value)
+    next.delete(whiskyId)
+    processingIds.value = next
+  }
+}
+
+export function removeBgInBackground(whiskyId, sourceBlob, photoUrl = null) {
   const userId = currentUser.value?.id
   if (!userId) return
   if (processingIds.value.has(whiskyId)) return
   processingIds.value = new Set([...processingIds.value, whiskyId])
 
+  // Resolve the blob first (fetch if needed), then enqueue
   ;(async () => {
     try {
-      const { updateWhisky } = useWhiskies()
-      let sourceBlob = jpegBlob
-      if (!sourceBlob) {
+      let blob = sourceBlob
+      if (!blob) {
         if (!photoUrl) throw new Error('No blob or photoUrl provided')
         const res = await fetch(photoUrl)
         if (!res.ok) throw new Error(`Failed to fetch photo: ${res.statusText}`)
-        sourceBlob = await res.blob()
+        blob = await res.blob()
       }
 
-      const seg     = await loadModel()
-      const dataUrl = await blobToDataUrl(sourceBlob)
-      const results = await seg(dataUrl, { return_mask: true })
-      const pngBlob = await applyMask(dataUrl, results[0].mask)
+      bgQueue.push({ whiskyId, userId, sourceBlob: blob })
 
-      const path = `${userId}/${whiskyId}.png`
-      const { error: uploadError } = await sb.storage
-        .from('whisky-photos')
-        .upload(path, pngBlob, { contentType: 'image/png', cacheControl: '3600', upsert: true })
-      if (uploadError) throw uploadError
-
-      const { data: urlData } = sb.storage.from('whisky-photos').getPublicUrl(path)
-      const newUrl = urlData.publicUrl + '?t=' + Date.now()
-
-      await sb.storage.from('whisky-photos').remove([`${userId}/${whiskyId}.jpg`])
-      await updateWhisky(whiskyId, { photo_url: newUrl })
-
+      // Wait for the browser to be idle before starting, to avoid competing
+      // with page rendering and triggering the low-memory reload
+      const start = () => drainQueue()
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(start, { timeout: 10000 })
+      } else {
+        setTimeout(start, 2000)
+      }
     } catch (err) {
-      console.warn(`BG removal failed for ${whiskyId}:`, err)
-    } finally {
+      console.warn(`BG removal enqueue failed for ${whiskyId}:`, err)
       const next = new Set(processingIds.value)
       next.delete(whiskyId)
       processingIds.value = next
