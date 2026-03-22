@@ -97,9 +97,10 @@ export function useFeatureRequests() {
     const idx = featureRequests.value.findIndex(r => r.id === id)
     if (idx !== -1) featureRequests.value[idx] = data
 
-    if (patch.status === 'done') {
+    const notifiableStatuses = ['accepted', 'in_progress', 'done', 'declined']
+    if (patch.status && notifiableStatuses.includes(patch.status)) {
       await sb.from('pending_notifications').insert({
-        type:       'feature_request_done',
+        type:       `feature_request_${patch.status}`,
         to_email:   data.user_email,
         from_email: currentUser.value.email,
         meta:       JSON.stringify({

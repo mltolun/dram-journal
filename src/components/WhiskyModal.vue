@@ -493,4 +493,11 @@ async function save() {
 .view-star.filled {
   color: var(--amber-light);
 }
+.bg-removal-status {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  opacity: 0.6;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
 </style>

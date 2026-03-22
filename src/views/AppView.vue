@@ -87,6 +87,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
+import { removeBgInBackground } from '../composables/useRemoveBg.js'
 import { useLookups } from '../composables/useLookups.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -134,6 +135,12 @@ onMounted(async () => {
   const session = await getSession()
   if (session) {
     await Promise.all([loadWhiskies(), loadLookups()])
+
+    // Re-queue any photos that didn't finish bg removal in a previous session
+    const { whiskies } = useWhiskies()
+    whiskies.value
+      .filter(w => w.photo_url && /\.jpg/i.test(w.photo_url))
+      .forEach(w => removeBgInBackground(w.id, null, w.photo_url))
   }
 })
 
@@ -191,7 +198,7 @@ function openShareModal(w) {
 async function doDelete(w) {
   if (!confirm(`Delete "${w.name}"?`)) return
   await deleteWhisky(w.id)
-  if (w.photo_url) deletePhoto(w.id)
+  if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
   selected.value = selected.value.filter(id => id !== w.id)
   toast(t.value.deleted)
 }
