@@ -61,9 +61,6 @@ const cardImage  = computed(() => props.whisky?.photo_url || placeholderImg)
 </script>
 
 <style scoped>
-  50%       { opacity: 1; }
-}
-
 .wcard-meta-row {
   display: flex;
   align-items: center;
