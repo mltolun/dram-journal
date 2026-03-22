@@ -25,7 +25,7 @@ async function loadModel() {
     env.backends.onnx.wasm.proxy = true
 
     segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
-      device: 'webgpu', // auto-falls back to wasm
+      device: 'wasm', // wasm proxy runs in a worker — avoids tab memory pressure from webgpu
     })
 
     modelLoaded.value = true
@@ -54,45 +54,32 @@ async function applyMask(dataUrl, mask) {
     el.src = dataUrl
   })
 
-  // Resize to the same cap used for the JPEG so the PNG stays small
+  // Resize output to MAX_PNG_PX on the longest side
   let w = img.width, h = img.height
   if (w > MAX_PNG_PX || h > MAX_PNG_PX) {
     if (w > h) { h = Math.round(h * MAX_PNG_PX / w); w = MAX_PNG_PX }
     else       { w = Math.round(w * MAX_PNG_PX / h); h = MAX_PNG_PX }
   }
 
-  const canvas  = document.createElement('canvas')
+  const canvas = document.createElement('canvas')
   canvas.width  = w
   canvas.height = h
-  const ctx     = canvas.getContext('2d')
+  const ctx = canvas.getContext('2d')
   ctx.drawImage(img, 0, 0, w, h)
 
   const imageData = ctx.getImageData(0, 0, w, h)
   const pixels    = imageData.data
 
-  // Resize the mask to match the output dimensions using a temporary canvas
-  const maskCanvas  = document.createElement('canvas')
-  maskCanvas.width  = w
-  maskCanvas.height = h
-  const maskCtx     = maskCanvas.getContext('2d')
-  const rawMask     = document.createElement('canvas')
-  rawMask.width     = mask.width
-  rawMask.height    = mask.height
-  const rawCtx      = rawMask.getContext('2d')
-  const rawData     = rawCtx.createImageData(mask.width, mask.height)
-  for (let i = 0; i < mask.data.length; i++) {
-    const v = Math.round(mask.data[i] * 255)
-    rawData.data[i * 4]     = v
-    rawData.data[i * 4 + 1] = v
-    rawData.data[i * 4 + 2] = v
-    rawData.data[i * 4 + 3] = 255
-  }
-  rawCtx.putImageData(rawData, 0, 0)
-  maskCtx.drawImage(rawMask, 0, 0, w, h)
-  const scaledMask = maskCtx.getImageData(0, 0, w, h)
-
-  for (let i = 0; i < pixels.length / 4; i++) {
-    pixels[i * 4 + 3] = scaledMask.data[i * 4] // red channel = grayscale mask value
+  // Scale the mask Float32Array directly — nearest-neighbour, no canvas gamma corruption
+  const mw = mask.width
+  const mh = mask.height
+  for (let y = 0; y < h; y++) {
+    const srcY = Math.min(Math.round(y * mh / h), mh - 1)
+    for (let x = 0; x < w; x++) {
+      const srcX  = Math.min(Math.round(x * mw / w), mw - 1)
+      const alpha = Math.round(mask.data[srcY * mw + srcX] * 255)
+      pixels[(y * w + x) * 4 + 3] = alpha
+    }
   }
   ctx.putImageData(imageData, 0, 0)
 
