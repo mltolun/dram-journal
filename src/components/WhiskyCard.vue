@@ -84,6 +84,7 @@ const isProcessingBg = computed(() => processingIds.value.has(props.whisky?.id))
   50%       { opacity: 1; }
 }
 
+.wcard-meta-row {
   display: flex;
   align-items: center;
   gap: 8px;
