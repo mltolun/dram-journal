@@ -25,7 +25,7 @@ async function loadModel() {
     env.backends.onnx.wasm.proxy = true
 
     segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
-      device: 'wasm', // wasm proxy runs in a worker — avoids tab memory pressure from webgpu
+      device: 'wasm',
     })
 
     modelLoaded.value = true
@@ -44,7 +44,69 @@ async function blobToDataUrl(blob) {
   })
 }
 
-const MAX_PNG_PX = 600 // match compressImage maxPx — keeps file size under ~100 KB
+const MAX_PNG_PX = 600
+
+/**
+ * Bilinear interpolation of the Float32 mask at a fractional (x, y) position.
+ */
+function sampleMaskBilinear(data, mw, mh, x, y) {
+  const x0 = Math.floor(x), y0 = Math.floor(y)
+  const x1 = Math.min(x0 + 1, mw - 1)
+  const y1 = Math.min(y0 + 1, mh - 1)
+  const fx = x - x0, fy = y - y0
+
+  const v00 = data[y0 * mw + x0]
+  const v10 = data[y0 * mw + x1]
+  const v01 = data[y1 * mw + x0]
+  const v11 = data[y1 * mw + x1]
+
+  return (v00 * (1 - fx) + v10 * fx) * (1 - fy) +
+         (v01 * (1 - fx) + v11 * fx) * fy
+}
+
+/**
+ * Apply a 1D Gaussian kernel to a Float32Array alpha channel (separable pass).
+ * Operates in-place on `alpha` (length = w * h).
+ */
+function gaussianBlurAlpha(alpha, w, h, radius) {
+  const sigma = radius / 2
+  const size  = Math.ceil(radius) * 2 + 1
+  const kernel = new Float32Array(size)
+  let sum = 0
+  for (let i = 0; i < size; i++) {
+    const x = i - Math.floor(size / 2)
+    kernel[i] = Math.exp(-(x * x) / (2 * sigma * sigma))
+    sum += kernel[i]
+  }
+  for (let i = 0; i < size; i++) kernel[i] /= sum
+
+  const tmp = new Float32Array(alpha.length)
+  const half = Math.floor(size / 2)
+
+  // Horizontal pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = 0
+      for (let k = 0; k < size; k++) {
+        const sx = Math.min(Math.max(x + k - half, 0), w - 1)
+        v += alpha[y * w + sx] * kernel[k]
+      }
+      tmp[y * w + x] = v
+    }
+  }
+
+  // Vertical pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = 0
+      for (let k = 0; k < size; k++) {
+        const sy = Math.min(Math.max(y + k - half, 0), h - 1)
+        v += tmp[sy * w + x] * kernel[k]
+      }
+      alpha[y * w + x] = v
+    }
+  }
+}
 
 async function applyMask(dataUrl, mask) {
   const img = await new Promise((resolve, reject) => {
@@ -54,7 +116,6 @@ async function applyMask(dataUrl, mask) {
     el.src = dataUrl
   })
 
-  // Resize output to MAX_PNG_PX on the longest side
   let w = img.width, h = img.height
   if (w > MAX_PNG_PX || h > MAX_PNG_PX) {
     if (w > h) { h = Math.round(h * MAX_PNG_PX / w); w = MAX_PNG_PX }
@@ -70,16 +131,25 @@ async function applyMask(dataUrl, mask) {
   const imageData = ctx.getImageData(0, 0, w, h)
   const pixels    = imageData.data
 
-  // Scale the mask Float32Array directly — nearest-neighbour, no canvas gamma corruption
   const mw = mask.width
   const mh = mask.height
+
+  // Step 1 — bilinear-sample the mask into a float alpha buffer at output resolution
+  const alpha = new Float32Array(w * h)
   for (let y = 0; y < h; y++) {
-    const srcY = Math.min(Math.round(y * mh / h), mh - 1)
+    const srcY = (y / (h - 1)) * (mh - 1)
     for (let x = 0; x < w; x++) {
-      const srcX  = Math.min(Math.round(x * mw / w), mw - 1)
-      const alpha = Math.round(mask.data[srcY * mw + srcX] * 255)
-      pixels[(y * w + x) * 4 + 3] = alpha
+      const srcX = (x / (w - 1)) * (mw - 1)
+      alpha[y * w + x] = sampleMaskBilinear(mask.data, mw, mh, srcX, srcY)
     }
+  }
+
+  // Step 2 — light Gaussian blur on the alpha channel to soften hard edges (radius ~1.2px)
+  gaussianBlurAlpha(alpha, w, h, 1.2)
+
+  // Step 3 — write alpha into the image pixels
+  for (let i = 0; i < w * h; i++) {
+    pixels[i * 4 + 3] = Math.round(Math.min(Math.max(alpha[i], 0), 1) * 255)
   }
   ctx.putImageData(imageData, 0, 0)
 
@@ -90,26 +160,18 @@ async function applyMask(dataUrl, mask) {
 
 /**
  * Fire-and-forget: run bg removal in the background after the record is saved.
- *
- * @param {string} whiskyId
- * @param {Blob|null} jpegBlob  - pass the blob if available (fresh upload),
- *                                or null to re-fetch from the stored photo_url (re-queue on startup)
- * @param {string|null} photoUrl - required when jpegBlob is null, used to fetch the image
  */
 export function removeBgInBackground(whiskyId, jpegBlob, photoUrl = null) {
   const userId = currentUser.value?.id
   if (!userId) return
 
-  // Avoid duplicate processing
   if (processingIds.value.has(whiskyId)) return
-
   processingIds.value = new Set([...processingIds.value, whiskyId])
 
   ;(async () => {
     try {
       const { updateWhisky } = useWhiskies()
 
-      // If no blob provided, fetch the JPG from its public URL
       let sourceBlob = jpegBlob
       if (!sourceBlob) {
         if (!photoUrl) throw new Error('No blob or photoUrl provided')
@@ -123,7 +185,6 @@ export function removeBgInBackground(whiskyId, jpegBlob, photoUrl = null) {
       const results = await seg(dataUrl, { return_mask: true })
       const pngBlob = await applyMask(dataUrl, results[0].mask)
 
-      // Upload PNG to storage
       const path = `${userId}/${whiskyId}.png`
       const { error: uploadError } = await sb.storage
         .from('whisky-photos')
@@ -131,14 +192,10 @@ export function removeBgInBackground(whiskyId, jpegBlob, photoUrl = null) {
 
       if (uploadError) throw uploadError
 
-      // Get new public URL
       const { data: urlData } = sb.storage.from('whisky-photos').getPublicUrl(path)
       const newUrl = urlData.publicUrl + '?t=' + Date.now()
 
-      // Delete old JPG
       await sb.storage.from('whisky-photos').remove([`${userId}/${whiskyId}.jpg`])
-
-      // Update DB + local reactive state — all components showing this whisky update instantly
       await updateWhisky(whiskyId, { photo_url: newUrl })
 
     } catch (err) {
