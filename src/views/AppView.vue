@@ -87,7 +87,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
-import { removeBgInBackground } from '../composables/useRemoveBg.js'
 import { useLookups } from '../composables/useLookups.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -140,7 +139,6 @@ onMounted(async () => {
     const { whiskies } = useWhiskies()
     whiskies.value
       .filter(w => w.photo_url && /\.jpg/i.test(w.photo_url))
-      .forEach(w => removeBgInBackground(w.id, null, w.photo_url))
   }
 })
 
