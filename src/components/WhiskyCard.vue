@@ -3,7 +3,6 @@
     <div v-if="!isWishlist" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
     <img v-if="!isWishlist" class="wcard-photo" :src="cardImage" :alt="whisky.name" loading="lazy">
-    <div v-if="!isWishlist && isProcessingBg" class="wcard-bg-processing">✦</div>
 
     <div>
       <div class="wcard-meta-row">
@@ -59,28 +58,9 @@ const { t } = useI18n()
 const isWishlist = computed(() => props.whisky?.list === 'wishlist')
 const cardImage  = computed(() => props.whisky?.photo_url || placeholderImg)
 
-import { processingIds } from '../composables/useRemoveBg.js'
-const isProcessingBg = computed(() => processingIds.value.has(props.whisky?.id))
 </script>
 
 <style scoped>
-.wcard-bg-processing {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  font-size: 0.65rem;
-  background: rgba(0,0,0,0.45);
-  color: #fff;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
   50%       { opacity: 1; }
 }
 
