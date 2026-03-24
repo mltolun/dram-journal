@@ -99,7 +99,7 @@ export function useFeatureRequests() {
 
     const notifiableStatuses = ['accepted', 'in_progress', 'done', 'declined']
     if (patch.status && notifiableStatuses.includes(patch.status)) {
-      await sb.from('pending_notifications').insert({
+      const { error: notifError } = await sb.from('pending_notifications').insert({
         type:       `feature_request_${patch.status}`,
         to_email:   data.user_email,
         from_email: currentUser.value.email,
@@ -107,7 +107,8 @@ export function useFeatureRequests() {
           feature_title: data.title,
           admin_note:    patch.admin_note || '',
         }),
-      }).maybeSingle()
+      })
+      if (notifError) console.error('pending_notifications insert failed:', notifError.message)
     }
 
     return data
