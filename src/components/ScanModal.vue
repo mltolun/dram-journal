@@ -41,19 +41,68 @@
 
       <!-- Step 4: result -->
       <div v-else-if="step === 'result'">
+
+        <!-- Identified header -->
         <div class="scan-result-header">
           <span class="scan-tick">✓</span> {{ t.whiskyIdentified }}
           <span class="scan-model-badge">{{ MODEL_LABELS[ACTIVE_MODEL] }}</span>
         </div>
-        <div class="scan-fields">
-          <div class="scan-field" v-for="(val, key) in displayResult" :key="key">
-            <span class="scan-field-lbl">{{ t.scanFieldLabels[key] }}</span>
-            <span class="scan-field-val">{{ val }}</span>
+
+        <!-- Catalogue picked — show locked card -->
+        <div v-if="cataloguePicked" class="scan-picked-card">
+          <div class="scan-picked-thumb">
+            <img v-if="cataloguePicked.photo_url" :src="cataloguePicked.photo_url" :alt="cataloguePicked.name" class="scan-picked-img">
+            <div v-else class="scan-picked-placeholder">🥃</div>
           </div>
+          <div class="scan-picked-info">
+            <div class="scan-picked-name">{{ cataloguePicked.name }}</div>
+            <div class="scan-picked-meta">{{ cataloguePicked.distillery }} · {{ cataloguePicked.country }}</div>
+          </div>
+          <button class="scan-picked-change" @click="cataloguePicked = null">↩</button>
         </div>
-        <div v-if="result.notes" class="scan-notes">{{ result.notes }}</div>
+
+        <!-- Catalogue matches -->
+        <template v-else>
+          <div v-if="catalogue.searching.value" class="scan-cat-searching">{{ t.searching || 'Searching catalogue…' }}</div>
+          <template v-else-if="catalogue.results.value.length">
+            <div class="scan-cat-hint">{{ t.scanMatchHint || 'Select the matching bottle:' }}</div>
+            <div class="scan-cat-list">
+              <div
+                v-for="item in catalogue.results.value"
+                :key="item.id"
+                class="cs-item"
+                @click="cataloguePicked = item"
+              >
+                <div class="cs-thumb">
+                  <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
+                  <div v-else class="cs-img-placeholder">🥃</div>
+                </div>
+                <div class="cs-info">
+                  <div class="cs-name">{{ item.name }}</div>
+                  <div class="cs-meta">
+                    <span v-if="item.distillery">{{ item.distillery }}</span>
+                    <span v-if="item.country" class="cs-dot">·</span>
+                    <span v-if="item.country">{{ item.country }}</span>
+                    <span v-if="item.type" class="cs-badge" :class="`type-${item.type}`">{{ t.types?.[item.type] }}</span>
+                  </div>
+                  <div class="cs-sub" v-if="item.age || item.abv">
+                    <span v-if="item.age">{{ item.age }}</span>
+                    <span v-if="item.age && item.abv" class="cs-dot">·</span>
+                    <span v-if="item.abv">{{ item.abv }}</span>
+                  </div>
+                </div>
+                <span class="cs-arrow">›</span>
+              </div>
+            </div>
+          </template>
+          <div v-else class="scan-cat-none">{{ t.scanNoMatch || 'No catalogue match — will save with scanned data.' }}</div>
+        </template>
+
+        <!-- Actions -->
         <div class="scan-actions">
-          <button class="btn-auth" @click="confirm">{{ t.addToList(props.list) }}</button>
+          <button class="btn-auth" :disabled="saving" @click="save">
+            {{ saving ? t.saving : t.addToList(props.list) }}
+          </button>
           <button class="btn-cancel" @click="reset">{{ t.scanAgain }}</button>
         </div>
       </div>
@@ -71,17 +120,26 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { DEFAULTS } from '../lib/constants.js'
+import { DEFAULTS, ATTRS } from '../lib/constants.js'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from '../composables/useAuth.js'
 import { compressImage } from '../utils/compressImage.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
+import { useWhiskies } from '../composables/useWhiskies.js'
+import { useToast } from '../composables/useToast.js'
 
 const emit = defineEmits(['close', 'identified'])
 
 const props = defineProps({ list: { type: String, default: 'journal' } })
 
 const { t } = useI18n()
+const { insertWhisky } = useWhiskies()
+const { toast } = useToast()
+const catalogue = useCatalogue()
+
+const saving         = ref(false)
+const cataloguePicked = ref(null)  // set when user picks from catalogue matches
 
 const DAILY_CAP = 20
 
@@ -92,7 +150,7 @@ const ACTIVE_MODEL = 'gemini' // 'gemma' | 'gemini'
 
 const MODEL_LABELS = {
   gemma:  'Gemma 3 27B',
-  gemini: 'Gemini 3.1 Flash Lite',
+  gemini: 'Gemini 2.0 Flash',
 }
 
 const step       = ref('pick')
@@ -106,30 +164,23 @@ const errorMsg   = ref('')
 const fileInput  = ref(null)
 const scansToday = ref(0)
 
-const API_KEY = import.meta.env.VITE_GEMINI_KEY
+const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-proxy`
 
 // ── Quota tracking ────────────────────────────────────────────────────────────
 
 async function fetchScansToday() {
   const today = new Date().toISOString().split('T')[0]
-  const { data } = await sb
-    .from('scan_usage')
-    .select('count')
+  const { count } = await sb
+    .from('scan_log')
+    .select('*', { count: 'exact', head: true })
     .eq('user_id', currentUser.value.id)
-    .eq('date', today)
-    .maybeSingle()
-  scansToday.value = parseInt(data?.count ?? 0, 10)
+    .gte('created_at', today)
+  scansToday.value = count ?? 0
 }
 
 async function incrementScans() {
-  const today = new Date().toISOString().split('T')[0]
-  const next = scansToday.value + 1
-  await sb.from('scan_usage').upsert({
-    user_id: currentUser.value.id,
-    date: today,
-    count: next,
-  }, { onConflict: 'user_id,date' })
-  scansToday.value = next
+  await sb.from('scan_log').insert({ user_id: currentUser.value.id })
+  scansToday.value += 1
 }
 
 fetchScansToday()
@@ -215,74 +266,50 @@ If you cannot read the label clearly or identify the whisky, set name to "Unknow
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
+async function edgeCall(body) {
+  const { data: { session } } = await sb.auth.getSession()
+  const res = await fetch(EDGE_FN_URL, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  if (!res.ok) handleApiError(res.status, { error: { message: data.error } })
+  return data
+}
+
 async function callGemma() {
-  // Step 1: upload file
-  const uploadRes = await fetch(
-    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${API_KEY}`,
-    {
-      method: 'POST',
-      headers: {
-        'X-Goog-Upload-Protocol': 'multipart',
-        'Content-Type': 'multipart/related; boundary=dj_boundary',
-      },
-      body: await buildMultipartBody(imageFile.value),
-    }
-  )
-  if (!uploadRes.ok) {
-    const err = await uploadRes.json().catch(() => ({}))
-    throw new Error(err.error?.message || 'File upload failed')
-  }
-  const uploadData = await uploadRes.json()
-  const fileUri = uploadData.file?.uri
+  // Step 1: upload file via Edge Function
+  const binary = await imageFile.value.arrayBuffer()
+  const b64    = btoa(String.fromCharCode(...new Uint8Array(binary)))
+
+  const { fileUri } = await edgeCall({
+    action: 'upload-file', model: 'gemma-3-27b-it',
+    imageB64: b64, imageMime: imageMime.value, prompt: PROMPT,
+  })
   if (!fileUri) throw new Error('Upload did not return a file URI')
 
-  // Step 2: generate
-  const genRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { file_data: { mime_type: imageMime.value, file_uri: fileUri } },
-            { text: PROMPT },
-          ]
-        }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
-      }),
-    }
-  )
-  const genData = await genRes.json()
-  if (!genRes.ok) handleApiError(genRes.status, genData)
-  return genData.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  // Step 2: generate from uploaded file
+  const { text } = await edgeCall({
+    action: 'generate-file', model: 'gemma-3-27b-it',
+    fileUri, imageMime: imageMime.value, prompt: PROMPT,
+  })
+  return text || ''
 }
 
 async function callGeminiFlashLite() {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: imageMime.value, data: imageB64.value } },
-            { text: PROMPT },
-          ]
-        }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
-      }),
-    }
-  )
-  const data = await res.json()
-  if (!res.ok) handleApiError(res.status, data)
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const { text } = await edgeCall({
+    action: 'generate-inline', model: 'gemini-2.0-flash',
+    imageB64: imageB64.value, imageMime: imageMime.value, prompt: PROMPT,
+  })
+  return text || ''
 }
-
 function handleApiError(status, data) {
   const msg = data.error?.message || 'API error'
-  if (status === 400 || status === 403) throw new Error('API key error. Please check your VITE_GEMINI_KEY.')
+  if (status === 400 || status === 403) throw new Error('API configuration error. Please contact support.')
   if (status === 429 || msg.includes('quota') || msg.includes('Quota'))
     throw new Error('Quota exceeded. Enable billing at console.cloud.google.com or try again later.')
   throw new Error(msg)
@@ -359,14 +386,52 @@ async function analyse() {
     step.value = 'result'
     await incrementScans()
 
+    // Auto-search catalogue with cleaned name
+    cataloguePicked.value = null
+    const q = cleanSearchQuery(result.value.name || '')
+    if (q.length >= 2) {
+      await catalogue.search(q)
+    }
+
   } catch (e) {
     errorMsg.value = e.message || 'Could not identify the bottle. Try a clearer photo.'
     step.value = 'error'
   }
 }
 
-function confirm() {
-  emit('identified', { ...result.value })
+async function save() {
+  saving.value = true
+  try {
+    const id = Date.now()
+    const picked = cataloguePicked.value
+
+    await insertWhisky({
+      id,
+      name:         picked?.name        || result.value.name        || '',
+      distillery:   picked?.distillery  || result.value.distillery  || '',
+      origin:       picked?.country     || result.value.origin      || '',
+      region:       picked?.region      || '',
+      type:         picked?.type        || result.value.type        || 'other',
+      age:          picked?.age         || result.value.age         || '',
+      price:        picked?.price_band  || '',
+      photo_url:    picked?.photo_url   || null,
+      catalogue_id: picked?.id          || null,
+      nose:         picked?.nose        || result.value.nose        || '',
+      palate:       picked?.palate      || result.value.palate      || '',
+      notes:        '',
+      rating:       0,
+      date:         new Date().toISOString().split('T')[0],
+      list:         props.list,
+      ...Object.fromEntries(ATTRS.map(a => [a, picked?.[a] ?? result.value[a] ?? DEFAULTS[a]])),
+    })
+
+    emit('close')
+    toast('✦ ' + (picked?.name || result.value.name) + ' added')
+  } catch (e) {
+    toast('⚠ ' + e.message)
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -513,4 +578,140 @@ function confirm() {
 }
 .scan-error-icon { font-size: 2rem; opacity: 0.4; }
 .scan-error-msg  { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.08em; color: var(--peat-light); text-align: center; line-height: 1.6; }
+/* ── Catalogue match styles ── */
+.scan-cat-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+.scan-cat-none {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  text-align: center;
+  padding: 12px 0;
+  font-style: italic;
+}
+.scan-cat-searching {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  text-align: center;
+  padding: 12px 0;
+}
+.scan-cat-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+/* Picked card */
+.scan-picked-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.scan-picked-thumb {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+}
+.scan-picked-img { width: 100%; height: 100%; object-fit: contain; }
+.scan-picked-placeholder { font-size: 1.2rem; opacity: 0.4; }
+.scan-picked-info { flex: 1; min-width: 0; }
+.scan-picked-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.scan-picked-meta {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  margin-top: 2px;
+}
+.scan-picked-change {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.scan-picked-change:hover { opacity: 1; }
+
+/* cs-* item styles for catalogue list */
+.cs-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cs-item:hover { background: var(--bg-card); }
+.cs-thumb {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+}
+.cs-img { width: 100%; height: 100%; object-fit: contain; }
+.cs-img-placeholder { font-size: 1rem; opacity: 0.4; }
+.cs-info { flex: 1; min-width: 0; }
+.cs-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cs-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  opacity: 0.65;
+}
+.cs-dot { opacity: 0.4; }
+.cs-sub { font-size: 0.68rem; color: var(--text-secondary); opacity: 0.5; margin-top: 1px; }
+.cs-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 20px;
+}
+.cs-arrow { color: var(--text-secondary); opacity: 0.25; font-size: 1.1rem; flex-shrink: 0; }
+
 </style>

@@ -25,7 +25,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
-const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview'
+const GEMINI_MODEL = 'gemini-2.0-flash'
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3
@@ -253,6 +253,21 @@ async function main() {
         throw new Error('Gemini returned empty or non-array recommendations')
       }
 
+      // Enrich recommendations with catalogue photo_url + catalogue_id
+      const enriched = await Promise.all(recs.map(async (rec) => {
+        const { data } = await sb
+          .from('catalogue')
+          .select('id, photo_url')
+          .eq('name', rec.name)
+          .eq('distillery', rec.distillery || '')
+          .maybeSingle()
+        return {
+          ...rec,
+          catalogue_id: data?.id        || null,
+          photo_url:    data?.photo_url || null,
+        }
+      }))
+
       // 6. Upsert recommendations
       const generatedAt = new Date().toISOString()
 
@@ -260,7 +275,7 @@ async function main() {
         .from('recommendations')
         .upsert({
           user_id:      userId,
-          payload:      recs,
+          payload:      enriched,
           generated_at: generatedAt,
         }, { onConflict: 'user_id' })
 

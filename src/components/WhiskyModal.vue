@@ -5,6 +5,9 @@
         <div class="modal-title" v-if="isViewMode">
           <span>{{ editing?.name }}</span>
         </div>
+        <div class="modal-title" v-else-if="!editing && !cataloguePicked && !manualMode">
+          {{ t.addToJournal }}
+        </div>
         <div class="modal-title" v-else-if="!editing">
           {{ list === 'wishlist' ? t.addToWishlist : t.addToJournal }}
         </div>
@@ -96,7 +99,7 @@
         </div>
 
         <div class="modal-actions">
-          <button class="btn-save" @click="switchToEdit">{{ t.editBtn }}</button>
+          <button class="btn-save" :disabled="editLoading" @click="switchToEdit">{{ t.editBtn }}</button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
 
@@ -109,14 +112,79 @@
         </Teleport>
       </template>
 
+      <!-- ── SCAN MATCH STEP — shown when opened via bottle scan ── -->
+      <template v-else-if="scanMode && !cataloguePicked">
+        <div class="scan-match-header">
+          <div class="scan-match-label">{{ t.scanMatchLabel || 'Is this the whisky?' }}</div>
+          <div class="scan-match-name">{{ form.name }}</div>
+          <div v-if="form.distillery" class="scan-match-sub">{{ form.distillery }}</div>
+        </div>
+
+        <div v-if="scanSearching" class="cs-state">{{ t.searching || 'Searching…' }}</div>
+
+        <template v-else>
+          <!-- Catalogue matches found -->
+          <div v-if="scanResults.length" class="cs-results scan-results">
+            <div class="scan-match-hint">{{ t.scanMatchHint || 'Select the matching bottle from the catalogue:' }}</div>
+            <div
+              v-for="item in scanResults"
+              :key="item.id"
+              class="cs-item"
+              @click="onCataloguePick(item); scanMode = false"
+            >
+              <div class="cs-thumb">
+                <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
+                <div v-else class="cs-img-placeholder">🥃</div>
+              </div>
+              <div class="cs-info">
+                <div class="cs-name">{{ item.name }}</div>
+                <div class="cs-meta">
+                  <span v-if="item.distillery">{{ item.distillery }}</span>
+                  <span v-if="item.country" class="cs-dot">· {{ item.country }}</span>
+                  <span v-if="item.type" class="cs-badge" :class="`type-${item.type}`">{{ t.types?.[item.type] }}</span>
+                </div>
+                <div class="cs-sub" v-if="item.age || item.abv">
+                  <span v-if="item.age">{{ item.age }}</span>
+                  <span v-if="item.age && item.abv" class="cs-dot">·</span>
+                  <span v-if="item.abv">{{ item.abv }}</span>
+                </div>
+              </div>
+              <span class="cs-arrow">›</span>
+            </div>
+          </div>
+
+          <div v-else class="cs-state cs-empty">
+            {{ t.scanNoMatch || 'No catalogue match found.' }}
+          </div>
+
+          <!-- Always offer manual fallback -->
+          <div class="cs-manual">
+            <span class="cs-manual-label">{{ t.scanNotRight || 'Not the right one?' }}</span>
+            <button class="cs-manual-btn" @click="dismissScanResults">
+              {{ t.scanUseScanned || 'Use scanned data' }}
+            </button>
+          </div>
+        </template>
+      </template>
+
+      <!-- ── CATALOGUE SEARCH STEP (new journal entry only) ── -->
+      <template v-else-if="!editing && !cataloguePicked && !manualMode">
+        <CatalogueSearch @pick="onCataloguePick" @manual="manualMode = true" />
+      </template>
+
+      <!-- Loading catalogue entry for existing record -->
+      <template v-else-if="editLoading">
+        <div class="cs-state">{{ t.searching || 'Loading…' }}</div>
+      </template>
+
       <!-- ── ADD / EDIT MODE ── -->
       <template v-else>
-        <div class="form-row">
+        <div v-if="!cataloguePicked" class="form-row">
           <label>{{ t.name }}</label>
           <input type="text" v-model="form.name" :placeholder="t.namePlaceholder">
         </div>
 
-        <div v-if="isJournal" class="form-row">
+        <div v-if="isJournal && !cataloguePicked" class="form-row">
           <label>{{ t.photo }}</label>
           <PhotoUpload
             :preview-src="previewUrl"
@@ -126,43 +194,75 @@
           />
         </div>
 
-        <div class="form-grid-2">
-          <div class="form-row">
-            <label>{{ t.distillery }}</label>
-            <Autocomplete v-model="form.distillery" category="distillery" :placeholder="t.distilleryPlaceholder" />
+        <template v-if="!cataloguePicked">
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label>{{ t.distillery }}</label>
+              <Autocomplete v-model="form.distillery" category="distillery" :placeholder="t.distilleryPlaceholder" />
+            </div>
+            <div class="form-row">
+              <label>{{ t.regionOrigin }}</label>
+              <Autocomplete v-model="form.origin" category="origin" :placeholder="t.regionPlaceholder" />
+            </div>
           </div>
-          <div class="form-row">
-            <label>{{ t.regionOrigin }}</label>
-            <Autocomplete v-model="form.origin" category="origin" :placeholder="t.regionPlaceholder" />
-          </div>
-        </div>
 
-        <div class="form-grid-2">
-          <div class="form-row">
-            <label>{{ t.style }}</label>
-            <select v-model="form.type">
-              <option value="scotch">{{ t.scotch }}</option>
-              <option value="irish">{{ t.irish }}</option>
-              <option value="bourbon">{{ t.bourbon }}</option>
-              <option value="japanese">{{ t.japanese }}</option>
-              <option value="other">{{ t.other }}</option>
-            </select>
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label>{{ t.style }}</label>
+              <select v-model="form.type">
+                <option value="scotch">{{ t.scotch }}</option>
+                <option value="irish">{{ t.irish }}</option>
+                <option value="bourbon">{{ t.bourbon }}</option>
+                <option value="japanese">{{ t.japanese }}</option>
+                <option value="other">{{ t.other }}</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>{{ t.ageMaturation }}</label>
+              <input type="text" v-model="form.age" :placeholder="t.agePlaceholder">
+            </div>
           </div>
-          <div class="form-row">
-            <label>{{ t.ageMaturation }}</label>
-            <input type="text" v-model="form.age" :placeholder="t.agePlaceholder">
-          </div>
-        </div>
 
-        <div class="form-grid-2">
-          <div class="form-row">
-            <label>{{ t.price }}</label>
-            <input type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label>{{ t.price }}</label>
+              <input type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
+            </div>
+            <div v-if="isJournal" class="form-row">
+              <label>{{ t.tastingDate }}</label>
+              <input type="date" v-model="form.date">
+            </div>
           </div>
-          <div v-if="isJournal" class="form-row">
+        </template>
+
+        <!-- Date picker still shown when catalogue picked -->
+        <div v-if="cataloguePicked && isJournal" class="form-grid-2">
+          <div class="form-row">
             <label>{{ t.tastingDate }}</label>
             <input type="date" v-model="form.date">
           </div>
+        </div>
+
+        <!-- Catalogue locked fields — shown when picked from catalogue -->
+        <div v-if="cataloguePicked" class="catalogue-locked-card">
+          <div class="catalogue-locked-thumb">
+            <img v-if="cataloguePicked.photo_url" :src="cataloguePicked.photo_url" :alt="cataloguePicked.name" class="catalogue-locked-img">
+            <div v-else class="catalogue-locked-placeholder">🥃</div>
+          </div>
+          <div class="catalogue-locked-info">
+            <div class="catalogue-locked-name">{{ cataloguePicked.name }}</div>
+            <div class="catalogue-locked-meta">
+              <span v-if="cataloguePicked.distillery">{{ cataloguePicked.distillery }}</span>
+              <span v-if="cataloguePicked.country"> · {{ cataloguePicked.country }}</span>
+              <span v-if="cataloguePicked.region"> · {{ cataloguePicked.region }}</span>
+            </div>
+            <div class="catalogue-locked-sub">
+              <span v-if="cataloguePicked.type" class="cs-badge" :class="`type-${cataloguePicked.type}`">{{ t.types?.[cataloguePicked.type] }}</span>
+              <span v-if="cataloguePicked.age"> · {{ cataloguePicked.age }}</span>
+              <span v-if="cataloguePicked.abv"> · {{ cataloguePicked.abv }}</span>
+            </div>
+          </div>
+          <button class="catalogue-locked-change" @click="cataloguePicked = null" title="Change whisky">↩</button>
         </div>
 
         <!-- Tasting fields only for journal -->
@@ -171,12 +271,27 @@
           <div v-for="a in ATTRS" :key="a" class="slider-row">
             <div class="slider-header">
               <span class="slider-lbl">{{ t.attrs[a] }}</span>
+              <span
+                v-if="cataloguePicked && form[a] !== cataloguePicked[a]"
+                class="override-badge"
+                :title="t.yourOverride || 'Your override'"
+              >yours</span>
               <span class="slider-val">{{ form[a] }}</span>
             </div>
             <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
           </div>
-          <div class="form-row"><label>{{ t.nose }}</label><input type="text" v-model="form.nose" :placeholder="t.nosePlaceholder"></div>
-          <div class="form-row"><label>{{ t.palate }}</label><input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder"></div>
+          <div class="form-row">
+            <label>{{ t.nose }}
+              <span v-if="cataloguePicked && form.nose !== cataloguePicked.nose && form.nose" class="override-badge">yours</span>
+            </label>
+            <input type="text" v-model="form.nose" :placeholder="t.nosePlaceholder">
+          </div>
+          <div class="form-row">
+            <label>{{ t.palate }}
+              <span v-if="cataloguePicked && form.palate !== cataloguePicked.palate && form.palate" class="override-badge">yours</span>
+            </label>
+            <input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder">
+          </div>
         </template>
 
         <div v-if="isJournal" class="form-row">
@@ -199,7 +314,7 @@
           <textarea v-model="form.notes" :placeholder="isJournal ? t.notesPlaceholder : t.wishlistNotesPlaceholder"></textarea>
         </div>
 
-        <div class="modal-actions">
+        <div v-if="(cataloguePicked || manualMode || editing) && !scanMode" class="modal-actions">
           <button class="btn-save" :disabled="saving" @click="save">
             {{ saving ? t.saving : (editing ? t.saveChanges : (isJournal ? t.addToJournalBtn : t.addToWishlistBtn)) }}
           </button>
@@ -216,6 +331,8 @@ import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
+import CatalogueSearch from './CatalogueSearch.vue'
+import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
 import { ATTRS, DEFAULTS, TYPE_LABELS } from '../lib/constants.js'
 import { compressImage } from '../utils/compressImage.js'
 import Autocomplete from './Autocomplete.vue'
@@ -234,9 +351,13 @@ const { pendingBlob, previewUrl, compressedKb, clearPhoto, loadExisting, uploadP
 const { toast } = useToast()
 const { t } = useI18n()
 
-const saving = ref(false)
-const inViewMode = ref(props.viewMode)
+const saving       = ref(false)
+const inViewMode   = ref(props.viewMode)
 const lightboxOpen = ref(false)
+const editLoading  = ref(false)  // true while fetching catalogue entry on mount
+const cataloguePicked = ref(null)
+const manualMode      = ref(false)
+const scanMode        = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
@@ -245,6 +366,10 @@ function switchToEdit() {
   inViewMode.value = false
 }
 
+const catalogueSearch = useCatalogue()
+const scanResults     = ref([])   // catalogue matches for the scanned whisky
+const scanSearching   = ref(false)
+
 const form = reactive({
   name: '', distillery: '', origin: '', type: 'scotch', age: '',
   price: '', date: new Date().toISOString().split('T')[0],
@@ -252,14 +377,44 @@ const form = reactive({
   ...Object.fromEntries(ATTRS.map(a => [a, DEFAULTS[a]])),
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (props.editing) {
     Object.assign(form, props.editing)
     loadExisting(props.editing.photo_url || null)
+
+    if (props.editing.catalogue_id) {
+      editLoading.value = true
+      try {
+        const entry = await catalogueSearch.getById(props.editing.catalogue_id)
+        cataloguePicked.value = entry
+      } catch {
+        manualMode.value = true
+      } finally {
+        editLoading.value = false
+      }
+    } else {
+      manualMode.value = true
+    }
   } else {
     clearPhoto()
     if (props.prefill) {
       Object.assign(form, props.prefill)
+
+      // Use name only — distillery is usually already in the scanned name
+      const raw = props.prefill.name || ''
+      const q   = cleanSearchQuery(raw) || raw
+      console.log('[Scan] raw query:', raw)
+      console.log('[Scan] cleaned query:', q)
+      if (q.trim().length >= 2) {
+        scanMode.value      = true
+        scanSearching.value = true
+        try {
+          await catalogueSearch.search(q)
+          scanResults.value = catalogueSearch.results.value
+        } finally {
+          scanSearching.value = false
+        }
+      }
     }
   }
 })
@@ -275,24 +430,61 @@ function onPhotoRemove() {
   clearPhoto()
 }
 
+function dismissScanResults() {
+  // User confirmed the scanned data is correct — use it as manual entry
+  scanMode.value    = false
+  scanResults.value = []
+  manualMode.value  = true
+}
+
+function onCataloguePick(entry) {
+  cataloguePicked.value = entry
+
+  // Pre-fill form with catalogue data — user can override tasting fields
+  Object.assign(form, {
+    name:       entry.name,
+    distillery: entry.distillery || '',
+    origin:     entry.country    || '',
+    region:     entry.region     || '',
+    type:       entry.type       || 'other',
+    age:        entry.age        || '',
+    price:      entry.price_band || '',
+    nose:       entry.nose       || '',
+    palate:     entry.palate     || '',
+    ...Object.fromEntries(ATTRS.map(a => [a, entry[a] ?? DEFAULTS[a]])),
+  })
+
+  // Use catalogue photo
+  if (entry.photo_url) loadExisting(entry.photo_url)
+}
+
 async function save() {
   if (!form.name.trim()) { toast(t.value.nameRequired); return }
   saving.value = true
   try {
     const recordId = props.editing?.id || Date.now()
-    let photo_url = null
-    try {
-      photo_url = await uploadPhoto(recordId)
-    } catch (e) {
-      toast(e.message)
-      saving.value = false
-      return
+
+    // Only upload a new photo for manual entries — catalogue entries use photo_url from catalogue
+    let photo_url = cataloguePicked.value?.photo_url || null
+    if (!cataloguePicked.value) {
+      try {
+        photo_url = await uploadPhoto(recordId)
+      } catch (e) {
+        toast(e.message)
+        saving.value = false
+        return
+      }
     }
+
+    // eslint-disable-next-line no-unused-vars
+    const { catalogue, ...formData } = form
     const fields = {
-      ...form,
-      photo_url: photo_url || null,
-      list: props.editing?.list || props.list,
+      ...formData,
+      photo_url:    photo_url || null,
+      catalogue_id: cataloguePicked.value?.id || null,
+      list:         props.editing?.list || props.list,
     }
+
     if (props.editing) {
       await updateWhisky(props.editing.id, fields)
     } else {
@@ -499,5 +691,225 @@ async function save() {
   opacity: 0.6;
   font-style: italic;
   letter-spacing: 0.02em;
+}
+
+/* ── Catalogue search result items (used in scan match step) ── */
+.cs-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 340px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+.cs-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cs-item:hover { background: var(--bg-card); }
+.cs-thumb {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+}
+.cs-img { width: 100%; height: 100%; object-fit: contain; }
+.cs-img-placeholder { font-size: 1.2rem; opacity: 0.4; }
+.cs-info { flex: 1; min-width: 0; }
+.cs-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cs-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+.cs-dot { opacity: 0.4; }
+.cs-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  margin-top: 2px;
+}
+.cs-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+.cs-arrow {
+  color: var(--text-secondary);
+  opacity: 0.3;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.cs-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+.cs-manual {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 0;
+  border-top: 0.5px solid var(--border);
+  margin-top: 4px;
+}
+.cs-manual-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+.cs-manual-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--amber-light);
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cs-manual-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--border-hi);
+}
+
+/* ── Scan match step ── */
+.scan-match-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--border);
+}
+.scan-match-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--amber-light);
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+.scan-match-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.scan-match-sub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  margin-top: 2px;
+}
+.scan-match-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+.scan-results { margin-bottom: 8px; }
+
+/* ── Catalogue locked card ── */
+.catalogue-locked-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+}
+.catalogue-locked-thumb {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+}
+.catalogue-locked-img { width: 100%; height: 100%; object-fit: contain; }
+.catalogue-locked-placeholder { font-size: 1.4rem; opacity: 0.4; }
+.catalogue-locked-info { flex: 1; min-width: 0; }
+.catalogue-locked-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.catalogue-locked-meta {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  opacity: 0.65;
+  margin-top: 2px;
+}
+.catalogue-locked-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.catalogue-locked-change {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.catalogue-locked-change:hover { opacity: 1; }
+
+/* ── Override badge ── */
+.override-badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(200, 130, 42, 0.15);
+  color: var(--amber-light);
+  margin-left: 6px;
+  vertical-align: middle;
 }
 </style>

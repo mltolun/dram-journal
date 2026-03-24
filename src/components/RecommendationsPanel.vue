@@ -9,6 +9,8 @@
     <div class="whisky-grid">
       <div v-for="(rec, i) in recommendations" :key="i" class="wcard rec-card">
 
+        <img v-if="rec.photo_url" :src="rec.photo_url" :alt="rec.name" class="wcard-photo">
+
         <div>
           <div class="wcard-meta-row">
             <span class="wcard-type" :class="`type-${rec.type}`">{{ t.types[rec.type] || rec.type }}</span>
@@ -85,16 +87,26 @@ onMounted(async () => {
 
 async function addToWishlist(rec, index) {
   try {
+    // Try to find a matching catalogue entry by name + distillery
+    const { data: catalogueMatch } = await sb
+      .from('catalogue')
+      .select('id, photo_url')
+      .eq('name', rec.name)
+      .eq('distillery', rec.distillery || '')
+      .maybeSingle()
+
     await insertWhisky({
-      id:         Date.now(),
-      name:       rec.name,
-      distillery: rec.distillery || '',
-      origin:     rec.origin     || '',
-      type:       rec.type       || 'other',
-      age:        rec.age        || '',
-      price:      rec.price      || '',
-      notes:      rec.reason     || '',
-      list:       'wishlist',
+      id:           Date.now(),
+      name:         rec.name,
+      distillery:   rec.distillery || '',
+      origin:       rec.origin     || '',
+      type:         rec.type       || 'other',
+      age:          rec.age        || '',
+      price:        rec.price      || '',
+      notes:        rec.reason     || '',
+      photo_url:    catalogueMatch?.photo_url || null,
+      catalogue_id: catalogueMatch?.id        || null,
+      list:         'wishlist',
       ...Object.fromEntries(ATTRS.map(a => [a, rec[a] ?? DEFAULTS[a]])),
     })
     addedIds.value = new Set([...addedIds.value, index])

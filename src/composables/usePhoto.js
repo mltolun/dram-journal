@@ -32,7 +32,6 @@ export function usePhoto() {
 
   async function uploadPhoto(whiskyId) {
     if (!pendingBlob.value) return currentUrl.value
-
     const path = `${currentUser.value.id}/${whiskyId}.jpg`
     const { error } = await sb.storage.from('whisky-photos').upload(path, pendingBlob.value, {
       contentType:  'image/jpeg',
@@ -40,7 +39,6 @@ export function usePhoto() {
       upsert: true,
     })
     if (error) { console.error(error); throw new Error('Photo upload failed: ' + error.message) }
-
     const { data: urlData } = sb.storage.from('whisky-photos').getPublicUrl(path)
     return urlData.publicUrl + '?t=' + Date.now()
   }

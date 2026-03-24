@@ -122,6 +122,21 @@ const TRANSLATIONS = {
     close: 'Close',
     nameRequired: 'Name is required',
 
+    // Catalogue search
+    catalogueSearchPlaceholder: 'Search whisky or distillery…',
+    catalogueNoResults:         'No results found.',
+    catalogueNotFound:          'Not in the list?',
+    catalogueAddManually:       'Add manually',
+    yourOverride:               'Your override',
+    searching:                  'Searching…',
+
+    // Scan match
+    scanMatchLabel:  'Is this the whisky?',
+    scanMatchHint:   'Select the matching bottle from the catalogue:',
+    scanNoMatch:     'No catalogue match found.',
+    scanNotRight:    'Not the right one?',
+    scanUseScanned:  'Use scanned data',
+
     // WhiskyModal – view mode
     editBtn: '✎ Edit',
     flavourProfileView: '— Flavour profile',
@@ -404,6 +419,21 @@ const TRANSLATIONS = {
     cancel: 'Cancelar',
     close: 'Cerrar',
     nameRequired: 'El nombre es obligatorio',
+
+    // Catalogue search
+    catalogueSearchPlaceholder: 'Buscar whisky o destilería…',
+    catalogueNoResults:         'Sin resultados.',
+    catalogueNotFound:          '¿No está en la lista?',
+    catalogueAddManually:       'Añadir manualmente',
+    yourOverride:               'Tu ajuste',
+    searching:                  'Buscando…',
+
+    // Scan match
+    scanMatchLabel:  '¿Es este el whisky?',
+    scanMatchHint:   'Selecciona la botella correcta del catálogo:',
+    scanNoMatch:     'No se encontró coincidencia en el catálogo.',
+    scanNotRight:    '¿No es el correcto?',
+    scanUseScanned:  'Usar datos escaneados',
 
     // WhiskyModal – view mode
     editBtn: '✎ Editar',

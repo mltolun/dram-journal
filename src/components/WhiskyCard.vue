@@ -57,7 +57,6 @@ defineEmits(['toggle', 'view', 'delete', 'share', 'move'])
 const { t } = useI18n()
 const isWishlist = computed(() => props.whisky?.list === 'wishlist')
 const cardImage  = computed(() => props.whisky?.photo_url || placeholderImg)
-
 </script>
 
 <style scoped>

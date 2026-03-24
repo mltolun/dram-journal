@@ -77,7 +77,6 @@
       v-if="scanOpen"
       :list="activeList"
       @close="scanOpen = false"
-      @identified="onScanned"
     />
   </div>
 </template>
@@ -134,11 +133,6 @@ onMounted(async () => {
   const session = await getSession()
   if (session) {
     await Promise.all([loadWhiskies(), loadLookups()])
-
-    // Re-queue any photos that didn't finish bg removal in a previous session
-    const { whiskies } = useWhiskies()
-    whiskies.value
-      .filter(w => w.photo_url && /\.jpg/i.test(w.photo_url))
   }
 })
 
@@ -173,14 +167,6 @@ function openAddModal() {
   scanPrefill.value   = null
   isViewMode.value    = false
   modalOpen.value = true
-}
-
-function onScanned(data) {
-  scanOpen.value      = false
-  editingWhisky.value = null
-  scanPrefill.value   = data
-  isViewMode.value    = false
-  modalOpen.value     = true
 }
 
 function openViewModal(w) {
