@@ -228,10 +228,10 @@ Sláinte 🥃`
 // ── Feature request status update ────────────────────────────────────────────
 
 const STATUS_COPY = {
-  accepted:    { emoji: '✦', color: '#A8620A', label: 'Request accepted',    body: 'Great news — we've accepted your feature request and added it to the roadmap.' },
+  accepted:    { emoji: '✦', color: '#A8620A', label: 'Request accepted',    body: "Great news — we've accepted your feature request and added it to the roadmap." },
   in_progress: { emoji: '⚙', color: '#A8620A', label: 'Now in progress',     body: 'We've started building your feature request. Stay tuned for the update.' },
   done:        { emoji: '✓', color: '#1D9E75', label: 'Feature shipped',      body: 'Your feature request has been built and is now live in The Dram Journal.' },
-  declined:    { emoji: '✕', color: '#8A7060', label: 'Request declined',     body: 'After review we've decided not to build this feature for now. Thank you for the suggestion.' },
+  declined:    { emoji: '✕', color: '#8A7060', label: 'Request declined',     body: "After review we've decided not to build this feature for now. Thank you for the suggestion." },
 }
 
 function featureRequestHtml(status, featureTitle, adminNote) {
@@ -310,6 +310,8 @@ async function sendEmail(to, subject, html, text) {
 async function main() {
   console.log('📬 Processing pending notifications...')
 
+  // ── Pass 1: pending_notifications table (follow requests, direct messages) ──
+
   const { data: notifications, error } = await sb
     .from('pending_notifications')
     .select('*')
@@ -319,7 +321,6 @@ async function main() {
 
   if (!notifications.length) {
     console.log('   No pending notifications.')
-    return
   }
 
   console.log(`   Found ${notifications.length} pending notification(s)`)
@@ -388,6 +389,47 @@ async function main() {
     } else {
       console.log(`   🗑 Cleared ${processed.length} processed notification(s)`)
     }
+  }
+
+  // ── Pass 2: feature request emails from direct_messages ─────────────────────
+  // (inserted client-side by admin; pending_notifications RLS blocks that path)
+
+  const { data: frMessages, error: frError } = await sb
+    .from('direct_messages')
+    .select('*')
+    .filter('whisky_payload->>msg_type', 'eq', 'feature_request')
+    .filter('whisky_payload->>email_sent', 'is', null)
+    .order('created_at', { ascending: true })
+
+  if (frError) {
+    console.error(`   ⚠ Failed to fetch feature request messages: ${frError.message}`)
+  } else if (frMessages?.length) {
+    console.log(`   Found ${frMessages.length} feature request notification(s)`)
+    const statusLabels = { accepted: 'Accepted', in_progress: 'In Progress', done: 'Shipped', declined: 'Declined' }
+
+    for (const msg of frMessages) {
+      const p = msg.whisky_payload
+      try {
+        await sendEmail(
+          msg.recipient_email,
+          `🥃 Feature request ${statusLabels[p.status] || p.status} — The Dram Journal`,
+          featureRequestHtml(p.status, p.feature_title || 'Your request', p.admin_note || ''),
+          featureRequestText(p.status, p.feature_title || 'Your request', p.admin_note || ''),
+        )
+        // Mark as sent by patching email_sent into the payload
+        await sb
+          .from('direct_messages')
+          .update({ whisky_payload: { ...p, email_sent: true } })
+          .eq('id', msg.id)
+        console.log(`   ✉ feature_request_${p.status} → ${msg.recipient_email} (${p.feature_title})`)
+        processed.push(`fr-${msg.id}`)
+      } catch (err) {
+        console.error(`   ✗ Failed for ${msg.recipient_email}: ${err.message}`)
+        failed.push(`fr-${msg.id}`)
+      }
+    }
+  } else {
+    console.log('   No feature request notifications pending.')
   }
 
   console.log(`\n✓ Done — ${processed.length} sent, ${failed.length} failed`)
