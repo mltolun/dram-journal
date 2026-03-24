@@ -125,14 +125,24 @@ async function main() {
   console.log(`    Offset     : ${START_OFFSET}`)
   console.log()
 
-  // Fetch whiskies to process — all, ordered by id for consistent resuming
-  const { data: whiskies, error } = await sb
-    .from('catalogue')
-    .select('id, name, distillery, country, region, age, abv, type')
-    .order('id', { ascending: true })
-    .range(START_OFFSET, START_OFFSET + BATCH_LIMIT - 1)
+  // Fetch whiskies to process — paginate in chunks of 1000 (Supabase row limit)
+  const PAGE_SIZE = 1000
+  let whiskies = []
+  let from = START_OFFSET
+  while (whiskies.length < BATCH_LIMIT) {
+    const to = from + Math.min(PAGE_SIZE, BATCH_LIMIT - whiskies.length) - 1
+    const { data: page, error } = await sb
+      .from('catalogue')
+      .select('id, name, distillery, country, region, age, abv, type')
+      .order('id', { ascending: true })
+      .range(from, to)
+    if (error) throw new Error(`Supabase query failed: ${error.message}`)
+    if (!page?.length) break
+    whiskies = whiskies.concat(page)
+    if (page.length < PAGE_SIZE) break  // last page
+    from += PAGE_SIZE
+  }
 
-  if (error) throw new Error(`Supabase query failed: ${error.message}`)
   if (!whiskies.length) { console.log('✅  No whiskies to process.'); return }
 
   // Get total count for progress display
