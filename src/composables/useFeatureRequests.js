@@ -99,33 +99,46 @@ export function useFeatureRequests() {
 
     const notifiableStatuses = ['accepted', 'in_progress', 'done', 'declined']
     if (patch.status && notifiableStatuses.includes(patch.status)) {
-      // Queue email notification via pending_notifications
-      // (requires `meta text` column — run: ALTER TABLE pending_notifications ADD COLUMN IF NOT EXISTS meta text)
-      const { error: notifError } = await sb.from('pending_notifications').insert({
-        type:       `feature_request_${patch.status}`,
-        to_email:   data.user_email,
-        from_email: currentUser.value.email,
-        meta:       JSON.stringify({
-          feature_title: data.title,
-          admin_note:    patch.admin_note || '',
-        }),
-      })
-      if (notifError) console.error('pending_notifications insert failed:', notifError.message)
+      console.log('[FR notify] status:', patch.status, '| user_email:', data.user_email, '| user_id:', data.user_id)
 
-      // Insert in-app inbox message for the user
-      const { error: msgError } = await sb.from('direct_messages').insert({
-        sender_id:       currentUser.value.id,
-        recipient_id:    data.user_id,
-        sender_email:    currentUser.value.email,
-        recipient_email: data.user_email,
-        whisky_payload:  {
-          msg_type:      'feature_request',
-          status:        patch.status,
-          feature_title: data.title,
-          admin_note:    patch.admin_note || null,
-        },
-      })
-      if (msgError) console.error('direct_messages insert failed:', msgError.message)
+      if (!data.user_email) {
+        console.error('[FR notify] Aborting — user_email is missing from feature request row')
+      } else {
+        // Queue email notification via pending_notifications
+        const { error: notifError } = await sb.from('pending_notifications').insert({
+          type:       `feature_request_${patch.status}`,
+          to_email:   data.user_email,
+          from_email: currentUser.value.email,
+          meta:       JSON.stringify({
+            feature_title: data.title,
+            admin_note:    patch.admin_note || '',
+          }),
+        })
+        if (notifError) {
+          console.error('[FR notify] pending_notifications insert failed:', notifError.message, notifError)
+        } else {
+          console.log('[FR notify] pending_notifications row created ✓')
+        }
+
+        // Insert in-app inbox message for the user
+        const { error: msgError } = await sb.from('direct_messages').insert({
+          sender_id:       currentUser.value.id,
+          recipient_id:    data.user_id,
+          sender_email:    currentUser.value.email,
+          recipient_email: data.user_email,
+          whisky_payload:  {
+            msg_type:      'feature_request',
+            status:        patch.status,
+            feature_title: data.title,
+            admin_note:    patch.admin_note || null,
+          },
+        })
+        if (msgError) {
+          console.error('[FR notify] direct_messages insert failed:', msgError.message, msgError)
+        } else {
+          console.log('[FR notify] direct_messages row created ✓')
+        }
+      }
     }
 
     return data
