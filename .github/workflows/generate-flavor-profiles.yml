@@ -1,0 +1,38 @@
+name: Generate Flavor Profiles
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_offset:
+        description: 'Skip first N whiskies (for resuming). Default: 0'
+        required: false
+        default: '0'
+      batch_limit:
+        description: 'Max whiskies to process this run. Default: 6100 (all)'
+        required: false
+        default: '6100'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6h max — 6100 whiskies × 2.5s = ~4.2h
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+
+      - name: Generate flavor profiles
+        env:
+          SUPABASE_URL:         ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GEMINI_KEY:           ${{ secrets.VITE_GEMINI_KEY }}
+          BATCH_LIMIT:          ${{ github.event.inputs.batch_limit }}
+          START_OFFSET:         ${{ github.event.inputs.start_offset }}
+          SLEEP_MS:             2500
+        run: node scripts/generate-flavor-profiles.js
