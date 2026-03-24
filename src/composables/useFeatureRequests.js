@@ -99,7 +99,8 @@ export function useFeatureRequests() {
 
     const notifiableStatuses = ['accepted', 'in_progress', 'done', 'declined']
     if (patch.status && notifiableStatuses.includes(patch.status)) {
-      // Queue email notification
+      // Queue email notification via pending_notifications
+      // (requires `meta text` column — run: ALTER TABLE pending_notifications ADD COLUMN IF NOT EXISTS meta text)
       const { error: notifError } = await sb.from('pending_notifications').insert({
         type:       `feature_request_${patch.status}`,
         to_email:   data.user_email,
