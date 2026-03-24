@@ -264,7 +264,7 @@
               <span v-if="cataloguePicked.abv"> · {{ cataloguePicked.abv }}</span>
             </div>
           </div>
-          <button class="catalogue-locked-change" @click="cataloguePicked = null" title="Change whisky">↩</button>
+          <button v-if="!editing" class="catalogue-locked-change" @click="cataloguePicked = null" title="Change whisky">↩</button>
         </div>
 
         <!-- Tasting fields only for journal -->
