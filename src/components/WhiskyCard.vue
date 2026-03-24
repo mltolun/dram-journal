@@ -30,18 +30,6 @@
     <!-- Wishlist: show notes snippet if any -->
     <div v-else-if="whisky.notes" class="wcard-wish-notes">{{ whisky.notes }}</div>
 
-    <!-- Bottle counter — journal only, hidden until at least one bottle logged -->
-    <div v-if="!isWishlist" class="wcard-bottle-row" @click.stop>
-      <span class="wcard-bottle-count" :class="{ muted: !whisky.bottle_count }">
-        <template v-if="whisky.bottle_count">
-          🍾 × {{ whisky.bottle_count }}
-          <span v-if="whisky.last_finished" class="wcard-bottle-date">· {{ whisky.last_finished }}</span>
-        </template>
-        <template v-else>{{ t.noBottles }}</template>
-      </span>
-      <button class="wcard-finish-btn" @click.stop="$emit('finish')" :title="t.finishBottle">＋</button>
-    </div>
-
     <div class="wcard-actions">
       <template v-if="isWishlist">
         <button class="wcard-btn move" @click.stop="$emit('move')">{{ t.moveToJournal }}</button>
@@ -64,7 +52,7 @@ import { useI18n } from '../composables/useI18n.js'
 import placeholderImg from '../assets/bottle-placeholder.jpg'
 
 const props = defineProps({ whisky: Object, selected: Boolean, selectColor: String })
-defineEmits(['toggle', 'view', 'delete', 'share', 'move', 'finish'])
+defineEmits(['toggle', 'view', 'delete', 'share', 'move'])
 
 const { t } = useI18n()
 const isWishlist = computed(() => props.whisky?.list === 'wishlist')
@@ -105,37 +93,5 @@ const cardImage  = computed(() => props.whisky?.photo_url || placeholderImg)
 .wcard-btn.move:hover {
   border-color: #1D9E75;
   color: #6ecb9a;
-}
-.wcard-bottle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 0 0;
-  border-top: 0.5px solid var(--border);
-  margin-top: 2px;
-}
-.wcard-bottle-count {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.58rem;
-  color: var(--peat-light);
-  letter-spacing: 0.04em;
-}
-.wcard-bottle-date {
-  opacity: 0.7;
-}
-.wcard-finish-btn {
-  background: none;
-  border: 0.5px solid rgba(200,130,42,0.25);
-  border-radius: 4px;
-  color: var(--peat-light);
-  font-size: 0.65rem;
-  cursor: pointer;
-  padding: 1px 6px;
-  line-height: 1.4;
-  transition: all 0.15s;
-}
-.wcard-finish-btn:hover {
-  border-color: var(--amber);
-  color: var(--amber-light);
 }
 </style>
