@@ -99,7 +99,9 @@
         </div>
 
         <div class="modal-actions">
-          <button class="btn-save" :disabled="editLoading" @click="switchToEdit">{{ t.editBtn }}</button>
+          <button
+            v-if="isJournal || !editing?.catalogue_id"
+            class="btn-save" :disabled="editLoading" @click="switchToEdit">{{ t.editBtn }}</button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
 
