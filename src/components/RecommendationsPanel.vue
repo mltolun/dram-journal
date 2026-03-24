@@ -87,13 +87,22 @@ onMounted(async () => {
 
 async function addToWishlist(rec, index) {
   try {
-    // Try to find a matching catalogue entry by name + distillery
-    const { data: catalogueMatch } = await sb
-      .from('catalogue')
-      .select('id, photo_url')
-      .eq('name', rec.name)
-      .eq('distillery', rec.distillery || '')
-      .maybeSingle()
+    // Use catalogue_id + photo_url already enriched by the generate script.
+    // Only fall back to a live lookup when the payload is missing them (e.g.
+    // recommendations generated before the enrichment step was added).
+    let catalogueId = rec.catalogue_id ?? null
+    let photoUrl    = rec.photo_url    ?? null
+
+    if (!catalogueId) {
+      const { data } = await sb
+        .from('catalogue')
+        .select('id, photo_url')
+        .ilike('name', rec.name.trim())
+        .eq('distillery', rec.distillery || '')
+        .maybeSingle()
+      catalogueId = data?.id        ?? null
+      photoUrl    = data?.photo_url ?? null
+    }
 
     await insertWhisky({
       id:           Date.now(),
@@ -104,8 +113,8 @@ async function addToWishlist(rec, index) {
       age:          rec.age        || '',
       price:        rec.price      || '',
       notes:        rec.reason     || '',
-      photo_url:    catalogueMatch?.photo_url || null,
-      catalogue_id: catalogueMatch?.id        || null,
+      photo_url:    photoUrl,
+      catalogue_id: catalogueId,
       list:         'wishlist',
       ...Object.fromEntries(ATTRS.map(a => [a, rec[a] ?? DEFAULTS[a]])),
     })
