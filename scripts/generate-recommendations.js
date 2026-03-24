@@ -13,7 +13,7 @@
  * Required environment variables:
  *   SUPABASE_URL         — your project URL
  *   SUPABASE_SERVICE_KEY — service role key (NOT the anon key)
- *   OPENROUTER_KEY       — OpenRouter API key (used to access Gemma 3 27B)
+ *   GEMINI_KEY           — Google AI API key (used for both Gemini and Gemma)
  *   RESEND_API_KEY       — Resend API key
  *   EMAIL_FROM           — verified sender address
  */
@@ -23,11 +23,11 @@ import { sendWeeklyEmail } from './send-recommendations-email.js'
 
 const SUPABASE_URL         = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
-const OPENROUTER_KEY       = process.env.OPENROUTER_KEY
+const GEMINI_KEY           = process.env.GEMINI_KEY
 const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
-const GEMMA_MODEL    = 'google/gemma-3-27b-it'
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
+const GEMMA_MODEL = 'gemma-3-27b-it'
+const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3
 
@@ -113,29 +113,22 @@ Respond ONLY with a valid JSON array — no explanation, no markdown, no backtic
 ]`
 }
 
-// ─── Gemma 3 27B API call (via OpenRouter) ───────────────────────────────────
+// ─── Gemma 3 27B API call (via Google AI) ────────────────────────────────────
 
 async function callGemma(prompt) {
-  const res = await fetch(OPENROUTER_URL, {
+  const res = await fetch(GEMMA_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENROUTER_KEY}`,
-      'HTTP-Referer': 'https://github.com/dram-journal',
-      'X-Title': 'Dram Journal',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: GEMMA_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4,
-      max_tokens: 2048,
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
     }),
   })
 
   const data = await res.json()
   if (!res.ok) throw new Error(`Gemma ${res.status}: ${data.error?.message || 'API error'}`)
 
-  return data.choices?.[0]?.message?.content || ''
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
 function parseGemmaResponse(text) {
