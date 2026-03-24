@@ -54,6 +54,38 @@ const TYPE_LABELS = {
 
 // ─── Prompt builder ───────────────────────────────────────────────────────────
 
+function filterCatalogueForUser(catalogue, journal, wishlist) {
+  // Exclude whiskies the user already has (journal + wishlist)
+  const triedNames = new Set([
+    ...journal.map(w => w.name?.toLowerCase().trim()),
+    ...wishlist.map(w => w.name?.toLowerCase().trim()),
+  ])
+
+  const available = catalogue.filter(c => !triedNames.has(c.name?.toLowerCase().trim()))
+
+  // Determine the user's preferred types from their journal (weighted by rating)
+  const typeScores = {}
+  for (const w of journal) {
+    if (w.type) typeScores[w.type] = (typeScores[w.type] || 0) + (w.rating || 3)
+  }
+  const topTypes = Object.entries(typeScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([t]) => t)
+
+  // Keep entries matching preferred types first, then fill up to MAX_CATALOGUE
+  const MAX_CATALOGUE = 50
+  const preferred = available.filter(c => topTypes.includes(c.type))
+  const others    = available.filter(c => !topTypes.includes(c.type))
+
+  // Shuffle each group so we don't always send the same subset
+  const shuffle = arr => arr.sort(() => Math.random() - 0.5)
+  const subset  = [...shuffle(preferred), ...shuffle(others)].slice(0, MAX_CATALOGUE)
+
+  console.log(`     catalogue: ${available.length} available after exclusions, ${subset.length} sent to model (top types: ${topTypes.join(', ') || 'any'})`)
+  return subset
+}
+
 function buildPrompt(journal, wishlist, catalogue) {
   const journalLines = journal.map(w => {
     const attrs = Object.entries(ATTR_LABELS)
@@ -74,8 +106,9 @@ function buildPrompt(journal, wishlist, catalogue) {
     ? wishlist.map(w => `- ${w.name} (${w.distillery || '—'})`).join('\n')
     : '(none)'
 
-  const catalogueLines = catalogue.length > 0
-    ? catalogue.map(c => `- ${c.name} | ${c.distillery || '—'} | ${c.type || '—'} | ${c.origin || c.country || '—'}`).join('\n')
+  const filtered = filterCatalogueForUser(catalogue, journal, wishlist)
+  const catalogueLines = filtered.length > 0
+    ? filtered.map(c => `- ${c.name} | ${c.distillery || '—'} | ${c.type || '—'} | ${c.origin || c.country || '—'}`).join('\n')
     : '(no catalogue available)'
 
   return `You are an expert whisky sommelier with deep knowledge of distilleries worldwide.
