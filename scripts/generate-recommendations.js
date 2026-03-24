@@ -4,15 +4,16 @@
  * Weekly cron script — run via GitHub Actions every Monday.
  *
  * For each user with >= 3 journal entries:
- *   1. Calls Gemini to generate 5 personalised whisky recommendations.
- *   2. Upserts them into the `recommendations` table.
- *   3. Fetches activity from people the user follows (last 7 days).
- *   4. Sends a combined "Weekly Update" email: recommendations + follower activity.
+ *   1. Calls Gemma 3 27B to generate 5 personalised whisky recommendations.
+ *   2. Matches each recommendation against the catalogue (fuzzy name + distillery).
+ *   3. Upserts them into the `recommendations` table.
+ *   4. Fetches activity from people the user follows (last 7 days).
+ *   5. Sends a combined "Weekly Update" email: recommendations + follower activity.
  *
  * Required environment variables:
  *   SUPABASE_URL         — your project URL
  *   SUPABASE_SERVICE_KEY — service role key (NOT the anon key)
- *   GEMINI_KEY           — Google Gemini API key
+ *   GEMINI_KEY           — Google AI API key (used for both Gemini and Gemma)
  *   RESEND_API_KEY       — Resend API key
  *   EMAIL_FROM           — verified sender address
  */
@@ -25,8 +26,8 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
-const GEMINI_MODEL = 'gemini-2.0-flash'
-const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`
+const GEMMA_MODEL = 'gemma-3-27b-it'
+const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3
 
@@ -103,10 +104,10 @@ Respond ONLY with a valid JSON array — no explanation, no markdown, no backtic
 ]`
 }
 
-// ─── Gemini API call ──────────────────────────────────────────────────────────
+// ─── Gemma 3 27B API call (via Google AI) ────────────────────────────────────
 
-async function callGemini(prompt) {
-  const res = await fetch(GEMINI_URL, {
+async function callGemma(prompt) {
+  const res = await fetch(GEMMA_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -116,18 +117,18 @@ async function callGemini(prompt) {
   })
 
   const data = await res.json()
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${data.error?.message || 'API error'}`)
+  if (!res.ok) throw new Error(`Gemma ${res.status}: ${data.error?.message || 'API error'}`)
 
   return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
-function parseGeminiResponse(text) {
+function parseGemmaResponse(text) {
   const match = text.match(/\[[\s\S]*\]/)
-  if (!match) throw new Error('No JSON array found in Gemini response')
+  if (!match) throw new Error('No JSON array found in Gemma response')
   try {
     return JSON.parse(match[0])
   } catch {
-    throw new Error('Could not parse Gemini JSON response')
+    throw new Error('Could not parse Gemma JSON response')
   }
 }
 
@@ -188,7 +189,7 @@ async function buildEmailMap(userIds) {
 
 async function main() {
   console.log('🥃 Starting weekly update generation...')
-  console.log(`   Model: ${GEMINI_MODEL}`)
+  console.log(`   Model: ${GEMMA_MODEL}`)
   console.log(`   Min journal entries required: ${MIN_JOURNAL_ENTRIES}`)
   console.log(`   Emails enabled: ${SEND_EMAILS}`)
   console.log('')
@@ -244,28 +245,50 @@ async function main() {
     console.log(`   ◎ User ${userId.slice(0, 8)}… — ${journal.length} journal, ${wishlist.length} wishlist`)
 
     try {
-      // 5. Generate recommendations via Gemini
+      // 5. Generate recommendations via Gemma 3 27B
       const prompt = buildPrompt(journal, wishlist)
-      const raw    = await callGemini(prompt)
-      const recs   = parseGeminiResponse(raw)
+      const raw    = await callGemma(prompt)
+      const recs   = parseGemmaResponse(raw)
 
       if (!Array.isArray(recs) || recs.length === 0) {
-        throw new Error('Gemini returned empty or non-array recommendations')
+        throw new Error('Gemma returned empty or non-array recommendations')
       }
 
-      // Enrich recommendations with catalogue photo_url + catalogue_id
+      // Enrich recommendations with catalogue photo_url + catalogue_id.
+      // Uses a two-pass fuzzy match so minor name variations still resolve:
+      //   Pass 1 — exact name + distillery (fastest, most precise)
+      //   Pass 2 — case-insensitive ILIKE on name alone (catches "12 Year Old"
+      //            vs "12 Years Old" and similar model inconsistencies)
       const enriched = await Promise.all(recs.map(async (rec) => {
-        const { data } = await sb
+        // Pass 1: exact match on both name and distillery
+        const { data: exact } = await sb
           .from('catalogue')
           .select('id, photo_url')
           .eq('name', rec.name)
           .eq('distillery', rec.distillery || '')
           .maybeSingle()
-        return {
-          ...rec,
-          catalogue_id: data?.id        || null,
-          photo_url:    data?.photo_url || null,
+
+        if (exact) {
+          return { ...rec, catalogue_id: exact.id, photo_url: exact.photo_url }
         }
+
+        // Pass 2: fuzzy — case-insensitive name search, then pick the closest
+        // distillery match from the results
+        const { data: fuzzyRows } = await sb
+          .from('catalogue')
+          .select('id, name, distillery, photo_url')
+          .ilike('name', rec.name.trim())
+
+        if (fuzzyRows?.length) {
+          // Prefer a row whose distillery also matches (case-insensitive)
+          const recDist = (rec.distillery || '').toLowerCase().trim()
+          const best = fuzzyRows.find(
+            r => r.distillery?.toLowerCase().trim() === recDist
+          ) || fuzzyRows[0]
+          return { ...rec, catalogue_id: best.id, photo_url: best.photo_url }
+        }
+
+        return { ...rec, catalogue_id: null, photo_url: null }
       }))
 
       // 6. Upsert recommendations
