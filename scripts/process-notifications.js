@@ -229,7 +229,7 @@ Sláinte 🥃`
 
 const STATUS_COPY = {
   accepted:    { emoji: '✦', color: '#A8620A', label: 'Request accepted',    body: "Great news — we've accepted your feature request and added it to the roadmap." },
-  in_progress: { emoji: '⚙', color: '#A8620A', label: 'Now in progress',     body: 'We've started building your feature request. Stay tuned for the update.' },
+  in_progress: { emoji: '⚙', color: '#A8620A', label: 'Now in progress',     body: "We've started building your feature request. Stay tuned for the update." },
   done:        { emoji: '✓', color: '#1D9E75', label: 'Feature shipped',      body: 'Your feature request has been built and is now live in The Dram Journal.' },
   declined:    { emoji: '✕', color: '#8A7060', label: 'Request declined',     body: "After review we've decided not to build this feature for now. Thank you for the suggestion." },
 }
@@ -278,9 +278,7 @@ function featureRequestText(status, featureTitle, adminNote) {
 
 Feature: ${featureTitle}
 
-${s.body}${adminNote ? '
-
-From the team: ' + adminNote : ''}
+${s.body}${adminNote ? `\n\nFrom the team: ${adminNote}` : ''}
 
 Open the app: ${APP_URL}
 
