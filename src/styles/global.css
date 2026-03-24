@@ -141,7 +141,7 @@ header::after { content:''; position:absolute; bottom:0; left:0; right:0; height
 .bar-track-s { flex:1; height:3px; background:var(--bg-bar-track); border-radius:2px; overflow:hidden; }
 .bar-fill-s  { height:100%; border-radius:2px; background:var(--amber); transition:width 0.5s cubic-bezier(.23,1,.32,1); }
 .bar-val-s   { font-family:'DM Mono',monospace; font-size:0.52rem; color:var(--peat-light); width:16px; text-align:right; flex-shrink:0; }
-.wcard-actions { display:flex; gap:5px; }
+.wcard-actions { display:flex; gap:5px; margin-top:auto; }
 .wcard-btn { flex:1; padding:5px 0; background:none; border:0.5px solid rgba(200,130,42,0.18); border-radius:6px; font-family:'DM Mono',monospace; font-size:0.52rem; letter-spacing:0.04em; color:var(--peat-light); cursor:pointer; transition:all 0.15s; text-transform:uppercase; }
 .wcard-btn:hover { border-color:var(--amber); color:var(--amber-light); }
 .wcard-btn.del:hover { border-color:#e08888; color:#e08888; }
