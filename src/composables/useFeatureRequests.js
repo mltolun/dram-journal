@@ -99,6 +99,7 @@ export function useFeatureRequests() {
 
     const notifiableStatuses = ['accepted', 'in_progress', 'done', 'declined']
     if (patch.status && notifiableStatuses.includes(patch.status)) {
+      // Queue email notification
       const { error: notifError } = await sb.from('pending_notifications').insert({
         type:       `feature_request_${patch.status}`,
         to_email:   data.user_email,
@@ -109,6 +110,21 @@ export function useFeatureRequests() {
         }),
       })
       if (notifError) console.error('pending_notifications insert failed:', notifError.message)
+
+      // Insert in-app inbox message for the user
+      const { error: msgError } = await sb.from('direct_messages').insert({
+        sender_id:       currentUser.value.id,
+        recipient_id:    data.user_id,
+        sender_email:    currentUser.value.email,
+        recipient_email: data.user_email,
+        whisky_payload:  {
+          msg_type:      'feature_request',
+          status:        patch.status,
+          feature_title: data.title,
+          admin_note:    patch.admin_note || null,
+        },
+      })
+      if (msgError) console.error('direct_messages insert failed:', msgError.message)
     }
 
     return data

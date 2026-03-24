@@ -61,7 +61,7 @@
           </div>
         </div>
 
-        <!-- ── Whisky message items ── -->
+        <!-- ── Inbox message items ── -->
         <div
           v-for="msg in inbox"
           :key="`msg-${msg.id}`"
@@ -71,48 +71,63 @@
         >
           <div class="inbox-item-header">
             <div class="inbox-meta">
-              <span class="inbox-type-pill inbox-type-pill--whisky">{{ t.sharedDram }}</span>
-              <span class="inbox-dot">·</span>
-              <span class="inbox-from">{{ msg.sender_email }}</span>
-              <span class="inbox-dot">·</span>
-              <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
+              <!-- Feature request update -->
+              <template v-if="msg.whisky_payload?.msg_type === 'feature_request'">
+                <span class="inbox-type-pill inbox-type-pill--feature">{{ t.featureUpdate }}</span>
+                <span class="inbox-dot">·</span>
+                <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
+              </template>
+              <!-- Shared dram -->
+              <template v-else>
+                <span class="inbox-type-pill inbox-type-pill--whisky">{{ t.sharedDram }}</span>
+                <span class="inbox-dot">·</span>
+                <span class="inbox-from">{{ msg.sender_email }}</span>
+                <span class="inbox-dot">·</span>
+                <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
+              </template>
             </div>
             <button class="inbox-delete" @click.stop="deleteMessage(msg.id)" title="Delete">✕</button>
           </div>
 
-          <div class="inbox-whisky-name">
-            {{ msg.whisky_payload.name }}
-          </div>
-
-          <div v-if="msg.whisky_payload.distillery" class="inbox-whisky-sub">
-            {{ msg.whisky_payload.distillery }}
-            <template v-if="msg.whisky_payload.age"> · {{ msg.whisky_payload.age }}</template>
-          </div>
-
-          <!-- Expanded detail -->
-          <div v-if="expanded === msg.id" class="inbox-detail">
-            <div v-if="msg.whisky_payload.notes" class="inbox-notes">
-              "{{ msg.whisky_payload.notes }}"
+          <!-- Feature request message body -->
+          <template v-if="msg.whisky_payload?.msg_type === 'feature_request'">
+            <div class="inbox-whisky-name">{{ msg.whisky_payload.feature_title }}</div>
+            <div class="inbox-fr-status" :class="`inbox-fr-status--${msg.whisky_payload.status}`">
+              {{ FR_STATUS_LABELS[msg.whisky_payload.status] || msg.whisky_payload.status }}
             </div>
+            <div v-if="msg.whisky_payload.admin_note" class="inbox-fr-note">
+              "{{ msg.whisky_payload.admin_note }}"
+            </div>
+          </template>
 
-            <div class="inbox-bars">
-              <div v-for="a in ATTRS" :key="a" class="inbox-bar-row">
-                <span class="inbox-bar-lbl">{{ ATTR_LABELS[a] }}</span>
-                <div class="inbox-bar-track">
-                  <div class="inbox-bar-fill" :style="{ width: (msg.whisky_payload[a] || 0) * 20 + '%' }"></div>
+          <!-- Shared whisky message body -->
+          <template v-else>
+            <div class="inbox-whisky-name">{{ msg.whisky_payload.name }}</div>
+            <div v-if="msg.whisky_payload.distillery" class="inbox-whisky-sub">
+              {{ msg.whisky_payload.distillery }}
+              <template v-if="msg.whisky_payload.age"> · {{ msg.whisky_payload.age }}</template>
+            </div>
+            <div v-if="expanded === msg.id" class="inbox-detail">
+              <div v-if="msg.whisky_payload.notes" class="inbox-notes">
+                "{{ msg.whisky_payload.notes }}"
+              </div>
+              <div class="inbox-bars">
+                <div v-for="a in ATTRS" :key="a" class="inbox-bar-row">
+                  <span class="inbox-bar-lbl">{{ ATTR_LABELS[a] }}</span>
+                  <div class="inbox-bar-track">
+                    <div class="inbox-bar-fill" :style="{ width: (msg.whisky_payload[a] || 0) * 20 + '%' }"></div>
+                  </div>
+                  <span class="inbox-bar-val">{{ msg.whisky_payload[a] || 0 }}</span>
                 </div>
-                <span class="inbox-bar-val">{{ msg.whisky_payload[a] || 0 }}</span>
+              </div>
+              <div v-if="msg.whisky_payload.rating" class="inbox-rating">
+                ★ {{ msg.whisky_payload.rating }} / 5
               </div>
             </div>
-
-            <div v-if="msg.whisky_payload.rating" class="inbox-rating">
-              ★ {{ msg.whisky_payload.rating }} / 5
+            <div class="inbox-expand-hint">
+              {{ expanded === msg.id ? t.frLess : t.frDetails }}
             </div>
-          </div>
-
-          <div class="inbox-expand-hint">
-            {{ expanded === msg.id ? t.frLess : t.frDetails }}
-          </div>
+          </template>
         </div>
 
       </div>
@@ -136,6 +151,13 @@ const ATTRS = ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']
 const ATTR_LABELS = {
   dulzor: 'Sweetness', ahumado: 'Smokiness', cuerpo: 'Body',
   frutado: 'Fruitiness', especiado: 'Spiciness',
+}
+
+const FR_STATUS_LABELS = {
+  accepted:    '✦ Accepted',
+  in_progress: '⚙ In progress',
+  done:        '✓ Shipped',
+  declined:    '✕ Declined',
 }
 
 const expanded  = ref(null)
@@ -296,6 +318,24 @@ function formatDate(iso) {
 }
 .inbox-item:hover { background: rgba(200,130,42,0.04); }
 .inbox-item.unread { background: rgba(200,130,42,0.06); }
+.inbox-type-pill--feature { background: rgba(29,158,117,0.15); color: #1D9E75; }
+.inbox-fr-status {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  margin: 4px 0 2px;
+}
+.inbox-fr-status--accepted    { color: var(--amber-light); }
+.inbox-fr-status--in_progress { color: var(--amber-light); }
+.inbox-fr-status--done        { color: #1D9E75; }
+.inbox-fr-status--declined    { color: var(--peat-light); }
+.inbox-fr-note {
+  font-size: 0.75rem;
+  color: var(--peat-light);
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.5;
+}
 .inbox-item.unread::before {
   content: '';
   position: absolute;

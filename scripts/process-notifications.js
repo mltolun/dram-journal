@@ -225,6 +225,68 @@ Open the app to see the full tasting profile: ${APP_URL}
 Sláinte 🥃`
 }
 
+// ── Feature request status update ────────────────────────────────────────────
+
+const STATUS_COPY = {
+  accepted:    { emoji: '✦', color: '#A8620A', label: 'Request accepted',    body: 'Great news — we've accepted your feature request and added it to the roadmap.' },
+  in_progress: { emoji: '⚙', color: '#A8620A', label: 'Now in progress',     body: 'We've started building your feature request. Stay tuned for the update.' },
+  done:        { emoji: '✓', color: '#1D9E75', label: 'Feature shipped',      body: 'Your feature request has been built and is now live in The Dram Journal.' },
+  declined:    { emoji: '✕', color: '#8A7060', label: 'Request declined',     body: 'After review we've decided not to build this feature for now. Thank you for the suggestion.' },
+}
+
+function featureRequestHtml(status, featureTitle, adminNote) {
+  const s = STATUS_COPY[status] || STATUS_COPY.accepted
+  const noteHtml = adminNote
+    ? `<div style="margin-top:16px;padding:12px 16px;background:rgba(200,130,42,0.08);border-left:2px solid ${AMBER_LIGHT};border-radius:4px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:${AMBER_LIGHT};margin-bottom:6px;">From the team</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">${adminNote}</div>
+       </div>`
+    : ''
+  return shell(`
+    <tr>
+      <td style="padding:28px 32px 8px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+                    text-transform:uppercase;color:${s.color};margin-bottom:10px;">
+          ${s.emoji} ${s.label}
+        </div>
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;
+                    font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:12px;">
+          ${featureTitle}
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
+          ${s.body}
+        </div>
+        ${noteHtml}
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:20px 32px 28px;">
+        <a href="${APP_URL}"
+           style="display:inline-block;background:${AMBER};color:${PEAT};
+                  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  text-transform:uppercase;text-decoration:none;padding:11px 26px;
+                  border-radius:7px;font-weight:500;">
+          Open My Journal →
+        </a>
+      </td>
+    </tr>`)
+}
+
+function featureRequestText(status, featureTitle, adminNote) {
+  const s = STATUS_COPY[status] || STATUS_COPY.accepted
+  return `THE DRAM JOURNAL — ${s.label}
+
+Feature: ${featureTitle}
+
+${s.body}${adminNote ? '
+
+From the team: ' + adminNote : ''}
+
+Open the app: ${APP_URL}
+
+Sláinte 🥃`
+}
+
 // ── Send via Resend ───────────────────────────────────────────────────────────
 
 async function sendEmail(to, subject, html, text) {
@@ -292,6 +354,17 @@ async function main() {
           directMessageText(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || ''),
         )
         console.log(`   ✉ direct_message → ${n.to_email} (${meta.whisky_name})`)
+      } else if (n.type.startsWith('feature_request_')) {
+        const status = n.type.replace('feature_request_', '')
+        const meta   = n.meta ? JSON.parse(n.meta) : {}
+        const statusLabels = { accepted: 'Accepted', in_progress: 'In Progress', done: 'Shipped', declined: 'Declined' }
+        await sendEmail(
+          n.to_email,
+          `🥃 Feature request ${statusLabels[status] || status} — The Dram Journal`,
+          featureRequestHtml(status, meta.feature_title || 'Your request', meta.admin_note || ''),
+          featureRequestText(status, meta.feature_title || 'Your request', meta.admin_note || ''),
+        )
+        console.log(`   ✉ ${n.type} → ${n.to_email} (${meta.feature_title})`)
       } else {
         console.warn(`   ⚠ Unknown notification type: ${n.type} — skipping`)
       }
