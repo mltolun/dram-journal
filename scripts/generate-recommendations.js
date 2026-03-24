@@ -13,7 +13,7 @@
  * Required environment variables:
  *   SUPABASE_URL         — your project URL
  *   SUPABASE_SERVICE_KEY — service role key (NOT the anon key)
- *   GEMINI_KEY           — Google AI API key (used for both Gemini and Gemma)
+ *   OPENROUTER_KEY       — OpenRouter API key (used to access Gemma 3 27B)
  *   RESEND_API_KEY       — Resend API key
  *   EMAIL_FROM           — verified sender address
  */
@@ -23,11 +23,11 @@ import { sendWeeklyEmail } from './send-recommendations-email.js'
 
 const SUPABASE_URL         = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
-const GEMINI_KEY           = process.env.GEMINI_KEY
+const OPENROUTER_KEY       = process.env.OPENROUTER_KEY
 const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
-const GEMMA_MODEL = 'gemma-3-27b-it'
-const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
+const GEMMA_MODEL    = 'google/gemma-3-27b-it'
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 const MIN_JOURNAL_ENTRIES = 3
 
@@ -54,7 +54,7 @@ const TYPE_LABELS = {
 
 // ─── Prompt builder ───────────────────────────────────────────────────────────
 
-function buildPrompt(journal, wishlist) {
+function buildPrompt(journal, wishlist, catalogue) {
   const journalLines = journal.map(w => {
     const attrs = Object.entries(ATTR_LABELS)
       .map(([key, label]) => `${label}: ${w[key] ?? 0}/5`)
@@ -74,6 +74,10 @@ function buildPrompt(journal, wishlist) {
     ? wishlist.map(w => `- ${w.name} (${w.distillery || '—'})`).join('\n')
     : '(none)'
 
+  const catalogueLines = catalogue.length > 0
+    ? catalogue.map(c => `- ${c.name} | ${c.distillery || '—'} | ${c.type || '—'} | ${c.origin || c.country || '—'}`).join('\n')
+    : '(no catalogue available)'
+
   return `You are an expert whisky sommelier with deep knowledge of distilleries worldwide.
 
 A whisky enthusiast has the following tasting journal:
@@ -83,13 +87,18 @@ ${journalLines}
 Their current wishlist (whiskies they already want to try — do NOT recommend these):
 ${wishlistNames}
 
-Based on their flavour preferences, ratings, and tasting notes, recommend exactly 5 whiskies they have NOT tried yet and are NOT already on their wishlist. Focus on their highest-rated whiskies to understand what they love.
+IMPORTANT: You MUST choose recommendations exclusively from the following catalogue. Do not invent whiskies not on this list. Use the EXACT name and distillery as written in the catalogue.
 
-Respond ONLY with a valid JSON array — no explanation, no markdown, no backticks. Each item must have exactly these keys:
+Available catalogue (name | distillery | type | region):
+${catalogueLines}
+
+Based on their flavour preferences, ratings, and tasting notes, recommend exactly 5 whiskies from the catalogue above that they have NOT tried yet and are NOT already on their wishlist. Focus on their highest-rated whiskies to understand what they love.
+
+Respond ONLY with a valid JSON array — no explanation, no markdown, no backticks. Use the exact name and distillery from the catalogue. Each item must have exactly these keys:
 [
   {
-    "name": "full whisky name including age statement",
-    "distillery": "distillery name",
+    "name": "exact name from catalogue",
+    "distillery": "exact distillery from catalogue",
     "origin": "region and country e.g. Speyside, Scotland",
     "type": one of: "scotch" | "irish" | "bourbon" | "japanese" | "other",
     "age": "age statement e.g. 12 Years Old",
@@ -104,22 +113,29 @@ Respond ONLY with a valid JSON array — no explanation, no markdown, no backtic
 ]`
 }
 
-// ─── Gemma 3 27B API call (via Google AI) ────────────────────────────────────
+// ─── Gemma 3 27B API call (via OpenRouter) ───────────────────────────────────
 
 async function callGemma(prompt) {
-  const res = await fetch(GEMMA_URL, {
+  const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENROUTER_KEY}`,
+      'HTTP-Referer': 'https://github.com/dram-journal',
+      'X-Title': 'Dram Journal',
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 2048 },
+      model: GEMMA_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.4,
+      max_tokens: 2048,
     }),
   })
 
   const data = await res.json()
   if (!res.ok) throw new Error(`Gemma ${res.status}: ${data.error?.message || 'API error'}`)
 
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  return data.choices?.[0]?.message?.content || ''
 }
 
 function parseGemmaResponse(text) {
@@ -227,6 +243,19 @@ async function main() {
   console.log(`   Found ${userIds.length} users with journal entries`)
   console.log('')
 
+  // 3b. Fetch catalogue entries for recommendation grounding
+  const { data: catalogue, error: catalogueError } = await sb
+    .from('catalogue')
+    .select('id, name, distillery, type, country, region, photo_url')
+    .order('name', { ascending: true })
+
+  if (catalogueError) {
+    console.warn('   ⚠ Could not fetch catalogue, recommendations will be ungrounded:', catalogueError.message)
+  }
+  const catalogueList = catalogue || []
+  console.log(`   Catalogue loaded: ${catalogueList.length} entries`)
+  console.log('')
+
   let processed = 0
   let skipped   = 0
   let errors    = 0
@@ -246,7 +275,7 @@ async function main() {
 
     try {
       // 5. Generate recommendations via Gemma 3 27B
-      const prompt = buildPrompt(journal, wishlist)
+      const prompt = buildPrompt(journal, wishlist, catalogueList)
       const raw    = await callGemma(prompt)
       const recs   = parseGemmaResponse(raw)
 
@@ -255,39 +284,54 @@ async function main() {
       }
 
       // Enrich recommendations with catalogue photo_url + catalogue_id.
-      // Uses a two-pass fuzzy match so minor name variations still resolve:
-      //   Pass 1 — exact name + distillery (fastest, most precise)
-      //   Pass 2 — case-insensitive ILIKE on name alone (catches "12 Year Old"
-      //            vs "12 Years Old" and similar model inconsistencies)
+      // Since Gemma is now prompted to use exact catalogue names, Pass 1 should
+      // hit most of the time. Passes 2-4 are safety nets for minor deviations.
       const enriched = await Promise.all(recs.map(async (rec) => {
-        // Pass 1: exact match on both name and distillery
+        const recName = rec.name.trim()
+        const recDist = (rec.distillery || '').toLowerCase().trim()
+
+        // Pass 1: exact name + distillery (case-insensitive)
         const { data: exact } = await sb
           .from('catalogue')
-          .select('id, photo_url')
-          .eq('name', rec.name)
-          .eq('distillery', rec.distillery || '')
+          .select('id, name, distillery, photo_url')
+          .ilike('name', recName)
+          .ilike('distillery', rec.distillery || '')
           .maybeSingle()
 
         if (exact) {
-          return { ...rec, catalogue_id: exact.id, photo_url: exact.photo_url }
+          console.log(`     ✓ catalogue match (exact): ${rec.name}`)
+          return { ...rec, name: exact.name, distillery: exact.distillery, catalogue_id: exact.id, photo_url: exact.photo_url }
         }
 
-        // Pass 2: fuzzy — case-insensitive name search, then pick the closest
-        // distillery match from the results
+        // Pass 2: name contains wildcard match (handles suffix differences)
+        const nameWords = recName.split(' ').filter(w => w.length > 2)
         const { data: fuzzyRows } = await sb
           .from('catalogue')
           .select('id, name, distillery, photo_url')
-          .ilike('name', rec.name.trim())
+          .ilike('name', `%${nameWords.join('%')}%`)
 
         if (fuzzyRows?.length) {
-          // Prefer a row whose distillery also matches (case-insensitive)
-          const recDist = (rec.distillery || '').toLowerCase().trim()
           const best = fuzzyRows.find(
             r => r.distillery?.toLowerCase().trim() === recDist
           ) || fuzzyRows[0]
-          return { ...rec, catalogue_id: best.id, photo_url: best.photo_url }
+          console.log(`     ~ catalogue match (fuzzy name): ${rec.name} → ${best.name}`)
+          return { ...rec, name: best.name, distillery: best.distillery, catalogue_id: best.id, photo_url: best.photo_url }
         }
 
+        // Pass 3: distillery match only — if only one entry exists for this distillery
+        if (recDist) {
+          const { data: distRows } = await sb
+            .from('catalogue')
+            .select('id, name, distillery, photo_url')
+            .ilike('distillery', rec.distillery || '')
+
+          if (distRows?.length === 1) {
+            console.log(`     ~ catalogue match (distillery only): ${rec.name} → ${distRows[0].name}`)
+            return { ...rec, name: distRows[0].name, distillery: distRows[0].distillery, catalogue_id: distRows[0].id, photo_url: distRows[0].photo_url }
+          }
+        }
+
+        console.warn(`     ✗ no catalogue match: ${rec.name} (${rec.distillery})`)
         return { ...rec, catalogue_id: null, photo_url: null }
       }))
 
