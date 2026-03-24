@@ -30,11 +30,14 @@
     <!-- Wishlist: show notes snippet if any -->
     <div v-else-if="whisky.notes" class="wcard-wish-notes">{{ whisky.notes }}</div>
 
-    <!-- Bottle counter — journal only -->
+    <!-- Bottle counter — journal only, hidden until at least one bottle logged -->
     <div v-if="!isWishlist" class="wcard-bottle-row" @click.stop>
-      <span class="wcard-bottle-count">
-        🍾 × {{ whisky.bottle_count || 1 }}
-        <span v-if="whisky.last_finished" class="wcard-bottle-date">· {{ whisky.last_finished }}</span>
+      <span class="wcard-bottle-count" :class="{ muted: !whisky.bottle_count }">
+        <template v-if="whisky.bottle_count">
+          🍾 × {{ whisky.bottle_count }}
+          <span v-if="whisky.last_finished" class="wcard-bottle-date">· {{ whisky.last_finished }}</span>
+        </template>
+        <template v-else>{{ t.noBottles }}</template>
       </span>
       <button class="wcard-finish-btn" @click.stop="$emit('finish')" :title="t.finishBottle">＋</button>
     </div>

@@ -74,6 +74,7 @@ const TRANSLATIONS = {
     // WhiskyCard
     moveToJournal: '↑ Move to Journal',
     finishBottle: 'Finish a bottle',
+    noBottles: 'no bottles yet',
     view: '⊙ View',
     delete: '✕',
 
@@ -376,6 +377,7 @@ const TRANSLATIONS = {
     // WhiskyCard
     moveToJournal: '↑ Mover al Diario',
     finishBottle: 'Terminar una botella',
+    noBottles: 'sin botellas aún',
     view: '⊙ Ver',
     delete: '✕',
 

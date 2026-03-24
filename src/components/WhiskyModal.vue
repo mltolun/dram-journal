@@ -101,8 +101,11 @@
         <div v-if="isJournal" class="view-field view-bottle-row">
           <div class="view-label">{{ t.bottleCount }}</div>
           <div class="view-value view-bottle-val">
-            🍾 × {{ form.bottle_count || 1 }}
-            <span v-if="form.last_finished" class="view-bottle-date">· {{ t.lastFinished }}: {{ form.last_finished }}</span>
+            <template v-if="form.bottle_count">
+              🍾 × {{ form.bottle_count }}
+              <span v-if="form.last_finished" class="view-bottle-date">· {{ t.lastFinished }}: {{ form.last_finished }}</span>
+            </template>
+            <template v-else>—</template>
           </div>
         </div>
 
@@ -394,7 +397,7 @@ const form = reactive({
   name: '', distillery: '', origin: '', type: 'scotch', age: '',
   price: '', date: new Date().toISOString().split('T')[0],
   nose: '', palate: '', notes: '', rating: 0,
-  bottle_count: 1, last_finished: null,
+  bottle_count: null, last_finished: null,
   ...Object.fromEntries(ATTRS.map(a => [a, DEFAULTS[a]])),
 })
 
