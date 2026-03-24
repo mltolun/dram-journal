@@ -209,8 +209,6 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.3); }
 .ac-item { padding:8px 12px; font-family:'DM Sans',sans-serif; font-size:0.84rem; color:var(--cream-dark); cursor:pointer; transition:background 0.12s; display:flex; align-items:center; justify-content:space-between; }
 .ac-item:hover, .ac-item.focused { background:rgba(200,130,42,0.12); }
 .ac-item-match { color:var(--amber-light); }
-.ac-item-add { color:var(--amber); font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.06em; gap:8px; }
-.ac-item-add span { opacity:0.6; font-size:0.65rem; }
 .ac-empty { padding:10px 12px; font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--peat-light); letter-spacing:0.08em; }
 
 /* ── SHARE SCREEN ── */

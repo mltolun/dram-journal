@@ -86,7 +86,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
-import { useLookups } from '../composables/useLookups.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
@@ -106,7 +105,6 @@ import RecommendationsPanel from '../components/RecommendationsPanel.vue'
 const { getSession } = useAuth()
 const { loadWhiskies, deleteWhisky, moveToJournal } = useWhiskies()
 const { deletePhoto } = usePhoto()
-const { loadLookups } = useLookups()
 const { toast } = useToast()
 const { t } = useI18n()
 
@@ -132,7 +130,7 @@ onMounted(async () => {
   if (route.query.list === 'wishlist') activeList.value = 'wishlist'
   const session = await getSession()
   if (session) {
-    await Promise.all([loadWhiskies(), loadLookups()])
+    await loadWhiskies()
   }
 })
 

@@ -31,12 +31,10 @@
 import { ref } from 'vue'
 import { useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
-import { useLookups } from '../composables/useLookups.js'
 import { useI18n } from '../composables/useI18n.js'
 
 const { signIn, signUp, forgotPassword } = useAuth()
 const { loadWhiskies } = useWhiskies()
-const { loadLookups } = useLookups()
 const { t } = useI18n()
 
 const tab       = ref('login')
@@ -56,11 +54,11 @@ async function submit() {
   try {
     if (tab.value === 'login') {
       await signIn(email.value, password.value)
-      await Promise.all([loadWhiskies(), loadLookups()])
+      await loadWhiskies()
     } else {
       const data = await signUp(email.value, password.value)
       if (data.user && data.session) {
-        await Promise.all([loadWhiskies(), loadLookups()])
+        await loadWhiskies()
       } else {
         success.value = t.value.accountCreated
       }

@@ -302,7 +302,7 @@ async function callGemma() {
 
 async function callGeminiFlashLite() {
   const { text } = await edgeCall({
-    action: 'generate-inline', model: 'gemini-2.0-flash',
+    action: 'generate-inline', model: 'gemini-3.1-flash-lite-preview',
     imageB64: imageB64.value, imageMime: imageMime.value, prompt: PROMPT,
   })
   return text || ''
