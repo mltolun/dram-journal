@@ -73,6 +73,7 @@ const TRANSLATIONS = {
 
     // WhiskyCard
     moveToJournal: '↑ Move to Journal',
+    finishBottle: 'Finish a bottle',
     view: '⊙ View',
     delete: '✕',
 
@@ -95,6 +96,8 @@ const TRANSLATIONS = {
     price: 'Price',
     pricePlaceholder: '£35–45',
     tastingDate: 'Tasting date',
+    bottleCount: 'Bottles finished',
+    lastFinished: 'Last finished',
     flavourProfile: '— Flavour profile (0–5)',
     nose: 'Nose',
     nosePlaceholder: 'Vanilla, green apple…',
@@ -249,6 +252,7 @@ const TRANSLATIONS = {
     // AppView / misc toasts
     deleted: 'Deleted',
     movedToJournal: (name) => `✓ ${name} moved to Journal`,
+    bottleFinished: (name) => `🍾 ${name} — bottle finished!`,
     whiskyUpdated: (name) => `✓ ${name} updated`,
     whiskyAdded: (name) => `✓ ${name} added`,
 
@@ -371,6 +375,7 @@ const TRANSLATIONS = {
 
     // WhiskyCard
     moveToJournal: '↑ Mover al Diario',
+    finishBottle: 'Terminar una botella',
     view: '⊙ Ver',
     delete: '✕',
 
@@ -393,6 +398,8 @@ const TRANSLATIONS = {
     price: 'Precio',
     pricePlaceholder: '£35–45',
     tastingDate: 'Fecha de cata',
+    bottleCount: 'Botellas terminadas',
+    lastFinished: 'Última terminada',
     flavourProfile: '— Perfil de sabor (0–5)',
     nose: 'Nariz',
     nosePlaceholder: 'Vainilla, manzana verde…',
@@ -547,6 +554,7 @@ const TRANSLATIONS = {
     // AppView / misc toasts
     deleted: 'Eliminado',
     movedToJournal: (name) => `✓ ${name} movido al Diario`,
+    bottleFinished: (name) => `🍾 ${name} — ¡botella terminada!`,
     whiskyUpdated: (name) => `✓ ${name} actualizado`,
     whiskyAdded: (name) => `✓ ${name} añadido`,
 

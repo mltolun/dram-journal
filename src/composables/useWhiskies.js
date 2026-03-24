@@ -155,5 +155,13 @@ export function useWhiskies() {
     return result
   }
 
-  return { whiskies, journal, wishlist, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToJournal }
+  async function finishBottle(id) {
+    const w = whiskies.value.find(w => w.id === id)
+    if (!w) return
+    const newCount = (w.bottle_count || 1) + 1
+    const today = new Date().toISOString().split('T')[0]
+    return updateWhisky(id, { bottle_count: newCount, last_finished: today })
+  }
+
+  return { whiskies, journal, wishlist, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToJournal, finishBottle }
 }

@@ -98,10 +98,16 @@
           <div class="view-value view-notes">{{ form.notes }}</div>
         </div>
 
+        <div v-if="isJournal" class="view-field view-bottle-row">
+          <div class="view-label">{{ t.bottleCount }}</div>
+          <div class="view-value view-bottle-val">
+            🍾 × {{ form.bottle_count || 1 }}
+            <span v-if="form.last_finished" class="view-bottle-date">· {{ t.lastFinished }}: {{ form.last_finished }}</span>
+          </div>
+        </div>
+
         <div class="modal-actions">
-          <button
-            v-if="isJournal || !editing?.catalogue_id"
-            class="btn-save" :disabled="editLoading" @click="switchToEdit">{{ t.editBtn }}</button>
+          <button class="btn-save" :disabled="editLoading" @click="switchToEdit">{{ t.editBtn }}</button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
 
@@ -245,6 +251,18 @@
           </div>
         </div>
 
+        <!-- Bottle counter — edit mode, journal only -->
+        <div v-if="isJournal && editing" class="form-grid-2">
+          <div class="form-row">
+            <label>{{ t.bottleCount }}</label>
+            <input type="number" v-model.number="form.bottle_count" min="1" step="1">
+          </div>
+          <div class="form-row">
+            <label>{{ t.lastFinished }}</label>
+            <input type="date" v-model="form.last_finished">
+          </div>
+        </div>
+
         <!-- Catalogue locked fields — shown when picked from catalogue -->
         <div v-if="cataloguePicked" class="catalogue-locked-card">
           <div class="catalogue-locked-thumb">
@@ -264,7 +282,7 @@
               <span v-if="cataloguePicked.abv"> · {{ cataloguePicked.abv }}</span>
             </div>
           </div>
-          <button v-if="!editing" class="catalogue-locked-change" @click="cataloguePicked = null" title="Change whisky">↩</button>
+          <button class="catalogue-locked-change" @click="cataloguePicked = null" title="Change whisky">↩</button>
         </div>
 
         <!-- Tasting fields only for journal -->
@@ -376,6 +394,7 @@ const form = reactive({
   name: '', distillery: '', origin: '', type: 'scotch', age: '',
   price: '', date: new Date().toISOString().split('T')[0],
   nose: '', palate: '', notes: '', rating: 0,
+  bottle_count: 1, last_finished: null,
   ...Object.fromEntries(ATTRS.map(a => [a, DEFAULTS[a]])),
 })
 

@@ -41,6 +41,7 @@
           @delete="doDelete(w)"
           @share="openShareModal(w)"
           @move="doMoveToJournal(w)"
+          @finish="doFinishBottle(w)"
         />
       </div>
     </div>
@@ -188,6 +189,11 @@ async function doDelete(w) {
 async function doMoveToJournal(w) {
   await moveToJournal(w.id)
   toast(t.value.movedToJournal(w.name))
+}
+
+async function doFinishBottle(w) {
+  await finishBottle(w.id)
+  toast(t.value.bottleFinished(w.name))
 }
 
 function onSaved(w) {
