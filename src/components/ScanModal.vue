@@ -284,7 +284,14 @@ async function edgeCall(body) {
 async function callGemma() {
   // Step 1: upload file via Edge Function
   const binary = await imageFile.value.arrayBuffer()
-  const b64    = btoa(String.fromCharCode(...new Uint8Array(binary)))
+  // Avoid spread operator on large arrays — blows the call stack on mobile
+  const bytes  = new Uint8Array(binary)
+  let b64str   = ''
+  const chunk  = 8192
+  for (let i = 0; i < bytes.length; i += chunk) {
+    b64str += String.fromCharCode(...bytes.subarray(i, i + chunk))
+  }
+  const b64 = btoa(b64str)
 
   const { fileUri } = await edgeCall({
     action: 'upload-file', model: 'gemma-3-27b-it',
