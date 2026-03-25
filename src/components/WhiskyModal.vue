@@ -575,6 +575,7 @@ async function save() {
 }
 .view-photo {
   width: 100%;
+  max-height: 300px;
   border-radius: 8px;
   object-fit: contain;
   display: block;
