@@ -393,11 +393,15 @@ async function analyse() {
     step.value = 'result'
     await incrementScans()
 
-    // Auto-search catalogue with cleaned name
+    // Auto-search catalogue — try name first, fall back to distillery if no results
     cataloguePicked.value = null
     const q = cleanSearchQuery(result.value.name || '')
     if (q.length >= 2) {
       await catalogue.search(q)
+    }
+    // If no matches found via name, try distillery
+    if (!catalogue.results.value.length && result.value.distillery) {
+      await catalogue.search(result.value.distillery)
     }
 
   } catch (e) {

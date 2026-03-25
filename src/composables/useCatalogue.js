@@ -82,15 +82,33 @@ export function useCatalogue() {
       console.log('[Catalogue] exact results:', exact?.length, '| fuzzy results:', fuzzy.length)
       console.log('[Catalogue] merged total:', merged.length, merged.slice(0,3).map(r => r.name))
 
+      // Strategy 3: if still no results, try each word independently against name+distillery
+      let fallback = []
+      if (merged.length === 0) {
+        const allWords = q.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2)
+        for (const word of allWords.slice(0, 3)) {
+          const { data: wordData } = await sb
+            .from('catalogue')
+            .select('id, name, distillery, country, region, type, age, abv, price_band, photo_url, nose, palate, dulzor, ahumado, cuerpo, frutado, especiado')
+            .or(`name.ilike.%${word}%,distillery.ilike.%${word}%`)
+            .order('name', { ascending: true })
+            .limit(20)
+          if (wordData?.length) { fallback = wordData; break }
+        }
+        console.log('[Catalogue] fallback results:', fallback.length)
+      }
+
+      const final = merged.length > 0 ? merged : fallback
+
       // Score results — items matching more words rank higher
       const queryWords = cleanSearchQuery(q).split(' ').filter(Boolean)
-      merged.sort((a, b) => {
-        const scoreA = queryWords.filter(w => a.name.toLowerCase().includes(w)).length
-        const scoreB = queryWords.filter(w => b.name.toLowerCase().includes(w)).length
+      final.sort((a, b) => {
+        const scoreA = queryWords.filter(w => a.name.toLowerCase().includes(w) || a.distillery?.toLowerCase().includes(w)).length
+        const scoreB = queryWords.filter(w => b.name.toLowerCase().includes(w) || b.distillery?.toLowerCase().includes(w)).length
         return scoreB - scoreA
       })
 
-      results.value = merged.slice(0, 30)
+      results.value = final.slice(0, 30)
     } catch (err) {
       console.error('Catalogue search error:', err)
       results.value = []
