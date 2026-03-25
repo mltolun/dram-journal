@@ -35,7 +35,7 @@
 
         <div class="wcard-actions">
           <button class="wcard-btn" @click="addToWishlist(rec, i)" :disabled="addedIds.has(i)">
-            {{ addedIds.has(i) ? '✓ ' + t.added : '✦ ' + t.addToWishlistBtn }}
+            <CheckIcon v-if="addedIds.has(i)" :size="11" /><HeartIcon v-else :size="11" /> {{ addedIds.has(i) ? t.added : t.addToWishlistBtn }}
           </button>
         </div>
 
@@ -55,6 +55,7 @@ import { useWhiskies } from '../composables/useWhiskies.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
 import { ATTRS, DEFAULTS } from '../lib/constants.js'
+import { Heart as HeartIcon, Check as CheckIcon } from 'lucide-vue-next'
 
 const { insertWhisky } = useWhiskies()
 const { toast } = useToast()

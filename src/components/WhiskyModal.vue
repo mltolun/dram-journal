@@ -120,7 +120,7 @@
         </div>
 
         <div class="modal-actions">
-          <button class="btn-save" :disabled="editLoading" @click="switchToEdit">{{ t.editBtn }}</button>
+          <button class="btn-save" :disabled="editLoading" @click="switchToEdit"><PencilIcon :size="14" /> {{ t.editBtn }}</button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
 
