@@ -83,7 +83,7 @@ export function useWhiskies() {
       }
     }
     // eslint-disable-next-line no-unused-vars
-    const { catalogue, ...cleanFields } = fields
+    const { catalogue, abv, ...cleanFields } = fields
     const { data, error } = await sb.from('whiskies')
       .insert({ ...cleanFields, user_id: currentUser.value.id })
       .select(WHISKY_SELECT)
@@ -111,7 +111,7 @@ export function useWhiskies() {
   async function updateWhisky(id, fields) {
     setSync('saving')
     // eslint-disable-next-line no-unused-vars
-    const { catalogue, ...cleanFields } = fields
+    const { catalogue, abv, ...cleanFields } = fields
     const { data, error } = await sb.from('whiskies').update(cleanFields).eq('id', id).select(WHISKY_SELECT).single()
     if (error) { setSync('error'); throw error }
     const merged = mergeWithCatalogue(data)
