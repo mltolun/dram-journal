@@ -40,9 +40,9 @@
                 <div class="view-label">{{ t.region }}</div>
                 <div class="view-value">{{ form.region }}</div>
               </div>
-              <div class="view-field" v-if="form.age">
+              <div class="view-field" v-if="form.age || form.abv">
                 <div class="view-label">{{ t.ageMaturation }}</div>
-                <div class="view-value">{{ form.age }}</div>
+                <div class="view-value">{{ form.age }}{{ form.age && form.abv ? ' · ' : '' }}{{ form.abv }}</div>
               </div>
             </div>
 
@@ -407,7 +407,7 @@ const scanResults     = ref([])   // catalogue matches for the scanned whisky
 const scanSearching   = ref(false)
 
 const form = reactive({
-  name: '', distillery: '', origin: '', region: '', type: 'scotch', age: '',
+  name: '', distillery: '', origin: '', region: '', type: 'scotch', age: '', abv: '',
   price: '', date: new Date().toISOString().split('T')[0],
   nose: '', palate: '', notes: '', rating: 0,
   bottle_count: null, last_finished: null,

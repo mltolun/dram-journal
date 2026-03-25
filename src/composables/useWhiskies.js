@@ -34,6 +34,7 @@ export function useWhiskies() {
       region:     w.region     || c.region,
       type:       w.type       || c.type,
       age:        w.age        || c.age,
+      abv:        w.abv        || c.abv,
       price:      w.price      || c.price_band,
       photo_url:  w.photo_url  || c.photo_url,
       nose:       w.nose       || c.nose,

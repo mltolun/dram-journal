@@ -13,7 +13,7 @@
       </div>
       <div class="wcard-distillery">{{ whisky.distillery || '—' }}</div>
       <div class="wcard-name">{{ whisky.name }}</div>
-      <div v-if="whisky.age" class="wcard-age">{{ whisky.age }}</div>
+      <div v-if="whisky.age || whisky.abv" class="wcard-age">{{ whisky.age }}{{ whisky.age && whisky.abv ? " · " : "" }}{{ whisky.abv }}</div>
     </div>
 
     <!-- Flavour bars only for journal entries -->
