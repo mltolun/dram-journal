@@ -6,7 +6,7 @@
       <div class="recs-sub">{{ t.recsSub }}</div>
     </div>
 
-    <div class="whisky-grid">
+    <div class="recs-grid">
       <div v-for="(rec, i) in recommendations" :key="i" class="wcard rec-card">
 
         <img v-if="rec.photo_url" :src="rec.photo_url" :alt="rec.name" class="wcard-photo">
@@ -131,6 +131,12 @@ async function addToWishlist(rec, index) {
 .recs-section {
   padding: 1.8rem 2.5rem 0;
 }
+.recs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 340px));
+  gap: 12px;
+  justify-content: center;
+}
 .recs-header {
   margin-bottom: 1rem;
 }
@@ -179,5 +185,6 @@ async function addToWishlist(rec, index) {
 }
 @media (max-width: 600px) {
   .recs-section { padding: 1.2rem 1.2rem 0; }
+  .recs-grid { grid-template-columns: 1fr; }
 }
 </style>

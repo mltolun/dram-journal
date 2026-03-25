@@ -435,7 +435,7 @@ function buildEmailText(recs, followerActivity, authorEmailMap, generatedAt) {
 ==================================
 
 YOUR PICKS THIS WEEK
-Based on your tasting journal, here are 5 personalised whisky recommendations:
+Based on your tasting journal, here are 3 personalised whisky recommendations:
 
 ${recLines}${activityText}
 

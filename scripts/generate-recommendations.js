@@ -125,7 +125,7 @@ IMPORTANT: You MUST choose recommendations exclusively from the following catalo
 Available catalogue (name | distillery | type | region):
 ${catalogueLines}
 
-Based on their flavour preferences, ratings, and tasting notes, recommend exactly 5 whiskies from the catalogue above that they have NOT tried yet and are NOT already on their wishlist. Focus on their highest-rated whiskies to understand what they love.
+Based on their flavour preferences, ratings, and tasting notes, recommend exactly 3 whiskies from the catalogue above that they have NOT tried yet and are NOT already on their wishlist. Focus on their highest-rated whiskies to understand what they love.
 
 Respond ONLY with a valid JSON array — no explanation, no markdown, no backticks. Use the exact name and distillery from the catalogue. Each item must have exactly these keys:
 [
@@ -308,11 +308,13 @@ async function main() {
       if (!Array.isArray(recs) || recs.length === 0) {
         throw new Error('Gemma returned empty or non-array recommendations')
       }
+      // Cap at 3 regardless of what the model returns
+      const recsSliced = recs.slice(0, 3)
 
       // Enrich recommendations with catalogue photo_url + catalogue_id.
       // Since Gemma is now prompted to use exact catalogue names, Pass 1 should
       // hit most of the time. Passes 2-4 are safety nets for minor deviations.
-      const enriched = await Promise.all(recs.map(async (rec) => {
+      const enriched = await Promise.all(recsSliced.map(async (rec) => {
         const recName = rec.name.trim()
         const recDist = (rec.distillery || '').toLowerCase().trim()
 
