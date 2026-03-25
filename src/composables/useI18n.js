@@ -73,10 +73,10 @@ const TRANSLATIONS = {
     clearSelected: 'Clear selection',
 
     // WhiskyCard
-    moveToJournal: '↑ Move to Journal',
+    moveToJournal: 'Move to Journal',
     finishBottle: 'Finish a bottle',
     noBottles: 'no bottles yet',
-    view: '⊙ View',
+    view: 'View',
     delete: '✕',
 
     // WhiskyModal – titles
@@ -125,9 +125,9 @@ const TRANSLATIONS = {
 
     // WhiskyModal – actions
     saving: 'Saving…',
-    saveChanges: '✓ Save changes',
-    addToJournalBtn: '＋ Add to Journal',
-    addToWishlistBtn: '✦ Add to Wishlist',
+    saveChanges: 'Save changes',
+    addToJournalBtn: 'Add to Journal',
+    addToWishlistBtn: 'Add to Wishlist',
     cancel: 'Cancel',
     close: 'Close',
     nameRequired: 'Name is required',
@@ -148,7 +148,7 @@ const TRANSLATIONS = {
     scanUseScanned:  'Use scanned data',
 
     // WhiskyModal – view mode
-    editBtn: '✎ Edit',
+    editBtn: 'Edit',
     flavourProfileView: '— Flavour profile',
 
     // Flavour attributes
@@ -213,7 +213,7 @@ const TRANSLATIONS = {
     analysingBottle: 'Analysing bottle…',
     isReading: (model) => `${model} is reading the label`,
     whiskyIdentified: '✓ Whisky identified',
-    addToList: (list) => `＋ Add to ${list === 'wishlist' ? 'Wishlist' : 'Journal'}`,
+    addToList: (list) => `Add to ${list === 'wishlist' ? 'Wishlist' : 'Journal'}`,
     scanAgain: 'Scan again',
     tryAgain: 'Try again',
     imageProcessing: 'Image still processing, please wait a moment.',
@@ -229,7 +229,7 @@ const TRANSLATIONS = {
     backToJournal: '← Back to The Dram Journal',
     details: '— Details',
     notes: '— Notes',
-    addToMyWishlist: '✦ Add to my Wishlist',
+    addToMyWishlist: 'Add to my Wishlist',
     importing: 'Importing…',
     signInToImport: 'Sign in to import',
     backToJournalBtn: '← Back to journal',
@@ -249,11 +249,11 @@ const TRANSLATIONS = {
     bottle: 'bottle',
     bottles: 'bottles',
     shared: 'shared',
-    addToMyWishlistOne: '✦ Add to Wishlist',
+    addToMyWishlistOne: 'Add to Wishlist',
     added: '✓ Added',
     addedToWishlist: (name) => `✦ ${name} added to your Wishlist!`,
     addedAllToWishlist: (n) => `✦ ${n} bottles added to your Wishlist!`,
-    addAllTo: (n) => `✦ Add all ${n} to my Wishlist`,
+    addAllTo: (n) => `Add all ${n} to my Wishlist`,
     importFailed: '⚠ Import failed: ',
 
     // AppView / misc toasts
@@ -382,10 +382,10 @@ const TRANSLATIONS = {
     clearSelected: 'Limpiar selección',
 
     // WhiskyCard
-    moveToJournal: '↑ Mover al Diario',
+    moveToJournal: 'Mover al Diario',
     finishBottle: 'Terminar una botella',
     noBottles: 'sin botellas aún',
-    view: '⊙ Ver',
+    view: 'Ver',
     delete: '✕',
 
     // WhiskyModal – titles
@@ -434,9 +434,9 @@ const TRANSLATIONS = {
 
     // WhiskyModal – actions
     saving: 'Guardando…',
-    saveChanges: '✓ Guardar cambios',
-    addToJournalBtn: '＋ Añadir al Diario',
-    addToWishlistBtn: '✦ Añadir a la Lista',
+    saveChanges: 'Guardar cambios',
+    addToJournalBtn: 'Añadir al Diario',
+    addToWishlistBtn: 'Añadir a la Lista',
     cancel: 'Cancelar',
     close: 'Cerrar',
     nameRequired: 'El nombre es obligatorio',
@@ -457,7 +457,7 @@ const TRANSLATIONS = {
     scanUseScanned:  'Usar datos escaneados',
 
     // WhiskyModal – view mode
-    editBtn: '✎ Editar',
+    editBtn: 'Editar',
     flavourProfileView: '— Perfil de sabor',
 
     // Flavour attributes
@@ -522,7 +522,7 @@ const TRANSLATIONS = {
     analysingBottle: 'Analizando botella…',
     isReading: (model) => `${model} está leyendo la etiqueta`,
     whiskyIdentified: '✓ Whisky identificado',
-    addToList: (list) => `＋ Añadir a ${list === 'wishlist' ? 'la Lista' : 'el Diario'}`,
+    addToList: (list) => `Añadir a ${list === 'wishlist' ? 'la Lista' : 'el Diario'}`,
     scanAgain: 'Escanear de nuevo',
     tryAgain: 'Intentar de nuevo',
     imageProcessing: 'La imagen aún se está procesando, espera un momento.',
@@ -538,7 +538,7 @@ const TRANSLATIONS = {
     backToJournal: '← Volver a The Dram Journal',
     details: '— Detalles',
     notes: '— Notas',
-    addToMyWishlist: '✦ Añadir a mi Lista',
+    addToMyWishlist: 'Añadir a mi Lista',
     importing: 'Importando…',
     signInToImport: 'Inicia sesión para importar',
     backToJournalBtn: '← Volver al diario',
@@ -558,11 +558,11 @@ const TRANSLATIONS = {
     bottle: 'botella',
     bottles: 'botellas',
     shared: 'compartida',
-    addToMyWishlistOne: '✦ Añadir a la Lista',
+    addToMyWishlistOne: 'Añadir a la Lista',
     added: '✓ Añadido',
     addedToWishlist: (name) => `✦ ${name} añadido a tu Lista!`,
     addedAllToWishlist: (n) => `✦ ${n} botellas añadidas a tu Lista!`,
-    addAllTo: (n) => `✦ Añadir las ${n} a mi Lista`,
+    addAllTo: (n) => `Añadir las ${n} a mi Lista`,
     importFailed: '⚠ Error al importar: ',
 
     // AppView / misc toasts
