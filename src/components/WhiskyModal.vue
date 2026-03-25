@@ -33,8 +33,12 @@
                 <div class="view-value">{{ form.distillery }}</div>
               </div>
               <div class="view-field" v-if="form.origin">
-                <div class="view-label">{{ t.regionOrigin }}</div>
+                <div class="view-label">{{ t.country }}</div>
                 <div class="view-value">{{ form.origin }}</div>
+              </div>
+              <div class="view-field" v-if="form.region">
+                <div class="view-label">{{ t.region }}</div>
+                <div class="view-value">{{ form.region }}</div>
               </div>
             </div>
 
@@ -208,12 +212,21 @@
         <div class="form-grid-2">
           <div class="form-row">
             <label>
-              {{ t.regionOrigin }}
+              {{ t.country }}
               <span v-if="cataloguePicked && form.origin !== (cataloguePicked.country || '')" class="override-badge">
                 yours · <button class="reset-btn" @click="form.origin = cataloguePicked.country || ''">↺</button>
               </span>
             </label>
-            <Autocomplete v-model="form.origin" category="origin" :placeholder="t.regionPlaceholder" />
+            <input type="text" v-model="form.origin" :placeholder="t.countryPlaceholder">
+          </div>
+          <div class="form-row">
+            <label>
+              {{ t.region }}
+              <span v-if="cataloguePicked && form.region !== (cataloguePicked.region || '')" class="override-badge">
+                yours · <button class="reset-btn" @click="form.region = cataloguePicked.region || ''">↺</button>
+              </span>
+            </label>
+            <Autocomplete v-model="form.region" category="origin" :placeholder="t.regionPlaceholder" />
           </div>
           <div class="form-row">
             <label>
@@ -392,7 +405,7 @@ const scanResults     = ref([])   // catalogue matches for the scanned whisky
 const scanSearching   = ref(false)
 
 const form = reactive({
-  name: '', distillery: '', origin: '', type: 'scotch', age: '',
+  name: '', distillery: '', origin: '', region: '', type: 'scotch', age: '',
   price: '', date: new Date().toISOString().split('T')[0],
   nose: '', palate: '', notes: '', rating: 0,
   bottle_count: null, last_finished: null,
