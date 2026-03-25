@@ -40,9 +40,13 @@
                 <div class="view-label">{{ t.region }}</div>
                 <div class="view-value">{{ form.region }}</div>
               </div>
-              <div class="view-field" v-if="form.age || form.abv">
+              <div class="view-field" v-if="form.age">
                 <div class="view-label">{{ t.ageMaturation }}</div>
-                <div class="view-value">{{ form.age }}{{ form.age && form.abv ? ' · ' : '' }}{{ form.abv }}</div>
+                <div class="view-value">{{ form.age }}</div>
+              </div>
+              <div class="view-field" v-if="form.abv">
+                <div class="view-label">{{ t.abv }}</div>
+                <div class="view-value">{{ form.abv }}</div>
               </div>
             </div>
 
