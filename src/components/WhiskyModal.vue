@@ -205,50 +205,48 @@
           />
         </div>
 
-        <template v-if="!cataloguePicked">
-          <div class="form-grid-2">
-            <div class="form-row">
-              <label>{{ t.distillery }}</label>
-              <Autocomplete v-model="form.distillery" category="distillery" :placeholder="t.distilleryPlaceholder" />
-            </div>
-            <div class="form-row">
-              <label>{{ t.regionOrigin }}</label>
-              <Autocomplete v-model="form.origin" category="origin" :placeholder="t.regionPlaceholder" />
-            </div>
-          </div>
-
-          <div class="form-grid-2">
-            <div class="form-row">
-              <label>{{ t.style }}</label>
-              <select v-model="form.type">
-                <option value="scotch">{{ t.scotch }}</option>
-                <option value="irish">{{ t.irish }}</option>
-                <option value="bourbon">{{ t.bourbon }}</option>
-                <option value="japanese">{{ t.japanese }}</option>
-                <option value="other">{{ t.other }}</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>{{ t.ageMaturation }}</label>
-              <input type="text" v-model="form.age" :placeholder="t.agePlaceholder">
-            </div>
-          </div>
-
-          <div class="form-grid-2">
-            <div class="form-row">
-              <label>{{ t.price }}</label>
-              <input type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
-            </div>
-            <div v-if="isJournal" class="form-row">
-              <label>{{ t.tastingDate }}</label>
-              <input type="date" v-model="form.date">
-            </div>
-          </div>
-        </template>
-
-        <!-- Date picker still shown when catalogue picked -->
-        <div v-if="cataloguePicked && isJournal" class="form-grid-2">
+        <div class="form-grid-2">
           <div class="form-row">
+            <label>
+              {{ t.regionOrigin }}
+              <span v-if="cataloguePicked && form.origin !== (cataloguePicked.country || '')" class="override-badge">
+                yours · <button class="reset-btn" @click="form.origin = cataloguePicked.country || ''">↺</button>
+              </span>
+            </label>
+            <Autocomplete v-model="form.origin" category="origin" :placeholder="t.regionPlaceholder" />
+          </div>
+          <div class="form-row">
+            <label>
+              {{ t.ageMaturation }}
+              <span v-if="cataloguePicked && form.age !== (cataloguePicked.age || '')" class="override-badge">
+                yours · <button class="reset-btn" @click="form.age = cataloguePicked.age || ''">↺</button>
+              </span>
+            </label>
+            <input type="text" v-model="form.age" :placeholder="t.agePlaceholder">
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div v-if="!cataloguePicked" class="form-row">
+            <label>{{ t.style }}</label>
+            <select v-model="form.type">
+              <option value="scotch">{{ t.scotch }}</option>
+              <option value="irish">{{ t.irish }}</option>
+              <option value="bourbon">{{ t.bourbon }}</option>
+              <option value="japanese">{{ t.japanese }}</option>
+              <option value="other">{{ t.other }}</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>
+              {{ t.price }}
+              <span v-if="cataloguePicked && form.price !== (cataloguePicked.price_band || '')" class="override-badge">
+                yours · <button class="reset-btn" @click="form.price = cataloguePicked.price_band || ''">↺</button>
+              </span>
+            </label>
+            <input type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
+          </div>
+          <div v-if="isJournal" class="form-row">
             <label>{{ t.tastingDate }}</label>
             <input type="date" v-model="form.date">
           </div>
@@ -937,4 +935,15 @@ async function save() {
   margin-left: 6px;
   vertical-align: middle;
 }
+.reset-btn {
+  background: none;
+  border: none;
+  color: var(--amber-light);
+  cursor: pointer;
+  font-size: 0.6rem;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.reset-btn:hover { opacity: 1; }
 </style>
