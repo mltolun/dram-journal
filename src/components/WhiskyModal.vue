@@ -40,16 +40,18 @@
                 <div class="view-label">{{ t.region }}</div>
                 <div class="view-value">{{ form.region }}</div>
               </div>
+              <div class="view-field" v-if="form.age">
+                <div class="view-label">{{ t.ageMaturation }}</div>
+                <div class="view-value">{{ form.age }}</div>
+              </div>
             </div>
 
             <div class="view-grid-2">
               <div class="view-field" v-if="form.type">
                 <div class="view-label">{{ t.style }}</div>
-                <div class="view-value">{{ t.types[form.type] || form.type }}</div>
-              </div>
-              <div class="view-field" v-if="form.age">
-                <div class="view-label">{{ t.ageMaturation }}</div>
-                <div class="view-value">{{ form.age }}</div>
+                <div class="view-value">
+                  <span class="wcard-type" :class="`type-${form.type}`">{{ t.types[form.type] || form.type }}</span>
+                </div>
               </div>
             </div>
 
