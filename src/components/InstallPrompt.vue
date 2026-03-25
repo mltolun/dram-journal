@@ -142,14 +142,14 @@ function dismiss() {
 .install-prompt-text { flex: 1; }
 
 .install-prompt-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 0.95rem;
   color: var(--text-primary, #F8F4EE);
   margin-bottom: 3px;
 }
 
 .install-prompt-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   color: var(--peat-light, #8A7060);
   line-height: 1.5;
@@ -177,7 +177,7 @@ function dismiss() {
   border: none;
   border-radius: 8px;
   padding: 7px 14px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;

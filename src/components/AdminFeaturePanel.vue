@@ -310,7 +310,7 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 .subs-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 1.15rem;
   color: var(--text-primary, #F8F4EE);
   display: flex;
@@ -336,7 +336,7 @@ onMounted(async () => {
 }
 
 .admin-badge {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.54rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -365,7 +365,7 @@ onMounted(async () => {
   border: 0.5px solid var(--border);
   border-radius: 999px;
   padding: 4px 11px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -393,7 +393,7 @@ onMounted(async () => {
   padding: 16px 20px 24px;
 }
 .fr-loading {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   color: var(--peat-light);
   padding: 20px 0;
@@ -402,7 +402,7 @@ onMounted(async () => {
 .fr-empty {
   text-align: center;
   padding: 28px 0;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   color: var(--peat-light);
   line-height: 1.6;
@@ -430,7 +430,7 @@ onMounted(async () => {
 }
 .admin-item-left { flex: 1; }
 .admin-item-title {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.84rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -438,7 +438,7 @@ onMounted(async () => {
   margin-bottom: 3px;
 }
 .admin-item-submitter {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.57rem;
   color: var(--peat-light);
 }
@@ -446,7 +446,7 @@ onMounted(async () => {
 /* Status badge (shared with user panel) */
 .fr-status-badge {
   flex-shrink: 0;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.54rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -467,7 +467,7 @@ onMounted(async () => {
 }
 .admin-field-group { margin-bottom: 10px; }
 .admin-field-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -475,7 +475,7 @@ onMounted(async () => {
   margin-bottom: 3px;
 }
 .admin-field-value {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.76rem;
   color: var(--text-secondary);
   line-height: 1.5;
@@ -501,7 +501,7 @@ onMounted(async () => {
   gap: 5px;
 }
 .admin-ctrl-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -524,7 +524,7 @@ onMounted(async () => {
   border: 0.5px solid var(--border);
   border-radius: 6px;
   padding: 7px 9px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
   color: var(--text-primary);
   cursor: pointer;
@@ -539,7 +539,7 @@ onMounted(async () => {
   border: 0.5px solid var(--border);
   border-radius: 6px;
   padding: 7px 9px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
   color: var(--text-primary);
   resize: vertical;
@@ -559,7 +559,7 @@ onMounted(async () => {
   color: var(--bg);
   border: none;
   border-radius: 6px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -574,7 +574,7 @@ onMounted(async () => {
   background: none;
   border: 0.5px solid rgba(226,75,74,0.4);
   border-radius: 6px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: #e08888;
   cursor: pointer;
@@ -582,13 +582,13 @@ onMounted(async () => {
 }
 .admin-delete-btn:hover { background: rgba(226,75,74,0.1); }
 
-.admin-save-ok  { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: #1D9E75; margin-top: 6px; }
-.admin-save-err { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: #e08888; margin-top: 6px; }
+.admin-save-ok  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #1D9E75; margin-top: 6px; }
+.admin-save-err { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #e08888; margin-top: 6px; }
 
 .fr-expand-btn {
   background: none;
   border: none;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
   color: var(--peat-light);
   cursor: pointer;
@@ -618,14 +618,14 @@ onMounted(async () => {
   max-width: 300px;
 }
 .admin-confirm-title {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 6px;
 }
 .admin-confirm-sub {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.76rem;
   color: var(--peat-light);
   margin-bottom: 18px;
@@ -637,7 +637,7 @@ onMounted(async () => {
   background: rgba(226,75,74,0.15);
   border: 0.5px solid rgba(226,75,74,0.5);
   border-radius: 6px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: #e08888;
   cursor: pointer;
@@ -647,7 +647,7 @@ onMounted(async () => {
   background: none;
   border: 0.5px solid var(--border);
   border-radius: 6px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: var(--text-secondary);
   cursor: pointer;
@@ -657,14 +657,14 @@ onMounted(async () => {
   padding: 32px 24px;
 }
 .access-denied-title {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
   font-weight: 500;
   color: #e08888;
   margin-bottom: 12px;
 }
 .access-denied-body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.76rem;
   color: var(--peat-light);
   line-height: 1.7;
@@ -672,7 +672,7 @@ onMounted(async () => {
 }
 .access-denied-body strong { color: var(--amber-light); }
 .access-denied-body code {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
   background: rgba(200,130,42,0.1);
   padding: 1px 5px;

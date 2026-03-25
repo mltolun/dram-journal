@@ -6,12 +6,12 @@
         <button class="modal-close" @click="$emit('close')">✕</button>
       </div>
 
-      <div v-if="loading" style="text-align:center;padding:1.5rem 0;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--peat-light);">
+      <div v-if="loading" style="text-align:center;padding:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--peat-light);">
         {{ t.generatingLink }}
       </div>
 
       <template v-else>
-        <p style="font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--peat-light);margin-bottom:0.6rem;line-height:1.6;"
+        <p style="font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--peat-light);margin-bottom:0.6rem;line-height:1.6;"
           v-html="t.sharingBottles(count)">
         </p>
         <div class="share-link-box">

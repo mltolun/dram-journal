@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
+    "lucide-vue-next": "^1.0.0",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"
   },

@@ -8,8 +8,9 @@
       <div class="header-right">
 
         <!-- Inbox button -->
-        <button class="btn-inbox" @click="inboxOpen = true" title="Inbox">
-          📬
+        <button class="btn-inbox" @click="inboxOpen = true">
+          <InboxIcon :size="16" />
+          <span>Inbox</span>
           <span v-if="totalInboxCount" class="inbox-dot-badge">{{ totalInboxCount }}</span>
         </button>
 
@@ -50,31 +51,31 @@
 
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doExport">
-                <span class="menu-item-icon">↓</span> {{ t.exportCsv }}
+                <DownloadIcon :size="14" /> {{ t.exportCsv }}
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="openSubscriptions">
-                <span class="menu-item-icon">👁</span> {{ t.friendsFollowers }}
+                <UsersIcon :size="14" /> {{ t.friendsFollowers }}
                 <span v-if="pendingRequests.length" class="menu-badge">{{ pendingRequests.length }}</span>
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="openFeatureRequests">
-                <span class="menu-item-icon">💡</span> {{ t.featureRequests }}
+                <LightbulbIcon :size="14" /> {{ t.featureRequests }}
               </button>
               <template v-if="isAdmin">
                 <div class="avatar-menu-divider"></div>
                 <button class="avatar-menu-item avatar-menu-item--admin" @click="openAdminPanel">
-                  <span class="menu-item-icon">🛠</span> {{ t.adminRequests }}
+                  <SettingsIcon :size="14" /> {{ t.adminRequests }}
                   <span v-if="openRequestCount" class="menu-badge">{{ openRequestCount }}</span>
                 </button>
               </template>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doToggleLocale">
-                <span class="menu-item-icon">🌐</span> {{ locale === 'en' ? 'Español' : 'English' }}
+                <GlobeIcon :size="14" /> {{ locale === 'en' ? 'Español' : 'English' }}
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item avatar-menu-item--danger" @click="doSignOut">
-                <span class="menu-item-icon">↪</span> {{ t.signOut }}
+                <LogOutIcon :size="14" /> {{ t.signOut }}
               </button>
             </div>
           </transition>
@@ -105,6 +106,7 @@ import InboxPanel from './InboxPanel.vue'
 import FeatureRequestPanel from './FeatureRequestPanel.vue'
 import AdminFeaturePanel from './AdminFeaturePanel.vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
+import { Inbox as InboxIcon, Download as DownloadIcon, Users as UsersIcon, Lightbulb as LightbulbIcon, Settings as SettingsIcon, Globe as GlobeIcon, LogOut as LogOutIcon } from 'lucide-vue-next'
 
 const { signOut } = useAuth()
 const { theme, THEMES } = useTheme()
@@ -233,7 +235,7 @@ async function doSignOut() {
   border-color: var(--amber);
 }
 .avatar-letter {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--amber-light);
@@ -266,7 +268,7 @@ async function doSignOut() {
   transform-origin: top right;
 }
 .avatar-menu-email {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   color: var(--peat-light);
   padding: 10px 14px 8px;
@@ -289,7 +291,7 @@ async function doSignOut() {
   gap: 10px;
 }
 .theme-row-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -323,7 +325,7 @@ async function doSignOut() {
 }
 .theme-option-icon { font-size: 0.9rem; }
 .theme-option-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.46rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -340,7 +342,7 @@ async function doSignOut() {
   padding: 10px 14px;
   background: none;
   border: none;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -361,9 +363,9 @@ async function doSignOut() {
   background: rgba(200, 130, 42, 0.1);
   color: var(--amber-light);
 }
-.menu-item-icon {
-  font-size: 0.75rem;
+.avatar-menu-item svg {
   opacity: 0.7;
+  flex-shrink: 0;
 }
 .menu-badge {
   margin-left: auto;
@@ -381,17 +383,21 @@ async function doSignOut() {
   position: relative;
   background: none;
   border: 0.5px solid var(--border);
-  border-radius: 5px;
-  font-size: 0.85rem;
-  padding: 2px 6px;
+  border-radius: 7px;
+  padding: 5px 10px;
   cursor: pointer;
-  transition: all 0.2s;
-  line-height: 1.6;
-  color: var(--text-primary);
+  transition: all 0.18s;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
 }
 .btn-inbox:hover {
-  border-color: var(--amber);
-  transform: scale(1.1);
+  border-color: var(--border-hi);
+  color: var(--text-primary);
 }
 .inbox-dot-badge {
   position: absolute;
@@ -399,7 +405,7 @@ async function doSignOut() {
   right: -4px;
   background: var(--amber);
   color: #fff;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.5rem;
   font-weight: 700;
   border-radius: 999px;

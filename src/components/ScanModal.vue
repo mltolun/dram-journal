@@ -463,11 +463,11 @@ async function save() {
   background: rgba(200,130,42,0.06);
 }
 .scan-drop-icon  { font-size: 2.8rem; margin-bottom: 0.75rem; }
-.scan-drop-label { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.3rem; }
-.scan-drop-hint  { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--peat-light); text-transform: uppercase; }
+.scan-drop-label { font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.3rem; }
+.scan-drop-hint  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--peat-light); text-transform: uppercase; }
 
 .scan-quota {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -508,11 +508,11 @@ async function save() {
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.scan-loading-text { font-family: 'Playfair Display', serif; font-size: 1.1rem; }
-.scan-loading-sub  { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--peat-light); }
+.scan-loading-text { font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em; font-size: 1.1rem; }
+.scan-loading-sub  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--peat-light); }
 
 .scan-result-header {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -553,7 +553,7 @@ async function save() {
 }
 .scan-field:last-child { border-bottom: none; }
 .scan-field-lbl {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -561,14 +561,14 @@ async function save() {
   flex-shrink: 0;
 }
 .scan-field-val {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   color: var(--text-primary);
   text-align: right;
 }
 
 .scan-notes {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   color: var(--peat-light);
   font-style: italic;
@@ -588,7 +588,7 @@ async function save() {
   gap: 0.75rem;
 }
 .scan-error-icon { font-size: 2rem; opacity: 0.4; }
-.scan-error-msg  { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.08em; color: var(--peat-light); text-align: center; line-height: 1.6; }
+.scan-error-msg  { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.08em; color: var(--peat-light); text-align: center; line-height: 1.6; }
 /* ── Catalogue match styles ── */
 .scan-cat-hint {
   font-size: 0.75rem;
@@ -716,7 +716,7 @@ async function save() {
 .cs-dot { opacity: 0.4; }
 .cs-sub { font-size: 0.68rem; color: var(--text-secondary); opacity: 0.5; margin-top: 1px; }
 .cs-badge {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;

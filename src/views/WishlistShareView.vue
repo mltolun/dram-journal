@@ -7,7 +7,7 @@
   <div v-else-if="!items.length" class="share-error">
     <div class="share-error-icon">✦</div>
     <div class="share-error-txt">{{ t.wishlistNotFound }}</div>
-    <RouterLink to="/" style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
+    <RouterLink to="/" style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
   </div>
 
   <div v-else>
@@ -15,7 +15,7 @@
       <div class="share-brand">The <span>Dram</span> Journal</div>
       <div class="share-whisky-name" style="font-size:1.6rem;">✦ {{ t.wishlist }}</div>
       <div class="share-meta" style="margin-top:0.5rem;">
-        <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--peat-light);letter-spacing:0.1em;text-transform:uppercase;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--peat-light);letter-spacing:0.1em;text-transform:uppercase;">
           {{ items.length }} {{ items.length === 1 ? t.bottle : t.bottles }}
           · {{ t.shared }} {{ sharedDate }}
         </span>
@@ -161,7 +161,7 @@ async function doImportAll() {
   flex: 1;
 }
 .wl-distillery {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
   color: var(--peat-light);
   text-transform: uppercase;
@@ -169,19 +169,19 @@ async function doImportAll() {
   margin-top: 4px;
 }
 .wl-name {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.25;
   color: var(--cream);
 }
 .wl-age {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
   color: var(--peat-light);
 }
 .wl-notes {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
   color: var(--peat-light);
   font-style: italic;

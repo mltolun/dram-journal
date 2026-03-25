@@ -246,7 +246,7 @@ function formatDate(iso) {
 }
 
 .subs-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 1.15rem;
   color: var(--text-primary, #F8F4EE);
   display: flex;
@@ -257,7 +257,7 @@ function formatDate(iso) {
 .inbox-unread-badge {
   background: var(--amber);
   color: #fff;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   border-radius: 999px;
   padding: 2px 7px;
@@ -281,7 +281,7 @@ function formatDate(iso) {
   border: 0.5px solid var(--border-hi);
   border-radius: 6px;
   padding: 4px 10px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -295,7 +295,7 @@ function formatDate(iso) {
 .inbox-empty {
   padding: 40px 24px;
   text-align: center;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   color: var(--peat-light);
   line-height: 1.7;
@@ -320,7 +320,7 @@ function formatDate(iso) {
 .inbox-item.unread { background: rgba(200,130,42,0.06); }
 .inbox-type-pill--feature { background: rgba(29,158,117,0.15); color: #1D9E75; }
 .inbox-fr-status {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   margin: 4px 0 2px;
@@ -370,7 +370,7 @@ function formatDate(iso) {
   flex-wrap: wrap;
 }
 .inbox-type-pill {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -387,13 +387,13 @@ function formatDate(iso) {
 }
 
 .inbox-from {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   color: var(--amber-light);
 }
 .inbox-dot { color: var(--peat-light); font-size: 0.7rem; }
 .inbox-date {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   color: var(--peat-light);
 }
@@ -412,14 +412,14 @@ function formatDate(iso) {
 
 /* Follow request body */
 .inbox-follow-from {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.82rem;
   color: var(--text-secondary);
   line-height: 1.4;
   margin-bottom: 12px;
 }
 .inbox-follow-email {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
   color: var(--text-primary);
   display: block;
@@ -434,7 +434,7 @@ function formatDate(iso) {
   background: rgba(29,158,117,0.15);
   border: 0.5px solid rgba(29,158,117,0.5);
   border-radius: 6px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -450,7 +450,7 @@ function formatDate(iso) {
   background: none;
   border: 0.5px solid var(--border);
   border-radius: 6px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -467,20 +467,20 @@ function formatDate(iso) {
 
 /* Whisky message body */
 .inbox-whisky-name {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 1rem;
   color: var(--text-primary);
   line-height: 1.3;
   margin-bottom: 2px;
 }
 .inbox-whisky-sub {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   color: var(--peat-light);
   margin-bottom: 4px;
 }
 .inbox-expand-hint {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   color: var(--peat-light);
   opacity: 0.5;
@@ -495,7 +495,7 @@ function formatDate(iso) {
   border-top: 0.5px solid var(--border);
 }
 .inbox-notes {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   font-style: italic;
   color: var(--peat-light);
@@ -512,7 +512,7 @@ function formatDate(iso) {
   margin-bottom: 4px;
 }
 .inbox-bar-lbl {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -534,14 +534,14 @@ function formatDate(iso) {
   transition: width 0.3s ease;
 }
 .inbox-bar-val {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: var(--amber-light);
   width: 12px;
   text-align: right;
 }
 .inbox-rating {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   color: var(--amber);
   margin-top: 4px;

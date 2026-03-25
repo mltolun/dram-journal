@@ -148,7 +148,7 @@ async function doRemove(id) {
 }
 
 .subs-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 1.15rem;
   color: var(--text-primary, #F8F4EE);
 }
@@ -171,7 +171,7 @@ async function doRemove(id) {
 }
 
 .subs-section-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -191,7 +191,7 @@ async function doRemove(id) {
   border: 0.5px solid var(--border-hi, rgba(200,130,42,0.3));
   border-radius: 8px;
   padding: 9px 12px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
   color: var(--text-primary, #F8F4EE);
   outline: none;
@@ -206,7 +206,7 @@ async function doRemove(id) {
   border: none;
   border-radius: 8px;
   padding: 9px 16px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -217,8 +217,8 @@ async function doRemove(id) {
 .follow-btn:disabled { opacity: 0.5; cursor: default; }
 .follow-btn:not(:disabled):hover { opacity: 0.85; }
 
-.follow-error   { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: #E24B4A; margin-top: 8px; }
-.follow-success { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: #1D9E75; margin-top: 8px; }
+.follow-error   { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #E24B4A; margin-top: 8px; }
+.follow-success { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #1D9E75; margin-top: 8px; }
 
 /* Rows */
 .sub-row {
@@ -232,7 +232,7 @@ async function doRemove(id) {
 .sub-row:last-child { border-bottom: none; }
 
 .sub-email {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
   color: var(--text-secondary, #C0A882);
   overflow: hidden;
@@ -241,7 +241,7 @@ async function doRemove(id) {
 }
 
 .sub-empty {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   color: var(--peat-light);
   font-style: italic;
@@ -250,7 +250,7 @@ async function doRemove(id) {
 .sub-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 .sub-btn {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -269,7 +269,7 @@ async function doRemove(id) {
 
 .subs-footer {
   padding: 16px 24px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: var(--peat-light);
   line-height: 1.5;

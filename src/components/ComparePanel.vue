@@ -141,7 +141,7 @@ const { t } = useI18n()
   flex-shrink: 0;
 }
 .cp-title {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -211,7 +211,7 @@ const { t } = useI18n()
 
 /* Inline label shown above each value */
 .cp-inline-lbl {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -219,7 +219,7 @@ const { t } = useI18n()
   margin-bottom: 2px;
 }
 .cp-section-lbl {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -227,13 +227,13 @@ const { t } = useI18n()
 }
 
 .cp-name {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.25;
 }
 .cp-origin {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
   color: var(--peat-light);
   margin-bottom: 4px;
@@ -260,7 +260,7 @@ const { t } = useI18n()
 }
 .cm-badge {
   display: inline-block;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   padding: 3px 9px;
   border-radius: 20px;
@@ -287,7 +287,7 @@ const { t } = useI18n()
   transition: width 0.6s cubic-bezier(.23, 1, .32, 1);
 }
 .cp-bar-val {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: var(--peat-light);
   width: 14px;

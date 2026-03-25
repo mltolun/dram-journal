@@ -221,7 +221,7 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 .subs-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
   font-size: 1.15rem;
   color: var(--text-primary, #F8F4EE);
 }
@@ -256,7 +256,7 @@ onMounted(async () => {
   padding: 0 0 12px;
 }
 .fr-section-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -275,7 +275,7 @@ onMounted(async () => {
 }
 .fr-label {
   display: block;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -284,7 +284,7 @@ onMounted(async () => {
 }
 .fr-required { color: var(--amber); }
 .fr-label-hint {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.68rem;
   color: var(--peat-light);
   margin-bottom: 6px;
@@ -297,7 +297,7 @@ onMounted(async () => {
   border: 0.5px solid var(--border);
   border-radius: 7px;
   padding: 9px 11px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   color: var(--text-primary);
   resize: vertical;
@@ -311,7 +311,7 @@ onMounted(async () => {
 }
 .fr-textarea { min-height: 70px; }
 .fr-char-count {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
   color: var(--peat-light);
   text-align: right;
@@ -327,7 +327,7 @@ onMounted(async () => {
   color: var(--bg);
   border: none;
   border-radius: 7px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -351,7 +351,7 @@ onMounted(async () => {
   flex: 1;
 }
 .fr-loading {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   color: var(--peat-light);
   padding: 20px 0;
@@ -360,7 +360,7 @@ onMounted(async () => {
 .fr-empty {
   text-align: center;
   padding: 28px 0;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   color: var(--peat-light);
   line-height: 1.6;
@@ -388,7 +388,7 @@ onMounted(async () => {
 }
 .fr-item-title {
   flex: 1;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -396,7 +396,7 @@ onMounted(async () => {
 }
 .fr-status-badge {
   flex-shrink: 0;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.54rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -410,7 +410,7 @@ onMounted(async () => {
 .badge--declined    { background: rgba(226,75,74,0.12);  color: #e08888; }
 
 .fr-item-meta {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   color: var(--peat-light);
   margin-bottom: 6px;
@@ -418,7 +418,7 @@ onMounted(async () => {
 .fr-priority { color: var(--amber-light); }
 
 .fr-admin-note {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
   font-style: italic;
   color: var(--text-secondary);
@@ -442,7 +442,7 @@ onMounted(async () => {
   border-radius: 6px;
 }
 .fr-item-field-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -450,7 +450,7 @@ onMounted(async () => {
   margin-bottom: 3px;
 }
 .fr-item-field-value {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.76rem;
   color: var(--text-secondary);
   line-height: 1.5;
@@ -459,7 +459,7 @@ onMounted(async () => {
 .fr-expand-btn {
   background: none;
   border: none;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
   color: var(--peat-light);
   cursor: pointer;

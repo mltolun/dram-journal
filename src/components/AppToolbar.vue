@@ -6,12 +6,12 @@
           class="list-tab"
           :class="{ active: activeList === 'journal' }"
           @click="$emit('setList', 'journal')"
-        >🥃 <span class="tab-label">{{ t.journal }}</span></button>
+        ><BookOpenIcon :size="13" /> <span class="tab-label">{{ t.journal }}</span></button>
         <button
           class="list-tab"
           :class="{ active: activeList === 'wishlist' }"
           @click="$emit('setList', 'wishlist')"
-        >✦ <span class="tab-label">{{ t.wishlist }}</span></button>
+        ><HeartIcon :size="13" /> <span class="tab-label">{{ t.wishlist }}</span></button>
       </div>
       <button
         v-if="selectedCount > 0"
@@ -19,7 +19,7 @@
         @click.prevent.stop="onClearSelected"
         :title="t.clearSelected"
         type="button"
-      >{{ selectedCount }} {{ t.selected }} ✕</button>
+      >{{ selectedCount }} {{ t.selected }} <XIcon :size="11" /></button>
     </div>
     <div class="toolbar-right">
       <button
@@ -28,21 +28,21 @@
         :class="{ ready: selectedCount >= 2, active: compareOpen }"
         :disabled="selectedCount < 2"
         @click="$emit('compare')"
-      >{{ t.compare }}</button>
+      ><Columns2Icon :size="14" /> <span class="btn-label">{{ t.compare }}</span></button>
       <button
         v-if="activeList === 'wishlist'"
         class="btn-t btn-share-wl"
         @click="$emit('shareWishlist')"
-        :title="t.share"
-      >↗ <span class="btn-label">{{ t.share }}</span></button>
-      <button class="btn-t btn-scan" @click="$emit('scan')" :title="t.scan">📷 <span class="btn-label">{{ t.scan }}</span></button>
-      <button class="btn-t btn-primary" @click="$emit('add')">＋ <span class="btn-label">{{ t.add }}</span></button>
+      ><Share2Icon :size="14" /> <span class="btn-label">{{ t.share }}</span></button>
+      <button class="btn-t btn-scan" @click="$emit('scan')"><CameraIcon :size="14" /> <span class="btn-label">{{ t.scan }}</span></button>
+      <button class="btn-t btn-primary" @click="$emit('add')"><PlusIcon :size="14" /> <span class="btn-label">{{ t.add }}</span></button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { useI18n } from '../composables/useI18n.js'
+import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon } from 'lucide-vue-next'
 const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function })
 defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
@@ -62,7 +62,7 @@ defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
   border-radius: 5px;
   background: transparent;
   border: none;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;

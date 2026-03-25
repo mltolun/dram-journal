@@ -11,7 +11,7 @@
 
         <img v-if="rec.photo_url" :src="rec.photo_url" :alt="rec.name" class="wcard-photo">
 
-        <div>
+        <div class="wcard-body">
           <div class="wcard-meta-row">
             <span class="wcard-type" :class="`type-${rec.type}`">{{ t.types[rec.type] || rec.type }}</span>
           </div>
@@ -19,19 +19,19 @@
           <div class="wcard-name">{{ rec.name }}</div>
           <div v-if="rec.age" class="wcard-age">{{ rec.age }}</div>
           <div v-if="rec.price" class="rec-price">{{ rec.price }}</div>
-        </div>
 
-        <div class="wcard-bars">
-          <div v-for="a in ATTRS" :key="a" class="bar-row-s">
-            <div class="bar-lbl-s">{{ t.attrs[a] }}</div>
-            <div class="bar-track-s">
-              <div class="bar-fill-s" :style="{ width: (rec[a] || 0) * 20 + '%' }"></div>
+          <div class="wcard-bars">
+            <div v-for="a in ATTRS" :key="a" class="bar-row-s">
+              <div class="bar-lbl-s">{{ t.attrs[a] }}</div>
+              <div class="bar-track-s">
+                <div class="bar-fill-s" :style="{ width: (rec[a] || 0) * 20 + '%' }"></div>
+              </div>
+              <div class="bar-val-s">{{ rec[a] || 0 }}</div>
             </div>
-            <div class="bar-val-s">{{ rec[a] || 0 }}</div>
           </div>
-        </div>
 
-        <div v-if="rec.reason" class="rec-reason">{{ rec.reason }}</div>
+          <div v-if="rec.reason" class="rec-reason">{{ rec.reason }}</div>
+        </div>
 
         <div class="wcard-actions">
           <button class="wcard-btn" @click="addToWishlist(rec, i)" :disabled="addedIds.has(i)">
@@ -134,7 +134,7 @@ async function addToWishlist(rec, index) {
   margin-bottom: 1rem;
 }
 .recs-title {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -142,7 +142,7 @@ async function addToWishlist(rec, index) {
   margin-bottom: 4px;
 }
 .recs-sub {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   color: var(--peat-light);
   font-style: italic;
@@ -156,20 +156,20 @@ async function addToWishlist(rec, index) {
   border-color: var(--amber) !important;
 }
 .rec-price {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   color: var(--amber-light);
   margin-top: 2px;
 }
 .rec-reason {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.74rem;
   color: var(--peat-light);
   font-style: italic;
   line-height: 1.5;
 }
 .recs-footer {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.08em;
   color: var(--peat-light);

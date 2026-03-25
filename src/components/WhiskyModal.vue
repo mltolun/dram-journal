@@ -12,11 +12,11 @@
           {{ list === 'wishlist' ? t.addToWishlist : t.addToJournal }}
         </div>
         <div class="modal-title" v-else>{{ t.edit }} <span>{{ editing.name }}</span></div>
-        <button class="modal-close" @click="$emit('close')">✕</button>
+        <button class="modal-close" @click="$emit('close')"><XIcon :size="18" /></button>
       </div>
 
       <!-- ── VIEW MODE ── -->
-      <template v-if="isViewMode">
+      <template v-if="isViewMode"><div style="padding: 0 20px 20px;">
 
         <div :class="isJournal && form.photo_url ? 'view-layout-split' : ''">
 
@@ -131,6 +131,7 @@
             <img :src="form.photo_url" :alt="form.name" class="lightbox-img" @click.stop>
           </div>
         </Teleport>
+        </div>
       </template>
 
       <!-- ── SCAN MATCH STEP — shown when opened via bottle scan ── -->
@@ -356,7 +357,7 @@
 
         <div v-if="(cataloguePicked || manualMode || editing) && !scanMode" class="modal-actions">
           <button class="btn-save" :disabled="saving" @click="save">
-            {{ saving ? t.saving : (editing ? t.saveChanges : (isJournal ? t.addToJournalBtn : t.addToWishlistBtn)) }}
+            <CheckIcon v-if="!saving" :size="14" /> {{ saving ? t.saving : (editing ? t.saveChanges : (isJournal ? t.addToJournalBtn : t.addToWishlistBtn)) }}
           </button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.cancel }}</button>
         </div>
@@ -367,6 +368,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -565,7 +567,7 @@ async function save() {
   transform: scale(1.15);
 }
 .star-clear {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: var(--peat-light);
   cursor: pointer;
@@ -675,7 +677,7 @@ async function save() {
   margin-bottom: 12px;
 }
 .view-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   color: var(--peat-light);
   text-transform: uppercase;
@@ -693,7 +695,7 @@ async function save() {
   white-space: pre-wrap;
 }
 .view-section-lbl {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   color: var(--peat-light);
   letter-spacing: 0.06em;
@@ -795,7 +797,7 @@ async function save() {
   margin-top: 2px;
 }
 .cs-badge {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -854,7 +856,7 @@ async function save() {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--amber-light);
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   margin-bottom: 4px;
   opacity: 0.8;
 }
@@ -944,7 +946,7 @@ async function save() {
 .override-badge {
   display: inline-block;
   font-size: 0.58rem;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 1px 5px;

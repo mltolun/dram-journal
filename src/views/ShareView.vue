@@ -7,7 +7,7 @@
   <div v-else-if="!whisky" class="share-error">
     <div class="share-error-icon">🥃</div>
     <div class="share-error-txt">{{ t.dramNotFound }}</div>
-    <RouterLink to="/" style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
+    <RouterLink to="/" style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
   </div>
 
   <div v-else>

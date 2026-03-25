@@ -151,7 +151,7 @@ async function doSend(sub) {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   padding: 8px 12px 10px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -181,7 +181,7 @@ async function doSend(sub) {
 .tab-body { min-height: 100px; }
 
 .share-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.82rem;
   color: var(--peat-light);
   margin-bottom: 1rem;
@@ -189,7 +189,7 @@ async function doSend(sub) {
 }
 
 .share-empty {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   color: var(--peat-light);
   font-style: italic;
@@ -225,7 +225,7 @@ async function doSend(sub) {
 .follower-row:disabled { cursor: default; }
 
 .follower-email {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
   color: var(--text-secondary);
   overflow: hidden;
@@ -234,7 +234,7 @@ async function doSend(sub) {
 }
 
 .follower-action {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
   color: var(--amber);
@@ -244,7 +244,7 @@ async function doSend(sub) {
 .follower-row.sent .follower-action { color: #1D9E75; }
 
 .share-tip {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   color: var(--peat-light);
   margin-top: 10px;

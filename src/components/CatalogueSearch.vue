@@ -241,7 +241,7 @@ function onClear() {
   margin-top: 2px;
 }
 .cs-badge {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
