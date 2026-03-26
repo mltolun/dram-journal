@@ -13,8 +13,10 @@
   <div v-else>
     <div class="share-hero">
       <div class="share-brand">The <span>Dram</span> Journal</div>
-      <img v-if="whisky.photo_url" :src="whisky.photo_url" :alt="whisky.name"
-        style="width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-bottom:1.2rem;border:0.5px solid var(--border)">
+      <div v-if="whisky.photo_url" style="background:var(--bg-input);border-radius:10px;border:0.5px solid var(--border);margin-bottom:1.2rem;display:flex;align-items:center;justify-content:center;max-height:280px;overflow:hidden;">
+        <img :src="whisky.photo_url" :alt="whisky.name"
+          style="max-height:280px;max-width:100%;object-fit:contain;display:block;">
+      </div>
       <div class="share-whisky-name">{{ whisky.name }}</div>
       <div class="share-meta">
         <span class="cm-badge" :style="typeBadgeStyle[whisky.type] || typeBadgeStyle.other">{{ t.types[whisky.type] }}</span>
