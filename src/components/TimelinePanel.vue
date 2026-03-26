@@ -9,7 +9,7 @@
             v-for="r in RANGES" :key="r.key"
             class="tl-range-btn"
             :class="{ active: range === r.key }"
-            @click="setRange(r.key)"
+            @click.stop="setRange(r.key)"
           >{{ r.label }}</button>
         </div>
         <button class="tl-close" type="button" @click.stop="emit('close')">
@@ -36,12 +36,12 @@
             <div class="tl-dot"></div>
 
             <!-- Bottles: horizontal row when expanded, vertical stack when collapsed -->
-            <div class="tl-bottles" :class="{ expanded: expandedKeys.has(m.key) }">
+            <div class="tl-bottles">
               <button
                 v-for="w in visibleEntries(m)"
                 :key="w.id"
                 class="tl-bottle"
-                @click="openEntry(w)"
+                @click.stop="openEntry(w)"
                 :title="w.name"
               >
                 <div class="tl-thumb">
@@ -58,14 +58,14 @@
               <button
                 v-if="!expandedKeys.has(m.key) && m.entries.length > PREVIEW_COUNT"
                 class="tl-see-more"
-                @click="expand(m.key)"
+                @click.stop="expand(m.key)"
               >
                 +{{ m.entries.length - PREVIEW_COUNT }} more
               </button>
               <button
                 v-if="expandedKeys.has(m.key)"
                 class="tl-collapse"
-                @click="collapse(m.key)"
+                @click.stop="collapse(m.key)"
               >
                 ↑ less
               </button>
@@ -177,7 +177,6 @@ function formatDay(dateStr) {
 
 function openEntry(w) {
   emit('open-entry', w)
-  emit('close')
 }
 </script>
 
@@ -256,6 +255,8 @@ function openEntry(w) {
   flex: 1;
   padding: 24px 24px 20px;
   -webkit-overflow-scrolling: touch;
+  background: var(--bg-modal);
+  border-radius: 0 0 16px 16px;
 }
 .tl-loading {
   display: flex;
@@ -295,9 +296,10 @@ function openEntry(w) {
   top: 22px;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 1px;
   background: var(--border);
   z-index: 0;
+  pointer-events: none;
 }
 .tl-month {
   display: flex;
@@ -333,15 +335,10 @@ function openEntry(w) {
 /* Bottles: vertical by default, horizontal row when expanded */
 .tl-bottles {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 128px;
-  padding: 0 6px;
-}
-.tl-bottles.expanded {
   flex-direction: row;
   flex-wrap: nowrap;
-  width: auto;
+  gap: 6px;
+  padding: 0 6px;
   align-items: flex-start;
 }
 .tl-bottle {
@@ -358,6 +355,7 @@ function openEntry(w) {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  height: 120px;
 }
 .tl-bottle:hover {
   border-color: var(--amber);
@@ -400,32 +398,43 @@ function openEntry(w) {
   background: var(--bg-input);
   border: 0.5px dashed var(--border-hi);
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 0 8px;
   cursor: pointer;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 600;
   color: var(--amber-light);
-  width: 100%;
-  text-align: center;
+  width: 40px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   transition: all 0.15s;
   font-family: 'Inter', sans-serif;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
 }
 .tl-see-more:hover { background: rgba(200,130,42,0.08); border-color: var(--amber); }
 .tl-collapse {
   background: none;
   border: 0.5px solid var(--border);
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 0 8px;
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 500;
   color: var(--peat-light);
-  width: 100%;
-  text-align: center;
+  width: 40px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   transition: all 0.15s;
   font-family: 'Inter', sans-serif;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
 }
 .tl-collapse:hover { border-color: var(--border-hi); color: var(--text-primary); }
 .tl-separator {

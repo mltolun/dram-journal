@@ -212,7 +212,7 @@ header { padding:12px 24px; border-bottom:0.5px solid var(--border); display:fle
 .flavor-val { font-size:0.62rem; color:var(--peat-light); width:24px; text-align:right; flex-shrink:0; font-family:'JetBrains Mono',monospace; }
 
 /* ── MODAL ── */
-.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:flex; align-items:center; justify-content:center; transition:opacity 0.25s; backdrop-filter:blur(2px); }
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:300; display:flex; align-items:center; justify-content:center; transition:opacity 0.25s; backdrop-filter:blur(2px); }
 .modal { background:var(--bg-modal); border:0.5px solid var(--border); border-radius:16px; width:min(640px,95vw); max-height:90vh; overflow-y:auto; padding:0; transform:translateY(16px); transition:transform 0.25s; box-shadow:var(--shadow-modal); }
 .modal-backdrop.open .modal { transform:translateY(0); }
 .modal-header { display:flex; justify-content:space-between; align-items:center; padding:18px 20px 16px; border-bottom:0.5px solid var(--border); }

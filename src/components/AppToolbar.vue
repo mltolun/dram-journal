@@ -35,18 +35,48 @@
         @click="$emit('shareWishlist')"
       ><Share2Icon :size="14" /> <span class="btn-label">{{ t.share }}</span></button>
       <button v-if="activeList === 'journal'" class="btn-t btn-outline" @click="$emit('timeline')"><CalendarIcon :size="14" /> <span class="btn-label">Timeline</span></button>
-      <button class="btn-t btn-scan" @click="$emit('scan')"><CameraIcon :size="14" /> <span class="btn-label">{{ t.scan }}</span></button>
-      <button class="btn-t btn-primary" @click="$emit('add')"><PlusIcon :size="14" /> <span class="btn-label">{{ t.add }}</span></button>
+      <div class="add-wrap" ref="addWrap">
+        <button class="btn-t btn-primary" @click.stop="addOpen = !addOpen">
+          <PlusIcon :size="14" /> <span class="btn-label">{{ t.add }}</span> <ChevronDownIcon :size="12" />
+        </button>
+        <div v-if="addOpen" class="add-dropdown">
+          <button class="add-option" @click.stop="choose('add')">
+            <SearchIcon :size="14" />
+            Search catalogue
+          </button>
+          <button class="add-option" @click.stop="choose('scan')">
+            <CameraIcon :size="14" />
+            {{ t.scan }} bottle
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { useI18n } from '../composables/useI18n.js'
-import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
+import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, Search as SearchIcon } from 'lucide-vue-next'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function })
-defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'timeline'])
+const emit = defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'timeline'])
+
+const addOpen = ref(false)
+const addWrap = ref(null)
+
+function choose(action) {
+  addOpen.value = false
+  if (action === 'add') emit('add')
+  else emit('scan')
+}
+
+function onClickOutside(e) {
+  if (addWrap.value && !addWrap.value.contains(e.target)) addOpen.value = false
+}
+
+onMounted(() => document.addEventListener('click', onClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 </script>
 
 <style scoped>
@@ -98,4 +128,37 @@ defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'timeline'])
   background: rgba(200,130,42,0.1);
   border-color: var(--amber);
 }
+.add-wrap {
+  position: relative;
+}
+.add-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg-modal);
+  border: 0.5px solid var(--border-hi);
+  border-radius: 10px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+  min-width: 160px;
+  z-index: 100;
+}
+.add-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+.add-option:hover { background: rgba(200,130,42,0.08); color: var(--text-primary); }
+.add-option + .add-option { border-top: 0.5px solid var(--border); }
 </style>
