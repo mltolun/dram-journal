@@ -11,44 +11,46 @@
   </div>
 
   <div v-else>
-    <div class="share-hero">
-      <div class="share-brand">The <span>Dram</span> Journal</div>
-      <div v-if="whisky.photo_url" style="background:var(--bg-input);border-radius:10px;border:0.5px solid var(--border);margin-bottom:1.2rem;display:flex;align-items:center;justify-content:center;max-height:280px;overflow:hidden;">
-        <img :src="whisky.photo_url" :alt="whisky.name"
-          style="max-height:280px;max-width:100%;object-fit:contain;display:block;">
+    <!-- Brand header -->
+    <div class="share-brand-bar">The <span>Dram</span> Journal</div>
+
+    <!-- Photo + details split — mirrors WhiskyModal view mode -->
+    <div class="share-top">
+      <div v-if="whisky.photo_url" class="share-photo-col">
+        <img :src="whisky.photo_url" :alt="whisky.name" class="share-photo">
       </div>
-      <div class="share-whisky-name">{{ whisky.name }}</div>
-      <div class="share-meta">
-        <span class="cm-badge" :style="typeBadgeStyle[whisky.type] || typeBadgeStyle.other">{{ t.types[whisky.type] }}</span>
-        <span v-if="whisky.distillery" class="share-distillery">{{ whisky.distillery }}</span>
-        <span v-if="whisky.origin" class="share-distillery" style="opacity:0.5">· {{ whisky.origin }}</span>
+      <div class="share-info-col">
+        <div class="share-whisky-name">{{ whisky.name }}</div>
+        <div class="share-meta">
+          <span class="cm-badge" :style="typeBadgeStyle[whisky.type] || typeBadgeStyle.other">{{ t.types[whisky.type] }}</span>
+          <span v-if="whisky.distillery" class="share-distillery">{{ whisky.distillery }}</span>
+          <span v-if="whisky.origin" class="share-distillery" style="opacity:0.5">· {{ whisky.origin }}</span>
+        </div>
+        <div class="share-detail-list">
+          <template v-for="d in details" :key="d.label">
+            <div class="share-detail-row">
+              <span class="share-detail-lbl">{{ d.label }}</span>
+              <span class="share-detail-val">{{ d.val }}</span>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
 
-    <div class="share-body">
-      <div>
-        <div class="share-section-lbl">{{ t.details }}</div>
-        <template v-for="d in details" :key="d.label">
-          <div class="share-detail-row">
-            <span class="share-detail-lbl">{{ d.label }}</span>
-            <span class="share-detail-val">{{ d.val }}</span>
-          </div>
-        </template>
-        <template v-if="whisky.notes">
-          <div class="share-section-lbl" style="margin-top:1.2rem">{{ t.notes }}</div>
-          <div class="share-notes-box">{{ whisky.notes }}</div>
-        </template>
-      </div>
-      <div>
-        <div class="share-section-lbl">{{ t.flavourProfileSection }}</div>
-        <div class="share-bars">
-          <div v-for="a in ATTRS" :key="a" class="share-bar-row">
-            <div class="share-bar-lbl">{{ t.attrs[a] }}</div>
-            <div class="share-track"><div class="share-fill" :style="{ width: (whisky[a] || 0) * 20 + '%' }"></div></div>
-            <div class="share-val">{{ whisky[a] || 0 }}</div>
-          </div>
+    <!-- Flavour profile + notes below -->
+    <div class="share-body-below">
+      <div class="share-section-lbl">{{ t.flavourProfileSection }}</div>
+      <div class="share-bars">
+        <div v-for="a in ATTRS" :key="a" class="share-bar-row">
+          <div class="share-bar-lbl">{{ t.attrs[a] }}</div>
+          <div class="share-track"><div class="share-fill" :style="{ width: (whisky[a] || 0) * 20 + '%' }"></div></div>
+          <div class="share-val">{{ whisky[a] || 0 }}</div>
         </div>
       </div>
+      <template v-if="whisky.notes">
+        <div class="share-section-lbl" style="margin-top:1.4rem">{{ t.notes }}</div>
+        <div class="share-notes-box">{{ whisky.notes }}</div>
+      </template>
     </div>
 
     <div class="share-actions">
@@ -120,3 +122,69 @@ async function doImport() {
   }
 }
 </script>
+
+<style scoped>
+.share-brand-bar {
+  padding: 14px 24px;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  margin-bottom: 0;
+}
+.share-brand-bar span { color: var(--amber-light); }
+
+.share-top {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  padding: 24px 24px 20px;
+  border-bottom: 0.5px solid var(--border);
+  align-items: start;
+}
+.share-photo-col {
+  background: var(--bg-input);
+  border-radius: 10px;
+  border: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  height: 220px;
+}
+.share-photo {
+  max-height: 220px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+.share-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.share-whisky-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+.share-detail-list {
+  margin-top: 4px;
+}
+.share-body-below {
+  padding: 20px 24px 8px;
+  max-width: 540px;
+}
+
+@media (max-width: 600px) {
+  .share-top {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .share-photo-col { height: 180px; }
+  .share-body-below { padding: 16px; }
+}
+</style>
