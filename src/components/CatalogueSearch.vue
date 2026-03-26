@@ -119,6 +119,7 @@ function onClear() {
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding: 16px 20px;
 }
 
 /* ── Scan banner ── */
