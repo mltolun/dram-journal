@@ -14,52 +14,55 @@
     <!-- Brand header -->
     <div class="share-brand-bar">The <span>Dram</span> Journal</div>
 
-    <!-- Three-column layout: details | photo | flavour profile -->
-    <div class="share-title-bar">
-      <div class="share-whisky-name">{{ whisky.name }}</div>
-      <div class="share-meta">
-        <span class="cm-badge" :style="typeBadgeStyle[whisky.type] || typeBadgeStyle.other">{{ t.types[whisky.type] }}</span>
-        <span v-if="whisky.distillery" class="share-distillery">{{ whisky.distillery }}</span>
-        <span v-if="whisky.origin" class="share-distillery" style="opacity:0.5">· {{ whisky.origin }}</span>
-      </div>
-    </div>
-
-    <div class="share-three-col">
-      <!-- Col 1: Details -->
-      <div class="share-col-details">
-        <div class="share-section-lbl">{{ t.details }}</div>
-        <template v-for="d in details" :key="d.label">
-          <div class="share-detail-row">
-            <span class="share-detail-lbl">{{ d.label }}</span>
-            <span class="share-detail-val">{{ d.val }}</span>
-          </div>
-        </template>
-        <template v-if="whisky.notes">
-          <div class="share-section-lbl" style="margin-top:1.2rem">{{ t.notes }}</div>
-          <div class="share-notes-box">{{ whisky.notes }}</div>
-        </template>
-      </div>
-
-      <!-- Col 2: Photo -->
-      <div v-if="whisky.photo_url" class="share-col-photo">
-        <div class="share-photo-wrap">
-          <img :src="whisky.photo_url" :alt="whisky.name" class="share-photo">
+    <div class="share-container">
+      <!-- Title -->
+      <div class="share-title-bar">
+        <div class="share-whisky-name">{{ whisky.name }}</div>
+        <div class="share-meta">
+          <span class="cm-badge" :style="typeBadgeStyle[whisky.type] || typeBadgeStyle.other">{{ t.types[whisky.type] }}</span>
+          <span v-if="whisky.distillery" class="share-distillery">{{ whisky.distillery }}</span>
+          <span v-if="whisky.origin" class="share-distillery" style="opacity:0.5">· {{ whisky.origin }}</span>
         </div>
       </div>
 
-      <!-- Col 3: Flavour profile -->
-      <div class="share-col-flavour">
-        <div class="share-section-lbl">{{ t.flavourProfileSection }}</div>
-        <div class="share-bars">
-          <div v-for="a in ATTRS" :key="a" class="share-bar-row">
-            <div class="share-bar-lbl">{{ t.attrs[a] }}</div>
-            <div class="share-track"><div class="share-fill" :style="{ width: (whisky[a] || 0) * 20 + '%' }"></div></div>
-            <div class="share-val">{{ whisky[a] || 0 }}</div>
+      <!-- Three-column layout: photo | details | flavour profile -->
+      <div class="share-three-col">
+        <!-- Col 1: Photo -->
+        <div v-if="whisky.photo_url" class="share-col-photo">
+          <div class="share-photo-wrap">
+            <img :src="whisky.photo_url" :alt="whisky.name" class="share-photo">
+          </div>
+        </div>
+
+        <!-- Col 2: Details -->
+        <div class="share-col-details">
+          <div class="share-section-lbl">{{ t.details }}</div>
+          <template v-for="d in details" :key="d.label">
+            <div class="share-detail-row">
+              <span class="share-detail-lbl">{{ d.label }}</span>
+              <span class="share-detail-val">{{ d.val }}</span>
+            </div>
+          </template>
+          <template v-if="whisky.notes">
+            <div class="share-section-lbl" style="margin-top:1.2rem">{{ t.notes }}</div>
+            <div class="share-notes-box">{{ whisky.notes }}</div>
+          </template>
+        </div>
+
+        <!-- Col 3: Flavour profile -->
+        <div class="share-col-flavour">
+          <div class="share-section-lbl">{{ t.flavourProfileSection }}</div>
+          <div class="share-bars">
+            <div v-for="a in ATTRS" :key="a" class="share-bar-row">
+              <div class="share-bar-lbl">{{ t.attrs[a] }}</div>
+              <div class="share-track"><div class="share-fill" :style="{ width: (whisky[a] || 0) * 20 + '%' }"></div></div>
+              <div class="share-val">{{ whisky[a] || 0 }}</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
+      <!-- Actions -->
       <div class="share-actions">
         <button v-if="currentUser" class="btn-t btn-primary" :disabled="importing" @click="doImport">
           {{ importing ? t.importing : t.addToMyWishlist }}
