@@ -26,11 +26,11 @@ const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
 
 // ── Colour palette ────────────────────────────────────────────────────────────
 
-const AMBER       = '#A8620A'
-const AMBER_LIGHT = '#C07820'
-const PEAT        = '#F8F4EE'
-const PEAT_LIGHT  = '#8A7060'
-const CREAM       = '#2C1F10'
+const AMBER       = '#B06A0A'
+const AMBER_LIGHT = '#C8822A'
+const PEAT        = '#FFFFFF'
+const PEAT_LIGHT  = '#6B6B6B'
+const CREAM       = '#111111'
 
 // ── Email builders ────────────────────────────────────────────────────────────
 
@@ -40,23 +40,23 @@ function shell(body) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital@0;1&family=DM+Sans:ital@0;1&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#1C1408;font-family:'DM Sans',Arial,sans-serif;">
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#1C1408;">
+<body style="margin:0;padding:0;background:#F5F5F5;font-family:'Inter',Arial,sans-serif;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F5F5;">
     <tr>
       <td align="center" style="padding:32px 16px 48px;">
         <table cellpadding="0" cellspacing="0" border="0" width="520"
-               style="max-width:520px;background:${PEAT};border-radius:16px;
+               style="max-width:520px;background:#FFFFFF;border-radius:16px;
                       overflow:hidden;border:1px solid rgba(200,130,42,0.2);">
           <tr>
             <td style="padding:24px 32px 20px;border-bottom:1px solid rgba(200,130,42,0.2);
-                       background:linear-gradient(to bottom,rgba(200,130,42,0.06),transparent);">
+                       background:#FFFFFF;border-bottom:1px solid #F0EDE8;">
               <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
                 <td>
-                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;
-                              font-weight:400;color:${CREAM};letter-spacing:-0.02em;">
-                    The <span style="color:${AMBER_LIGHT};font-style:italic;">Dram</span> Journal
+                  <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
+                              font-weight:600;color:#111111;letter-spacing:-0.02em;">
+                    The <span style="color:${AMBER_LIGHT};">Dram</span> Journal
                   </div>
                 </td>
                 <td align="right"><div style="font-size:24px;">🥃</div></td>
@@ -66,9 +66,9 @@ function shell(body) {
           ${body}
           <tr>
             <td style="padding:16px 32px;border-top:1px solid rgba(200,130,42,0.15);
-                       background:rgba(250,245,236,0.02);">
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.06em;
-                          color:rgba(122,98,85,0.6);text-align:center;">
+                       background:#FAFAFA;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.06em;
+                          color:#999999;text-align:center;">
                 Manage followers in your journal settings ·
                 <a href="${APP_URL}" style="color:${AMBER_LIGHT};text-decoration:none;">dramjournal.online</a>
               </div>
@@ -87,16 +87,16 @@ function followRequestHtml(fromEmail) {
   return shell(`
     <tr>
       <td style="padding:28px 32px 8px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
           ✦ New follow request
         </div>
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:19px;
                     font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:12px;">
           Someone wants to follow your journal
         </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
-          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>
           &nbsp;has sent you a follow request. If you accept, they'll receive
           a weekly digest of the whiskies you add and rate.
         </div>
@@ -106,7 +106,7 @@ function followRequestHtml(fromEmail) {
       <td align="center" style="padding:20px 32px 28px;">
         <a href="${APP_URL}"
            style="display:inline-block;background:${AMBER};color:${PEAT};
-                  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
           Review request →
@@ -133,16 +133,16 @@ function followAcceptedHtml(fromEmail) {
   return shell(`
     <tr>
       <td style="padding:28px 32px 8px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:#1D9E75;margin-bottom:10px;">
           ✦ Request accepted
         </div>
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:19px;
                     font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:12px;">
           You're now following their journal
         </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
-          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>
           &nbsp;accepted your follow request. You'll now receive their whisky
           additions and ratings in your weekly Monday update.
         </div>
@@ -152,7 +152,7 @@ function followAcceptedHtml(fromEmail) {
       <td align="center" style="padding:20px 32px 28px;">
         <a href="${APP_URL}"
            style="display:inline-block;background:${AMBER};color:${PEAT};
-                  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
           Open My Journal →
@@ -178,25 +178,25 @@ Sláinte 🥃`
 
 function directMessageHtml(fromEmail, whiskyName, distillery) {
   const name = fromEmail.split('@')[0]
-  const sub  = distillery ? `<div style="font-family:'DM Mono',monospace;font-size:10px;color:${PEAT_LIGHT};margin-bottom:14px;">${distillery}</div>` : ''
+  const sub  = distillery ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${PEAT_LIGHT};margin-bottom:14px;">${distillery}</div>` : ''
   return shell(`
     <tr>
       <td style="padding:28px 32px 8px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
           ✦ A friend shared a dram
         </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                     line-height:1.6;margin-bottom:16px;">
-          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>
           &nbsp;thinks you'd enjoy this:
         </div>
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:20px;
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:20px;
                     font-weight:400;color:${CREAM};line-height:1.2;margin-bottom:4px;">
           ${whiskyName}
         </div>
         ${sub}
-        <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">
           Open the app to see the full tasting profile and add it to your wishlist.
         </div>
       </td>
@@ -205,7 +205,7 @@ function directMessageHtml(fromEmail, whiskyName, distillery) {
       <td align="center" style="padding:20px 32px 28px;">
         <a href="${APP_URL}"
            style="display:inline-block;background:${AMBER};color:${PEAT};
-                  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
           Open My Inbox →
@@ -238,22 +238,22 @@ function featureRequestHtml(status, featureTitle, adminNote) {
   const s = STATUS_COPY[status] || STATUS_COPY.accepted
   const noteHtml = adminNote
     ? `<div style="margin-top:16px;padding:12px 16px;background:rgba(200,130,42,0.08);border-left:2px solid ${AMBER_LIGHT};border-radius:4px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:${AMBER_LIGHT};margin-bottom:6px;">From the team</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">${adminNote}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:${AMBER_LIGHT};margin-bottom:6px;">From the team</div>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">${adminNote}</div>
        </div>`
     : ''
   return shell(`
     <tr>
       <td style="padding:28px 32px 8px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${s.color};margin-bottom:10px;">
           ${s.emoji} ${s.label}
         </div>
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:19px;
                     font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:12px;">
           ${featureTitle}
         </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
           ${s.body}
         </div>
         ${noteHtml}
@@ -263,7 +263,7 @@ function featureRequestHtml(status, featureTitle, adminNote) {
       <td align="center" style="padding:20px 32px 28px;">
         <a href="${APP_URL}"
            style="display:inline-block;background:${AMBER};color:${PEAT};
-                  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
           Open My Journal →

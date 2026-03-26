@@ -44,7 +44,7 @@ function barRow(label, value) {
   const pct = (value || 0) * 20
   return `
     <tr>
-      <td style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;
+      <td style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.08em;
                  color:${PEAT_LIGHT};text-transform:uppercase;padding:3px 8px 3px 0;
                  white-space:nowrap;width:70px;">${label}</td>
       <td style="padding:3px 8px 3px 0;">
@@ -58,7 +58,7 @@ function barRow(label, value) {
           </tr>
         </table>
       </td>
-      <td style="font-family:'DM Mono',monospace;font-size:10px;color:${AMBER_LIGHT};
+      <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${AMBER_LIGHT};
                  padding:3px 0;white-space:nowrap;width:16px;text-align:right;">
         ${value || 0}
       </td>
@@ -77,29 +77,29 @@ function recCard(rec) {
                 border-radius:12px;margin-bottom:16px;overflow:hidden;">
     <tr>
       <td style="padding:18px 20px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.18em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:6px;">
           ${typeLabel}
         </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:11px;
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;
                     color:${PEAT_LIGHT};margin-bottom:2px;">
           ${rec.distillery || ''}
         </div>
-        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:400;
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:18px;font-weight:400;
                     color:${CREAM};line-height:1.2;margin-bottom:4px;">
           ${rec.name}
         </div>
         <div style="margin-bottom:14px;">
-          ${rec.age   ? `<span style="font-family:'DM Mono',monospace;font-size:10px;color:${CREAM_DARK};">${rec.age}</span>` : ''}
+          ${rec.age   ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${CREAM_DARK};">${rec.age}</span>` : ''}
           ${rec.age && rec.price ? `<span style="color:${PEAT_LIGHT};margin:0 6px;">·</span>` : ''}
-          ${rec.price ? `<span style="font-family:'DM Mono',monospace;font-size:10px;color:${AMBER_LIGHT};">${rec.price}</span>` : ''}
+          ${rec.price ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${AMBER_LIGHT};">${rec.price}</span>` : ''}
         </div>
         <table cellpadding="0" cellspacing="0" border="0" width="100%"
                style="margin-bottom:14px;">
           ${bars}
         </table>
         ${rec.reason ? `
-        <div style="font-family:'DM Sans',sans-serif;font-size:12px;font-style:italic;
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;
                     color:${PEAT_LIGHT};line-height:1.55;border-top:1px solid rgba(200,130,42,0.2);
                     padding-top:12px;">
           ${rec.reason}
@@ -159,7 +159,7 @@ function activityEventRow(event) {
     : `<strong>${event.whisky_name}</strong>${event.distillery ? ` <span style="color:${PEAT_LIGHT};">· ${event.distillery}</span>` : ''}`
 
   const notesHtml = event.notes
-    ? `<div style="font-family:'DM Sans',sans-serif;font-size:11px;font-style:italic;
+    ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;
                    color:${PEAT_LIGHT};margin-top:4px;line-height:1.5;
                    padding-left:10px;border-left:2px solid rgba(200,130,42,0.3);">
          "${event.notes}"
@@ -169,9 +169,9 @@ function activityEventRow(event) {
   return `
     <tr>
       <td style="padding:6px 0 6px 16px;border-bottom:1px solid rgba(200,130,42,0.07);">
-        <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${CREAM_DARK};line-height:1.5;">
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${CREAM_DARK};line-height:1.5;">
           ${detail}
-          <span style="white-space:nowrap;font-family:'DM Mono',monospace;font-size:9px;
+          <span style="white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:9px;
                        color:${PEAT_LIGHT};margin-left:8px;">${dateStr}</span>
         </div>
         ${notesHtml}
@@ -185,7 +185,7 @@ function activityUserBlock(userGroup) {
     return `
   <tr>
     <td style="padding:4px 0 2px;">
-      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;
                   text-transform:uppercase;color:${PEAT_LIGHT};">
         ${g.icon}&nbsp;${g.label}
       </div>
@@ -203,7 +203,7 @@ function activityUserBlock(userGroup) {
   return `
   <tr>
     <td style="padding:14px 0 4px;border-bottom:1px solid rgba(200,130,42,0.18);">
-      <div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
                   color:${AMBER_LIGHT};margin-bottom:4px;">
         ${userGroup.authorName}
       </div>
@@ -224,8 +224,8 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
   const hasActivity   = followerActivity && followerActivity.length > 0
   const activityRows  = hasActivity
     ? groupActivity(followerActivity, authorEmailMap).map(activityUserBlock).join('')
-    : `<tr><td style="padding:16px 0;font-family:'DM Sans',sans-serif;font-size:12px;
-                      font-style:italic;color:${PEAT_LIGHT};line-height:1.6;">
+    : `<tr><td style="padding:16px 0;font-family:'Inter',Arial,sans-serif;font-size:12px;
+                      color:${PEAT_LIGHT};line-height:1.6;">
          Your friends had no new activity this week — check back next Monday.
        </td></tr>`
 
@@ -240,15 +240,15 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
           <!-- ── ACTIVITY HEADER ── -->
           <tr>
             <td style="padding:24px 32px 8px;">
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                           text-transform:uppercase;color:${AMBER};margin-bottom:8px;">
                 ✦ Friends this week
               </div>
-              <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;
+              <div style="font-family:'Inter',Arial,sans-serif;font-size:17px;
                           font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:6px;">
                 What your friends are tasting
               </div>
-              <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:${PEAT_LIGHT};
+              <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};
                           line-height:1.6;">
                 Updates from people you follow in The Dram Journal.
               </div>
@@ -270,30 +270,30 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Your weekly dram update — The Dram Journal</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital@0;1&family=DM+Sans:ital@0;1&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#1C1408;font-family:'DM Sans',Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#F5F5F5;font-family:'Inter',Arial,sans-serif;">
 
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#1C1408;">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F5F5;">
     <tr>
       <td align="center" style="padding:32px 16px 48px;">
 
         <table cellpadding="0" cellspacing="0" border="0" width="600"
-               style="max-width:600px;background:${PEAT};border-radius:16px;
+               style="max-width:600px;background:#FFFFFF;border-radius:16px;
                       overflow:hidden;border:1px solid rgba(200,130,42,0.2);">
 
           <!-- ── HEADER ── -->
           <tr>
             <td style="padding:28px 32px 24px;border-bottom:1px solid rgba(200,130,42,0.2);
-                       background:linear-gradient(to bottom,rgba(200,130,42,0.06),transparent);">
+                       background:#FFFFFF;border-bottom:1px solid #F0EDE8;">
               <table cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td>
-                    <div style="font-family:'Playfair Display',Georgia,serif;font-size:26px;
-                                font-weight:400;color:${CREAM};letter-spacing:-0.02em;line-height:1;">
-                      The <span style="color:${AMBER_LIGHT};font-style:italic;">Dram</span> Journal
+                    <div style="font-family:'Inter',Arial,sans-serif;font-size:26px;
+                                font-weight:600;color:#111111;letter-spacing:-0.02em;line-height:1;">
+                      The <span style="color:${AMBER_LIGHT};">Dram</span> Journal
                     </div>
-                    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.22em;
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.22em;
                                 text-transform:uppercase;color:${PEAT_LIGHT};margin-top:4px;">
                       Your personal whisky companion
                     </div>
@@ -309,15 +309,15 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
           <!-- ── INTRO ── -->
           <tr>
             <td style="padding:28px 32px 20px;">
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                           text-transform:uppercase;color:${AMBER};margin-bottom:8px;">
                 ✦ Weekly Update
               </div>
-              <div style="font-family:'Playfair Display',Georgia,serif;font-size:20px;
+              <div style="font-family:'Inter',Arial,sans-serif;font-size:20px;
                           font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:10px;">
                 Your picks &amp; what's new with friends
               </div>
-              <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:${PEAT_LIGHT};
+              <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                           line-height:1.6;">
                 Your AI sommelier has selected five whiskies matched to your palate,
                 plus a roundup of what your friends have been tasting this week.
@@ -328,7 +328,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
           <!-- ── RECOMMENDATION SUBHEADING ── -->
           <tr>
             <td style="padding:0 32px 12px;">
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                           text-transform:uppercase;color:${AMBER};margin-bottom:4px;">
                 ✦ Your picks this week
               </div>
@@ -349,7 +349,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
             <td align="center" style="padding:16px 32px 28px;">
               <a href="https://dramjournal.online"
                  style="display:inline-block;background:${AMBER};color:${PEAT};
-                        font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                        font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                         text-transform:uppercase;text-decoration:none;padding:12px 28px;
                         border-radius:7px;font-weight:500;">
                 Open My Journal →
@@ -360,22 +360,22 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
           <!-- ── FOOTER ── -->
           <tr>
             <td style="padding:20px 32px;border-top:1px solid rgba(200,130,42,0.15);
-                       background:rgba(250,245,236,0.02);">
+                       background:#FAFAFA;">
               <table cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
                   <td>
-                    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.1em;
                                 color:${PEAT_LIGHT};">
                       Generated on ${dateStr}
                     </div>
-                    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.06em;
-                                color:rgba(122,98,85,0.6);margin-top:4px;">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.06em;
+                                color:#999999;margin-top:4px;">
                       Sent every Monday · Manage followers in app settings
                     </div>
                   </td>
                   <td align="right">
-                    <div style="font-family:'Playfair Display',Georgia,serif;font-size:13px;
-                                font-style:italic;color:rgba(200,130,42,0.5);">
+                    <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;
+                                color:rgba(200,130,42,0.5);">
                       Sláinte
                     </div>
                   </td>
