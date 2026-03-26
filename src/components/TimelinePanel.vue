@@ -12,7 +12,7 @@
             @click="setRange(r.key)"
           >{{ r.label }}</button>
         </div>
-        <button class="tl-close" type="button" @click="$emit('close')">
+        <button class="tl-close" type="button" @click.stop="emit('close')">
           <XIcon :size="16" />
         </button>
       </div>
