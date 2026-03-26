@@ -178,7 +178,7 @@ async function doSend(sub) {
   line-height: 1.5;
 }
 
-.tab-body { min-height: 100px; }
+.tab-body { min-height: 100px; padding: 16px 20px; }
 
 .share-desc {
   font-family: 'Inter', sans-serif;
