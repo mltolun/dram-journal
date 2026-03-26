@@ -60,12 +60,13 @@
       </div>
     </div>
 
-    <div class="share-actions">
-      <button v-if="currentUser" class="btn-t btn-primary" :disabled="importing" @click="doImport">
-        {{ importing ? t.importing : t.addToMyWishlist }}
-      </button>
-      <RouterLink v-else to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.signInToImport }}</RouterLink>
-      <RouterLink to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.backToJournalBtn }}</RouterLink>
+      <div class="share-actions">
+        <button v-if="currentUser" class="btn-t btn-primary" :disabled="importing" @click="doImport">
+          {{ importing ? t.importing : t.addToMyWishlist }}
+        </button>
+        <RouterLink v-else to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.signInToImport }}</RouterLink>
+        <RouterLink to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.backToJournalBtn }}</RouterLink>
+      </div>
     </div>
   </div>
 </template>
@@ -142,6 +143,16 @@ async function doImport() {
 }
 .share-brand-bar span { color: var(--amber-light); }
 
+.share-container {
+  width: 70%;
+  max-width: 900px;
+  margin: 40px auto;
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  background: var(--bg-modal);
+}
 .share-title-bar {
   padding: 20px 24px 16px;
   border-bottom: 0.5px solid var(--border);
@@ -156,13 +167,9 @@ async function doImport() {
 }
 .share-three-col {
   display: grid;
-  grid-template-columns: 1fr 200px 1fr;
+  grid-template-columns: 160px 1fr 1fr;
   gap: 0;
   align-items: start;
-}
-.share-col-details {
-  padding: 20px 20px 20px 24px;
-  border-right: 0.5px solid var(--border);
 }
 .share-col-photo {
   padding: 20px 12px;
@@ -180,7 +187,7 @@ async function doImport() {
   justify-content: center;
   overflow: hidden;
   width: 100%;
-  aspect-ratio: 3/4;
+  aspect-ratio: 2/3;
 }
 .share-photo {
   width: 100%;
@@ -188,16 +195,33 @@ async function doImport() {
   object-fit: contain;
   display: block;
 }
+.share-col-details {
+  padding: 20px 16px 20px 20px;
+  border-right: 0.5px solid var(--border);
+}
 .share-col-flavour {
-  padding: 20px 24px 20px 20px;
+  padding: 20px 20px 20px 16px;
+}
+.share-actions {
+  padding: 16px 20px;
+  border-top: 0.5px solid var(--border);
+  display: flex;
+  gap: 8px;
 }
 
 @media (max-width: 700px) {
+  .share-container {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
   .share-three-col {
     grid-template-columns: 1fr;
   }
   .share-col-photo {
-    order: -1;
     border-right: none;
     border-bottom: 0.5px solid var(--border);
     padding: 16px;
