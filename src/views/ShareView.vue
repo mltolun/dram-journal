@@ -160,6 +160,26 @@ async function doImport() {
   padding: 20px 24px 16px;
   border-bottom: 0.5px solid var(--border);
 }
+.share-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.cm-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.share-distillery {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
 .share-whisky-name {
   font-size: 1.5rem;
   font-weight: 700;
