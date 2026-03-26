@@ -137,11 +137,12 @@ async function doImport() {
 
 .share-top {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px minmax(0, 480px);
   gap: 24px;
   padding: 24px 24px 20px;
   border-bottom: 0.5px solid var(--border);
   align-items: start;
+  max-width: 800px;
 }
 .share-photo-col {
   background: var(--bg-input);
@@ -176,7 +177,7 @@ async function doImport() {
 }
 .share-body-below {
   padding: 20px 24px 8px;
-  max-width: 540px;
+  max-width: 560px;
 }
 
 @media (max-width: 600px) {
