@@ -34,6 +34,7 @@
         class="btn-t btn-share-wl"
         @click="$emit('shareWishlist')"
       ><Share2Icon :size="14" /> <span class="btn-label">{{ t.share }}</span></button>
+      <button v-if="activeList === 'journal'" class="btn-t btn-outline" @click="$emit('timeline')"><CalendarIcon :size="14" /> <span class="btn-label">Timeline</span></button>
       <button class="btn-t btn-scan" @click="$emit('scan')"><CameraIcon :size="14" /> <span class="btn-label">{{ t.scan }}</span></button>
       <button class="btn-t btn-primary" @click="$emit('add')"><PlusIcon :size="14" /> <span class="btn-label">{{ t.add }}</span></button>
     </div>
@@ -42,10 +43,10 @@
 
 <script setup>
 import { useI18n } from '../composables/useI18n.js'
-import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon } from 'lucide-vue-next'
+import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
 const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function })
-defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist'])
+defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'timeline'])
 </script>
 
 <style scoped>

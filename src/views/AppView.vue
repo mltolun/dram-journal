@@ -16,6 +16,7 @@
       @compare="toggleCompare"
       @scan="scanOpen = true"
       @set-list="setActiveList"
+      @timeline="timelineOpen = true"
       @share-wishlist="wishlistShareOpen = true"
     />
     <div class="grid-area">
@@ -73,6 +74,12 @@
       @close="wishlistShareOpen = false"
     />
 
+    <TimelinePanel
+      v-if="timelineOpen"
+      @close="timelineOpen = false"
+      @open-entry="openViewModal"
+    />
+
     <ScanModal
       v-if="scanOpen"
       :list="activeList"
@@ -101,6 +108,7 @@ import ShareModal          from '../components/ShareModal.vue'
 import ScanModal           from '../components/ScanModal.vue'
 import WishlistShareModal  from '../components/WishlistShareModal.vue'
 import RecommendationsPanel from '../components/RecommendationsPanel.vue'
+import TimelinePanel from '../components/TimelinePanel.vue'
 
 const { getSession } = useAuth()
 const { loadWhiskies, deleteWhisky, moveToJournal } = useWhiskies()
