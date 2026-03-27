@@ -1,0 +1,33 @@
+name: Daily Notifications
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 10:00 AM UTC
+    - cron: '0 15 * * *'  # 3:00 PM UTC
+    - cron: '0 20 * * *'  # 8:00 PM UTC
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+        working-directory: ${{ github.workspace }}
+
+      - name: Process notifications
+        env:
+          SUPABASE_URL:         ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM:           ${{ secrets.EMAIL_FROM }}
+        run: node scripts/process-notifications.js
