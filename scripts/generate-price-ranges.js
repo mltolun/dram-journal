@@ -35,7 +35,7 @@ const GEMINI_KEY           = process.env.GEMINI_KEY
 const BATCH_LIMIT          = parseInt(process.env.BATCH_LIMIT  || '6100')
 const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '4000')
 const START_OFFSET         = parseInt(process.env.START_OFFSET || '0')
-const CURRENCY             = process.env.CURRENCY              || '£'
+const CURRENCY             = process.env.CURRENCY              || '€'
 const REPRICE              = process.env.REPRICE === 'true'
 
 const MOM_BASE   = 'https://www.masterofmalt.com'
