@@ -129,13 +129,12 @@ async function addToWishlist(rec, index) {
 
 <style scoped>
 .recs-section {
-  padding: 1.8rem 2.5rem 0;
+  padding: 0;
 }
 .recs-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 340px));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  justify-content: center;
 }
 .recs-header {
   margin-bottom: 1rem;
@@ -170,10 +169,14 @@ async function addToWishlist(rec, index) {
 }
 .rec-reason {
   font-family: 'Inter', sans-serif;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   color: var(--peat-light);
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .recs-footer {
   font-family: 'JetBrains Mono', monospace;
@@ -183,8 +186,5 @@ async function addToWishlist(rec, index) {
   text-align: right;
   padding: 0.5rem 0;
 }
-@media (max-width: 600px) {
-  .recs-section { padding: 1.2rem 1.2rem 0; }
-  .recs-grid { grid-template-columns: 1fr; }
-}
+
 </style>

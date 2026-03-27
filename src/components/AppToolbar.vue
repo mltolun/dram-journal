@@ -29,11 +29,6 @@
         :disabled="selectedCount < 2"
         @click="$emit('compare')"
       ><Columns2Icon :size="14" /> <span class="btn-label">{{ t.compare }}</span></button>
-      <button
-        v-if="activeList === 'wishlist'"
-        class="btn-t btn-share-wl"
-        @click="$emit('shareWishlist')"
-      ><Share2Icon :size="14" /> <span class="btn-label">{{ t.share }}</span></button>
       <button v-if="activeList === 'journal'" class="btn-t btn-outline" @click="$emit('timeline')"><CalendarIcon :size="14" /> <span class="btn-label">Timeline</span></button>
       <div class="add-wrap" ref="addWrap">
         <button class="btn-t btn-primary" @click.stop="addOpen = !addOpen">
@@ -60,7 +55,7 @@ import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as C
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function })
-const emit = defineEmits(['add', 'compare', 'scan', 'setList', 'shareWishlist', 'timeline'])
+const emit = defineEmits(['add', 'compare', 'scan', 'setList', 'timeline'])
 
 const addOpen = ref(false)
 const addWrap = ref(null)

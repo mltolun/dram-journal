@@ -17,18 +17,63 @@
       @scan="scanOpen = true"
       @set-list="setActiveList"
       @timeline="timelineOpen = true"
-      @share-wishlist="wishlistShareOpen = true"
     />
     <div class="grid-area">
-      <RecommendationsPanel v-if="activeList === 'wishlist'" />
-      <div v-if="activeList === 'wishlist'" class="wishlist-section-lbl">✦ {{ t.wishlist }}</div>
-      <div class="whisky-grid">
+      <!-- Wishlist: two-column layout — items left (4-col grid), recs right (column) -->
+      <div v-if="activeList === 'wishlist'" class="wishlist-layout">
+        <div class="wishlist-col">
+          <div class="wishlist-section-lbl">✦ {{ t.wishlist }}</div>
+          <div class="whisky-grid wishlist-grid">
+        <template v-if="activeList === 'wishlist'">
+            <div class="empty-grid" v-if="activeItems.length === 0">
+              <div class="empty-icon">✦</div>
+              <div class="empty-text">{{ t.emptyWishlist }}</div>
+            </div>
+            <WhiskyCard
+              v-for="w in activeItems"
+              :key="w.id"
+              :whisky="w"
+              :selected="false"
+              :select-color="null"
+              @view="openViewModal(w)"
+              @delete="doDelete(w)"
+              @share="openShareModal(w)"
+              @move="doMoveToJournal(w)"
+            />
+          </template>
+          <template v-else>
+            <template v-if="activeItems.length === 0">
+              <div class="empty-grid">
+                <div class="empty-icon">🥃</div>
+                <div class="empty-text">{{ t.emptyJournal }}</div>
+              </div>
+            </template>
+            <WhiskyCard
+              v-for="w in activeItems"
+              :key="w.id"
+              :whisky="w"
+              :selected="selected.includes(w.id)"
+              :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
+              @toggle="toggleSelect(w.id)"
+              @view="openViewModal(w)"
+              @delete="doDelete(w)"
+              @share="openShareModal(w)"
+              @move="doMoveToJournal(w)"
+            />
+          </template>
+        </div>
+        </div><!-- /wishlist-col -->
+        <div class="recs-col">
+          <RecommendationsPanel />
+        </div>
+      </div><!-- /wishlist-layout -->
+
+      <!-- Journal grid — plain, no two-column wrapper -->
+      <div v-if="activeList === 'journal'" class="whisky-grid">
         <template v-if="activeItems.length === 0">
           <div class="empty-grid">
-            <div class="empty-icon">{{ activeList === 'wishlist' ? '✦' : '🥃' }}</div>
-            <div class="empty-text">
-              {{ activeList === 'wishlist' ? t.emptyWishlist : t.emptyJournal }}
-            </div>
+            <div class="empty-icon">🥃</div>
+            <div class="empty-text">{{ t.emptyJournal }}</div>
           </div>
         </template>
         <WhiskyCard
@@ -37,11 +82,10 @@
           :whisky="w"
           :selected="selected.includes(w.id)"
           :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
-          @toggle="activeList === 'journal' ? toggleSelect(w.id) : null"
+          @toggle="toggleSelect(w.id)"
           @view="openViewModal(w)"
           @delete="doDelete(w)"
           @share="openShareModal(w)"
-          @move="doMoveToJournal(w)"
         />
       </div>
 
@@ -86,12 +130,6 @@
       @close="shareModalWhisky = null"
     />
 
-    <WishlistShareModal
-      v-if="wishlistShareOpen"
-      :items="wishlist"
-      @close="wishlistShareOpen = false"
-    />
-
     <TimelinePanel
       v-if="timelineOpen"
       @close="timelineOpen = false"
@@ -124,7 +162,6 @@ import WhiskyModal  from '../components/WhiskyModal.vue'
 import ComparePanel from '../components/ComparePanel.vue'
 import ShareModal          from '../components/ShareModal.vue'
 import ScanModal           from '../components/ScanModal.vue'
-import WishlistShareModal  from '../components/WishlistShareModal.vue'
 import RecommendationsPanel from '../components/RecommendationsPanel.vue'
 import TimelinePanel from '../components/TimelinePanel.vue'
 
@@ -144,7 +181,6 @@ const isViewMode    = ref(false)
 const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
-const wishlistShareOpen = ref(false)
 const timelineOpen      = ref(false)
 
 const activeItems = computed(() => activeList.value === 'wishlist' ? wishlist.value : journal.value)
@@ -269,5 +305,30 @@ function onSaved(w) {
 }
 .trash-grid {
   opacity: 0.85;
+}
+.wishlist-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 24px;
+  align-items: start;
+}
+.wishlist-col {
+  min-width: 0;
+}
+.wishlist-grid {
+  grid-template-columns: repeat(3, minmax(0, 255px)) !important;
+}
+.recs-col {
+  position: sticky;
+  top: 70px;
+}
+@media (max-width: 1100px) {
+  .wishlist-layout { grid-template-columns: 1fr; }
+  .recs-col { position: static; }
+  .wishlist-grid { grid-template-columns: repeat(2, minmax(0, 255px)) !important; }
+  .wishlist-layout { grid-template-columns: 1fr 240px; }
+}
+@media (max-width: 600px) {
+  .wishlist-grid { grid-template-columns: 1fr !important; }
 }
 </style>

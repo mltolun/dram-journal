@@ -3,7 +3,6 @@
     class="wcard"
     :class="{
       selected,
-      wishlist: isWishlist,
       trash: isTrash,
     }"
     :style="selectColor ? `border-color:${selectColor}` : ''"
@@ -11,12 +10,12 @@
   >
     <div v-if="!isWishlist && !isTrash" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
-    <img v-if="!isWishlist" class="wcard-photo" :src="cardImage" :alt="whisky.name" loading="lazy">
+    <img class="wcard-photo" :src="cardImage" :alt="whisky.name" loading="lazy">
 
     <div class="wcard-body">
       <div class="wcard-meta-row">
         <span class="wcard-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
-        <span v-if="!isWishlist && !isTrash && whisky.rating" class="wcard-rating-pill" @click.stop>
+        <span v-if="!isTrash && whisky.rating" class="wcard-rating-pill" @click.stop>
           ★ {{ whisky.rating }}
         </span>
         <span v-if="isTrash" class="wcard-trash-pill">
@@ -26,9 +25,8 @@
       <div class="wcard-distillery">{{ whisky.distillery || '—' }}</div>
       <div class="wcard-name">{{ whisky.name }}</div>
       <div v-if="whisky.age || whisky.abv" class="wcard-age">{{ whisky.age }}{{ whisky.age && whisky.abv ? " · " : "" }}{{ whisky.abv }}</div>
-
-      <!-- Flavour bars only for journal entries -->
-      <div v-if="!isWishlist && !isTrash" class="wcard-bars">
+      <!-- Flavour bars for journal and wishlist entries -->
+      <div v-if="!isTrash" class="wcard-bars">
         <div v-for="a in ATTRS" :key="a" class="bar-row-s">
           <div class="bar-lbl-s">{{ t.attrs[a] }}</div>
           <div class="bar-track-s">
@@ -38,8 +36,6 @@
         </div>
       </div>
 
-      <!-- Wishlist: show notes snippet if any -->
-      <div v-else-if="isWishlist && whisky.notes" class="wcard-wish-notes">{{ whisky.notes }}</div>
     </div>
 
     <div class="wcard-actions">
@@ -48,8 +44,8 @@
         <button class="wcard-btn del" @click.stop="$emit('delete')" :title="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
       </template>
       <template v-else-if="isWishlist">
-        <button class="wcard-btn move" @click.stop="$emit('move')"><ArrowUpIcon :size="11" /> {{ t.moveToJournal }}</button>
-        <button class="wcard-btn" @click.stop="$emit('view')"><EyeIcon :size="11" /> {{ t.view }}</button>
+        <button class="wcard-btn" @click.stop="$emit('share')"><Share2Icon :size="11" /> {{ t.share }}</button>
+        <button class="wcard-btn" @click.stop="$emit('move')"><ArrowUpIcon :size="11" /> {{ t.moveToJournal }}</button>
         <button class="wcard-btn del" @click.stop="$emit('delete')"><Trash2Icon :size="11" /></button>
       </template>
       <template v-else>
@@ -138,13 +134,6 @@ const daysLeft   = computed(() => daysUntilFlush(props.whisky))
 }
 .wcard.trash:hover .wcard-body {
   opacity: 0.6;
-}
-.wcard-btn.move {
-  flex: 2;
-}
-.wcard-btn.move:hover {
-  border-color: #1D9E75;
-  color: #6ecb9a;
 }
 .wcard-btn.restore {
   flex: 2;
