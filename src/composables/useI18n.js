@@ -263,6 +263,16 @@ const TRANSLATIONS = {
     whiskyUpdated: (name) => `✓ ${name} updated`,
     whiskyAdded: (name) => `✓ ${name} added`,
 
+    // Trash
+    trashSection: 'Trash',
+    trashAutoFlush: 'items deleted after 5 days',
+    trashRestore: 'Restore',
+    trashDeleteNow: 'Delete permanently',
+    trashDaySingular: 'day left',
+    trashDayPlural: 'days left',
+    trashMoved: (name) => `🗑 "${name}" moved to trash`,
+    trashRestored: (name) => `✓ "${name}" restored to Journal`,
+
     // Empty states
     emptyWishlist: 'Your wishlist is empty\nPress "＋ Add" to start one',
     emptyJournal: 'No whiskies yet\nPress "＋ Add" to get started',
@@ -571,6 +581,16 @@ const TRANSLATIONS = {
     bottleFinished: (name) => `🍾 ${name} — ¡botella terminada!`,
     whiskyUpdated: (name) => `✓ ${name} actualizado`,
     whiskyAdded: (name) => `✓ ${name} añadido`,
+
+    // Trash
+    trashSection: 'Papelera',
+    trashAutoFlush: 'se eliminan tras 5 días',
+    trashRestore: 'Restaurar',
+    trashDeleteNow: 'Eliminar permanentemente',
+    trashDaySingular: 'día restante',
+    trashDayPlural: 'días restantes',
+    trashMoved: (name) => `🗑 "${name}" movido a la papelera`,
+    trashRestored: (name) => `✓ "${name}" restaurado al Diario`,
 
     // Empty states
     emptyWishlist: 'Tu lista está vacía\nPulsa "＋ Añadir" para empezar',

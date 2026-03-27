@@ -24,6 +24,34 @@ export function cleanSearchQuery(raw) {
     .join(' ')
 }
 
+// ---------------------------------------------------------------------------
+// Module-level caches — shared across all useCatalogue() instances
+// ---------------------------------------------------------------------------
+const queryCache = new Map() // normalised query → { data, ts }
+const itemCache  = new Map() // id             → { data, ts }
+const CACHE_TTL  = 5 * 60 * 1000 // 5 minutes
+const CACHE_MAX  = 200            // safety ceiling — clear if exceeded
+
+function getCached(cache, key) {
+  const hit = cache.get(key)
+  if (!hit) return null
+  if (Date.now() - hit.ts > CACHE_TTL) { cache.delete(key); return null }
+  return hit.data
+}
+
+function setCached(cache, key, data) {
+  if (cache.size >= CACHE_MAX) cache.clear()
+  cache.set(key, { data, ts: Date.now() })
+}
+
+/** Call this if you need to force-refresh after catalogue updates. */
+export function clearCatalogueCache() {
+  queryCache.clear()
+  itemCache.clear()
+}
+
+// ---------------------------------------------------------------------------
+
 export function useCatalogue() {
   const results    = ref([])
   const searching  = ref(false)
@@ -37,7 +65,16 @@ export function useCatalogue() {
 
     searching.value = true
     try {
-      const q = query.trim()
+      const q        = query.trim()
+      const cacheKey = q.toLowerCase()
+
+      // Return cached results immediately if still fresh
+      const cached = getCached(queryCache, cacheKey)
+      if (cached) {
+        console.log('[Catalogue] cache hit:', cacheKey)
+        results.value = cached
+        return
+      }
 
       // Strategy 1: search the full query as-is (works for short precise queries)
       console.log('[Catalogue] searching exact:', q)
@@ -108,7 +145,13 @@ export function useCatalogue() {
         return scoreB - scoreA
       })
 
-      results.value = final.slice(0, 30)
+      const finalSlice = final.slice(0, 30)
+
+      // Populate item cache from search results as a free side-effect
+      for (const item of finalSlice) setCached(itemCache, item.id, item)
+
+      setCached(queryCache, cacheKey, finalSlice)
+      results.value = finalSlice
     } catch (err) {
       console.error('Catalogue search error:', err)
       results.value = []
@@ -123,6 +166,13 @@ export function useCatalogue() {
   }
 
   async function getById(id) {
+    // Check item cache before hitting the network
+    const cached = getCached(itemCache, id)
+    if (cached) {
+      console.log('[Catalogue] getById cache hit:', id)
+      return cached
+    }
+
     const { data, error } = await sb
       .from('catalogue')
       .select('*')
@@ -130,6 +180,7 @@ export function useCatalogue() {
       .single()
 
     if (error) throw error
+    setCached(itemCache, id, data)
     return data
   }
 

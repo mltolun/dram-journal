@@ -44,6 +44,24 @@
           @move="doMoveToJournal(w)"
         />
       </div>
+
+      <!-- Trash section — only shown on journal tab when there are trashed items -->
+      <template v-if="activeList === 'journal' && trash.length > 0">
+        <div class="trash-divider">
+          <span>🗑 {{ t.trashSection }} · {{ t.trashAutoFlush }}</span>
+        </div>
+        <div class="whisky-grid trash-grid">
+          <WhiskyCard
+            v-for="w in trash"
+            :key="w.id"
+            :whisky="w"
+            :selected="false"
+            :select-color="null"
+            @restore="doRestore(w)"
+            @delete="doHardDelete(w)"
+          />
+        </div>
+      </template>
     </div>
 
     <ComparePanel
@@ -92,7 +110,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
-import { useWhiskies, journal, wishlist } from '../composables/useWhiskies.js'
+import { useWhiskies, journal, wishlist, trash } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
@@ -111,7 +129,7 @@ import RecommendationsPanel from '../components/RecommendationsPanel.vue'
 import TimelinePanel from '../components/TimelinePanel.vue'
 
 const { getSession } = useAuth()
-const { loadWhiskies, deleteWhisky, moveToJournal } = useWhiskies()
+const { loadWhiskies, deleteWhisky, moveToJournal, moveToTrash, restoreFromTrash } = useWhiskies()
 const { deletePhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
@@ -187,10 +205,33 @@ function openShareModal(w) {
 }
 
 async function doDelete(w) {
-  if (!confirm(`Delete "${w.name}"?`)) return
+  if (w.list === "wishlist") {
+    if (!confirm(`Delete "${w.name}" from your wishlist?`)) return
+    await deleteWhisky(w.id)
+    if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
+    toast(t.value.deleted)
+    return
+  }
+  if (!confirm(`Move "${w.name}" to trash?`)) return
+  try {
+    await moveToTrash(w.id)
+    selected.value = selected.value.filter(id => id !== w.id)
+    toast(t.value.trashMoved(w.name))
+  } catch (err) {
+    console.error("moveToTrash failed:", err)
+    toast(`⚠ Could not move to trash: ${err.message}`)
+  }
+}
+
+async function doRestore(w) {
+  await restoreFromTrash(w.id)
+  toast(t.value.trashRestored(w.name))
+}
+
+async function doHardDelete(w) {
+  if (!confirm(`Permanently delete "${w.name}"? This cannot be undone.`)) return
   await deleteWhisky(w.id)
   if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
-  selected.value = selected.value.filter(id => id !== w.id)
   toast(t.value.deleted)
 }
 
@@ -199,7 +240,6 @@ async function doMoveToJournal(w) {
   toast(t.value.movedToJournal(w.name))
 }
 
-
 function onSaved(w) {
   modalOpen.value = false
   toast(editingWhisky.value ? t.value.whiskyUpdated(w.name) : t.value.whiskyAdded(w.name))
@@ -207,4 +247,27 @@ function onSaved(w) {
 </script>
 
 <style scoped>
+.trash-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 32px 0 16px;
+  padding: 0 4px;
+  color: var(--peat-light);
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+.trash-divider::before,
+.trash-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.trash-grid {
+  opacity: 0.85;
+}
 </style>

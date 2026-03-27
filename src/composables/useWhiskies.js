@@ -3,11 +3,22 @@ import { sb } from '../lib/supabase.js'
 import { currentUser } from './useAuth.js'
 import { useSubscriptions } from './useSubscriptions.js'
 
-export const whiskies = ref([])
+export const whiskies   = ref([])
 export const syncStatus = ref('ok') // 'loading' | 'saving' | 'ok' | 'error'
 
-export const journal   = computed(() => whiskies.value.filter(w => (w.list || 'journal') === 'journal'))
-export const wishlist  = computed(() => whiskies.value.filter(w => w.list === 'wishlist'))
+export const journal  = computed(() => whiskies.value.filter(w => (w.list || 'journal') === 'journal'))
+export const wishlist = computed(() => whiskies.value.filter(w => w.list === 'wishlist'))
+export const trash    = computed(() => whiskies.value.filter(w => w.list === 'trash'))
+
+const TRASH_TTL_DAYS = 5
+
+export function daysUntilFlush(w) {
+  if (!w.deleted_at) return TRASH_TTL_DAYS
+  const deletedAt = new Date(w.deleted_at)
+  if (isNaN(deletedAt.getTime())) return TRASH_TTL_DAYS
+  const ms = TRASH_TTL_DAYS * 24 * 60 * 60 * 1000 - (Date.now() - deletedAt.getTime())
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)))
+}
 
 export function useWhiskies() {
   const { logActivity } = useSubscriptions()
@@ -55,7 +66,16 @@ export function useWhiskies() {
       .order('created_at', { ascending: true })
 
     if (error) { setSync('error'); throw error }
-    whiskies.value = (data || []).map(mergeWithCatalogue)
+
+    const all = (data || []).map(mergeWithCatalogue)
+
+    // Hard-delete any trash items older than 5 days
+    const expired = all.filter(w => w.list === 'trash' && w.deleted_at && daysUntilFlush(w) === 0)
+    if (expired.length > 0) {
+      await Promise.all(expired.map(w => sb.from('whiskies').delete().eq('id', w.id)))
+    }
+
+    whiskies.value = all.filter(w => !(w.list === 'trash' && w.deleted_at && daysUntilFlush(w) === 0))
     setSync('ok')
   }
 
@@ -64,7 +84,7 @@ export function useWhiskies() {
 
     // Prevent duplicates — check by catalogue_id if present, else by name+distillery
     if (fields.catalogue_id) {
-      const exists = whiskies.value.some(w => w.catalogue_id === fields.catalogue_id)
+      const exists = whiskies.value.some(w => w.catalogue_id === fields.catalogue_id && w.list !== 'trash')
       if (exists) {
         setSync('ok')
         const existing = whiskies.value.find(w => w.catalogue_id === fields.catalogue_id)
@@ -74,6 +94,7 @@ export function useWhiskies() {
       const name = (fields.name || '').toLowerCase().trim()
       const dist = (fields.distillery || '').toLowerCase().trim()
       const exists = whiskies.value.some(w =>
+        w.list !== 'trash' &&
         (w.name || '').toLowerCase().trim() === name &&
         (w.distillery || '').toLowerCase().trim() === dist
       )
@@ -142,6 +163,15 @@ export function useWhiskies() {
     setSync('ok')
   }
 
+  async function moveToTrash(id) {
+    const now = new Date().toISOString()
+    await updateWhisky(id, { list: 'trash', deleted_at: now })
+  }
+
+  async function restoreFromTrash(id) {
+    await updateWhisky(id, { list: 'journal', deleted_at: null })
+  }
+
   async function moveToJournal(id) {
     const result = await updateWhisky(id, { list: 'journal' })
     // Log as a journal_add — the whisky is now in the journal for the first time
@@ -156,5 +186,5 @@ export function useWhiskies() {
     return result
   }
 
-  return { whiskies, journal, wishlist, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToJournal }
+  return { whiskies, journal, wishlist, trash, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToTrash, restoreFromTrash, moveToJournal }
 }
