@@ -60,9 +60,20 @@
             </div>
 
             <div class="view-grid-2">
-              <div class="view-field" v-if="form.price">
+              <div class="view-field" v-if="form.price || cataloguePriceRange">
                 <div class="view-label">{{ t.price }}</div>
-                <div class="view-value">{{ form.price }}</div>
+                <div class="view-value">
+                  <button
+                    v-if="cataloguePriceRange"
+                    class="price-range-btn"
+                    :title="`Search prices for ${form.name}`"
+                    @click.stop="openPriceSearch"
+                  >
+                    <span class="price-range-value">{{ cataloguePriceRange }}</span>
+                    <span class="price-range-icon">🛒</span>
+                  </button>
+                  <span v-else>{{ form.price }}</span>
+                </div>
               </div>
               <div class="view-field" v-if="isJournal && form.date">
                 <div class="view-label">{{ t.tastingDate }}</div>
@@ -403,6 +414,19 @@ const scanMode        = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
+
+// Price range from catalogue entry — shown in view mode as a tappable badge
+const cataloguePriceRange = computed(() => cataloguePicked.value?.price_band || null)
+
+function openPriceSearch() {
+  const query = [form.name, form.distillery].filter(Boolean).join(' ').trim()
+  if (!query) return
+  // Google Shopping deep link — works as a universal deep link on Android/iOS
+  // Falls back to Google Search with shopping filter on desktop
+  const encoded = encodeURIComponent(query + ' whisky buy price')
+  const url = 
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
 
 function switchToEdit() {
   inViewMode.value = false
@@ -967,4 +991,41 @@ async function save() {
   transition: opacity 0.15s;
 }
 .reset-btn:hover { opacity: 1; }
+
+/* ── Price range badge ── */
+.price-range-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(200, 130, 42, 0.1);
+  border: 0.5px solid rgba(200, 130, 42, 0.35);
+  border-radius: 20px;
+  padding: 4px 10px 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  font-family: inherit;
+  text-decoration: none;
+  /* Ensure tappable on mobile */
+  -webkit-tap-highlight-color: transparent;
+  min-height: 32px;
+}
+.price-range-btn:hover,
+.price-range-btn:focus-visible {
+  background: rgba(200, 130, 42, 0.18);
+  border-color: var(--amber);
+}
+.price-range-btn:active {
+  transform: scale(0.96);
+}
+.price-range-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--amber-light);
+  letter-spacing: 0.01em;
+}
+.price-range-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.75;
+}
 </style>
