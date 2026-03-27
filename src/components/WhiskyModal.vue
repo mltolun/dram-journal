@@ -418,14 +418,17 @@ const isJournal = computed(() => (props.editing?.list || props.list) === 'journa
 const cataloguePriceRange = computed(() => cataloguePicked.value?.price_band || null)
 
 function openPriceSearch() {
-  // Use name + distillery from catalogue if available, else fall back to form values
-  const query = [
-    cataloguePicked.value?.name || form.name,
-    cataloguePicked.value?.distillery || form.distillery,
-  ].filter(Boolean).join(' ').trim()
+  const name       = (cataloguePicked.value?.name       || form.name       || '').trim()
+  const distillery = (cataloguePicked.value?.distillery || form.distillery || '').trim()
+
+  // Only append distillery if it isn't already part of the name (avoids "Deanston Virgin Oak Deanston")
+  const nameIncludesDistillery = distillery && name.toLowerCase().includes(distillery.toLowerCase())
+  const query = nameIncludesDistillery ? name : [name, distillery].filter(Boolean).join(' ')
+
   if (!query) return
-  const url = `https://www.google.com/search?q=${encodeURIComponent(query + ' whisky price')}&tbm=shop`
-  // Use location.href rather than window.open — more reliable in PWA/Android WebView
+
+  // udm=28 = Google Products tab (better retailer coverage than tbm=shop / Shopping tab)
+  const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&udm=28`
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
