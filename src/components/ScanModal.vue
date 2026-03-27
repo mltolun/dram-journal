@@ -447,7 +447,7 @@ async function save() {
 </script>
 
 <style scoped>
-.scan-modal { max-width: 420px; }
+.scan-modal { max-width: 420px; padding: 0 1.25rem 1.25rem; }
 
 .scan-drop {
   border: 1.5px dashed var(--border-hi);
