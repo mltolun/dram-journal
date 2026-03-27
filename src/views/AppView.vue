@@ -127,6 +127,7 @@ const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
 const wishlistShareOpen = ref(false)
+const timelineOpen      = ref(false)
 
 const activeItems = computed(() => activeList.value === 'wishlist' ? wishlist.value : journal.value)
 
