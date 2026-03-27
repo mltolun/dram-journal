@@ -1,9 +1,11 @@
 import { ref, watch } from 'vue'
 
-export const THEMES = ['whisky', 'light', 'dark']
+export const THEMES = ['dark', 'light']
 
-const stored = localStorage.getItem('dram-theme') || 'whisky'
-export const theme = ref(THEMES.includes(stored) ? stored : 'whisky')
+const stored = localStorage.getItem('dram-theme')
+// migrate anyone who had 'whisky' saved
+const initial = stored === 'whisky' || !THEMES.includes(stored) ? 'dark' : stored
+export const theme = ref(initial)
 
 function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t)

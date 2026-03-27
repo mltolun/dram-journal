@@ -1,9 +1,8 @@
 /* ── IMPORT FONTS ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── WHISKY THEME (default dark) ── */
-:root,
-[data-theme="whisky"] {
+/* ── DEFAULT THEME (dark) ── */
+:root {
   --amber: #C8822A;
   --amber-light: #E8A84C;
   --peat: #1C160E;
@@ -158,15 +157,15 @@ header { padding:12px 24px; border-bottom:0.5px solid var(--border); display:fle
 
 .wcard-type { font-size:0.6rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; padding:2px 8px; border-radius:20px; flex-shrink:0; display:inline-block; }
 .type-scotch   { background:rgba(200,130,42,0.12); color:#9a5d10; }
-[data-theme="dark"] .type-scotch, [data-theme="whisky"] .type-scotch { color:var(--amber-light); }
+[data-theme="dark"] .type-scotch { color:var(--amber-light); }
 .type-irish    { background:rgba(50,170,100,0.12); color:#1a7a45; }
-[data-theme="dark"] .type-irish, [data-theme="whisky"] .type-irish { color:#6ecb93; }
+[data-theme="dark"] .type-irish { color:#6ecb93; }
 .type-bourbon  { background:rgba(180,80,80,0.12); color:#9a2020; }
-[data-theme="dark"] .type-bourbon, [data-theme="whisky"] .type-bourbon { color:#e08888; }
+[data-theme="dark"] .type-bourbon { color:#e08888; }
 .type-japanese { background:rgba(130,80,200,0.12); color:#6633aa; }
-[data-theme="dark"] .type-japanese, [data-theme="whisky"] .type-japanese { color:#c4aff0; }
+[data-theme="dark"] .type-japanese { color:#c4aff0; }
 .type-other    { background:rgba(120,120,120,0.1); color:#666; }
-[data-theme="dark"] .type-other, [data-theme="whisky"] .type-other { color:#aaa; }
+[data-theme="dark"] .type-other { color:#aaa; }
 
 .wcard-meta-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .wcard-rating-pill { font-size:0.68rem; font-weight:500; color:var(--amber-light); display:flex; align-items:center; gap:2px; }

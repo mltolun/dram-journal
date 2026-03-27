@@ -14,7 +14,7 @@
           @dragover.prevent="dragging = true"
           @dragleave="dragging = false"
           @drop.prevent="onDrop">
-          <div class="scan-drop-icon">📷</div>
+          <div class="scan-drop-icon"><CameraIcon :size="48" /></div>
           <div class="scan-drop-label">{{ t.tapToPhoto }}</div>
           <div class="scan-drop-hint">{{ t.orDragDrop }}</div>
         </div>
@@ -127,6 +127,7 @@ import { compressImage } from '../utils/compressImage.js'
 import { useI18n } from '../composables/useI18n.js'
 import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
+import { Camera as CameraIcon } from 'lucide-vue-next'
 import { useToast } from '../composables/useToast.js'
 
 const emit = defineEmits(['close', 'identified'])
@@ -462,7 +463,7 @@ async function save() {
   border-color: var(--amber);
   background: rgba(200,130,42,0.06);
 }
-.scan-drop-icon  { font-size: 2.8rem; margin-bottom: 0.75rem; }
+.scan-drop-icon  { color: var(--peat-light); opacity: 0.4; margin-bottom: 0.75rem; }
 .scan-drop-label { font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.3rem; }
 .scan-drop-hint  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--peat-light); text-transform: uppercase; }
 

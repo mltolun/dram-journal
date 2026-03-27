@@ -43,7 +43,7 @@
                     @click="setTheme(th)"
                     :title="th"
                   >
-                    <span class="theme-option-icon">{{ THEME_ICONS[th] }}</span>
+                    <span class="theme-option-icon"><SunIcon v-if="th === 'light'" :size="14" /><MoonIcon v-else :size="14" /></span>
                     <span class="theme-option-label">{{ th }}</span>
                   </button>
                 </div>
@@ -106,7 +106,7 @@ import InboxPanel from './InboxPanel.vue'
 import FeatureRequestPanel from './FeatureRequestPanel.vue'
 import AdminFeaturePanel from './AdminFeaturePanel.vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
-import { Inbox as InboxIcon, Download as DownloadIcon, Users as UsersIcon, Lightbulb as LightbulbIcon, Settings as SettingsIcon, Globe as GlobeIcon, LogOut as LogOutIcon } from 'lucide-vue-next'
+import { Inbox as InboxIcon, Download as DownloadIcon, Users as UsersIcon, Lightbulb as LightbulbIcon, Settings as SettingsIcon, Globe as GlobeIcon, LogOut as LogOutIcon, Sun as SunIcon, Moon as MoonIcon } from 'lucide-vue-next'
 
 const { signOut } = useAuth()
 const { theme, THEMES } = useTheme()
@@ -115,7 +115,7 @@ const { locale, t, toggleLocale } = useI18n()
 const { loadSubscriptions } = useSubscriptions()
 const { loadInbox } = useMessages()
 
-const THEME_ICONS = { whisky: '🥃', light: '☀️', dark: '🌑' }
+
 
 const menuOpen    = ref(false)
 const avatarWrap  = ref(null)
