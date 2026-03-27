@@ -1,26 +1,27 @@
 /**
- * generate-flavor-profiles.js
+ * generate-price-ranges.js
  *
- * Calls Gemma 3 27B via Google AI Studio to generate tasting notes and
- * flavor scores for every whisky in the catalogue table.
+ * Fills the existing `price_band` column in the catalogue table with an
+ * AI-estimated retail price range (e.g. "€40–€60") using Gemma 3 27B via
+ * Google AI Studio.  No schema changes required.
+ *
+ * Strategy:
+ *   - Only processes rows where status IS NULL (skips already-processed ones).
+ *   - Paginates in chunks of 1000, sleeps between API calls to stay under limits.
+ *   - Run via GitHub Actions workflow_dispatch or locally; use START_OFFSET to resume.
  *
  * Rate limit: max 15 RPM — default sleep of 4s between calls.
- * Run manually via GitHub Actions workflow_dispatch — each run picks up
- * where the last one left off (processes rows where status IS NULL).
- *
- * status column (boolean):
- *   NULL  = not yet processed — picked up by this cron
- *   true  = completed successfully
- *   false = last attempt failed (retry by resetting status to NULL)
  *
  * Usage (local):
  *   SUPABASE_URL=... SUPABASE_SERVICE_KEY=... GEMINI_KEY=... \
- *   node scripts/generate-flavor-profiles.js
+ *   node scripts/generate-price-ranges.js
  *
  * Optional env vars:
- *   BATCH_LIMIT  — max whiskies to process per run (default: 6100 = all)
- *   SLEEP_MS     — ms to wait between calls (default: 4000 = 15 RPM)
- *   START_OFFSET — skip first N unprocessed whiskies, for manual resuming
+ *   BATCH_LIMIT   — max rows to process per run (default: 6100)
+ * *   SLEEP_MS      — ms between API calls (default: 4000 = 15 RPM)
+ *   START_OFFSET  — skip first N unpriced rows, for manual resuming
+ *   CURRENCY      — symbol prepended to ranges (default: €)
+ *   REPRICE       — if 'true', also re-processes rows where status IS NOT NULL
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -31,12 +32,14 @@ const GEMINI_KEY           = process.env.GEMINI_KEY
 const BATCH_LIMIT          = parseInt(process.env.BATCH_LIMIT  || '6100')
 const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '4000')  // 15 RPM = 4s between calls
 const START_OFFSET         = parseInt(process.env.START_OFFSET || '0')
+const CURRENCY             = process.env.CURRENCY              || '€'
+const REPRICE              = process.env.REPRICE === 'true'
 
 const GEMMA_MODEL = 'gemma-3-27b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {
-  console.error('❌  Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or GEMINI_KEY')
+  console.error('Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or GEMINI_KEY')
   process.exit(1)
 }
 
@@ -53,19 +56,25 @@ function buildPrompt(whisky) {
   if (whisky.abv)        parts.push(`at ${whisky.abv}`)
   if (whisky.type)       parts.push(`style: ${whisky.type}`)
 
-  return `You are an expert whisky taster. Provide tasting notes and flavor scores for:
+  return `You are a whisky retail pricing expert. Estimate the typical retail price range in EUR for:
 ${parts.join(', ')}.
 
+Base your estimate on standard European retail prices (Spain, UK, Germany, France).
+Reference bands:
+  Budget       ${CURRENCY}20-40   (entry blends, young NAS)
+  Mid-range    ${CURRENCY}40-80   (standard single malts)
+  Premium      ${CURRENCY}80-150  (aged single malts, premium expressions)
+  Luxury       ${CURRENCY}150-300 (rare/old/limited editions)
+  Ultra-luxury ${CURRENCY}300+    (collectors, very rare)
+
 Respond ONLY with a JSON object, no markdown, no explanation:
-{
-  "nose": "2-4 aroma descriptors, comma separated",
-  "palate": "2-4 taste descriptors, comma separated",
-  "dulzor": <integer 0-5, sweetness>,
-  "ahumado": <integer 0-5, smokiness>,
-  "cuerpo": <integer 0-5, body/weight>,
-  "frutado": <integer 0-5, fruitiness>,
-  "especiado": <integer 0-5, spiciness>
-}`
+{"price_band":"${CURRENCY}<low>-${CURRENCY}<high>"}
+
+For open-ended top prices: {"price_band":"${CURRENCY}300+"}
+Examples:
+{"price_band":"${CURRENCY}40-${CURRENCY}60"}
+{"price_band":"${CURRENCY}120-${CURRENCY}180"}
+{"price_band":"${CURRENCY}300+"}`
 }
 
 // ── Gemma API call ────────────────────────────────────────────────────────────
@@ -76,7 +85,7 @@ async function callGemma(prompt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 300 },
+      generationConfig: { temperature: 0.2, maxOutputTokens: 60 },
     }),
   })
 
@@ -92,27 +101,16 @@ async function callGemma(prompt) {
 // ── Parse response ────────────────────────────────────────────────────────────
 
 function parseResponse(text) {
-  // Strip markdown fences if present
   const clean = text.replace(/```json|```/g, '').trim()
-
-  // Extract JSON object
-  const match = clean.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('No JSON object found in response')
+  const match = clean.match(/\{[\s\S]*?\}/)
+  if (!match) throw new Error('No JSON found in response')
 
   const parsed = JSON.parse(match[0])
+  const band = (parsed.price_band || '').trim()
+  if (!band) throw new Error('Empty price_band in response')
+  if (!/\d/.test(band)) throw new Error(`Unexpected format: "${band}"`)
 
-  // Validate and clamp scores
-  const clamp = (v) => Math.min(5, Math.max(0, Math.round(Number(v) || 0)))
-
-  return {
-    nose:      (parsed.nose      || '').trim(),
-    palate:    (parsed.palate    || '').trim(),
-    dulzor:    clamp(parsed.dulzor),
-    ahumado:   clamp(parsed.ahumado),
-    cuerpo:    clamp(parsed.cuerpo),
-    frutado:   clamp(parsed.frutado),
-    especiado: clamp(parsed.especiado),
-  }
+  return band
 }
 
 // ── Sleep ─────────────────────────────────────────────────────────────────────
@@ -122,40 +120,50 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🥃  Dram Journal — Flavor Profile Generator')
-  console.log(`    Model      : ${GEMMA_MODEL}`)
-  console.log(`    Batch limit: ${BATCH_LIMIT}`)
-  console.log(`    Sleep      : ${SLEEP_MS / 1000}s between calls`)
-  console.log(`    Offset     : ${START_OFFSET}`)
+  console.log('Dram Journal - Price Band Generator')
+  console.log(`  Model      : ${GEMMA_MODEL}`)
+  console.log(`  Batch limit: ${BATCH_LIMIT}`)
+  console.log(`  Sleep      : ${SLEEP_MS / 1000}s between calls`)
+  console.log(`  Offset     : ${START_OFFSET}`)
+  console.log(`  Currency   : ${CURRENCY}`)
+  console.log(`  Reprice    : ${REPRICE}`)
   console.log()
 
-  // Fetch whiskies to process — paginate in chunks of 1000 (Supabase row limit)
   const PAGE_SIZE = 1000
   let whiskies = []
   let from = START_OFFSET
+
   while (whiskies.length < BATCH_LIMIT) {
     const to = from + Math.min(PAGE_SIZE, BATCH_LIMIT - whiskies.length) - 1
-    const { data: page, error } = await sb
+
+    let query = sb
       .from('catalogue')
       .select('id, name, distillery, country, region, age, abv, type')
-      .is('status', null)
       .order('id', { ascending: true })
       .range(from, to)
+
+    if (!REPRICE) {
+      query = query.is('status', null)
+    }
+
+    const { data: page, error } = await query
     if (error) throw new Error(`Supabase query failed: ${error.message}`)
     if (!page?.length) break
     whiskies = whiskies.concat(page)
-    if (page.length < PAGE_SIZE) break  // last page
+    if (page.length < PAGE_SIZE) break
     from += PAGE_SIZE
   }
 
-  if (!whiskies.length) { console.log('✅  No whiskies to process.'); return }
+  if (!whiskies.length) {
+    console.log('No unprocessed whiskies found (status IS NULL). Use REPRICE=true to re-process all.')
+    return
+  }
 
-  // Get total count for progress display
   const { count: total } = await sb
     .from('catalogue')
     .select('*', { count: 'exact', head: true })
 
-  console.log(`📋  Processing ${whiskies.length} whiskies (offset ${START_OFFSET} of ${total} total)\n`)
+  console.log(`Processing ${whiskies.length} unpriced whiskies (${total} total in catalogue)\n`)
 
   let succeeded = 0
   let failed    = 0
@@ -163,57 +171,48 @@ async function main() {
   for (let i = 0; i < whiskies.length; i++) {
     const whisky = whiskies[i]
     const pos    = START_OFFSET + i + 1
-    process.stdout.write(`  [${pos}/${total}] ${whisky.name}… `)
+    process.stdout.write(`  [${pos}] ${whisky.name}... `)
 
     try {
-      const prompt   = buildPrompt(whisky)
-      const raw      = await callGemma(prompt)
-      const profile  = parseResponse(raw)
+      const band = parseResponse(await callGemma(buildPrompt(whisky)))
 
       const { error: updateError } = await sb
         .from('catalogue')
-        .update({
-          ...profile,
-          status: true,
-        })
+        .update({ price_band: band, status: true })
         .eq('id', whisky.id)
 
       if (updateError) throw new Error(updateError.message)
 
-      console.log(`✓  nose: "${profile.nose.slice(0, 30)}…"`)
+      console.log(`OK  ${band}`)
       succeeded++
 
     } catch (err) {
-      console.log(`✗  ${err.message}`)
-
-      // Mark as error so we can filter/retry later if needed
-      await sb.from('catalogue')
-        .update({ status: false })
-        .eq('id', whisky.id)
-
+      console.log(`ERR ${err.message}`)
+      await sb.from('catalogue').update({ status: false }).eq('id', whisky.id)
       failed++
     }
 
-    // Sleep between calls to stay within 15 RPM — skip after last item
     if (i < whiskies.length - 1) {
-      process.stdout.write(`     ⏱  waiting ${SLEEP_MS / 1000}s…\r`)
+      process.stdout.write(`     waiting ${SLEEP_MS / 1000}s...\r`)
       await sleep(SLEEP_MS)
     }
   }
 
   console.log()
-  console.log('✅  Done!')
-  console.log(`    ✓ Succeeded : ${succeeded}`)
-  console.log(`    ✗ Failed    : ${failed}`)
-  console.log()
+  console.log('Done!')
+  console.log(`  Succeeded : ${succeeded}`)
+  console.log(`  Failed    : ${failed}`)
+
+  if (failed > 0) {
+    console.log(`\n  ${failed} rows marked status=false — reset status to NULL to retry them.`)
+  }
 
   const nextOffset = START_OFFSET + whiskies.length
   if (nextOffset < total) {
-    console.log(`▶   Next run: set START_OFFSET=${nextOffset} to continue`)
-    console.log(`    Remaining: ${total - nextOffset} whiskies`)
+    console.log(`\n  Next run: START_OFFSET=${nextOffset}`)
   } else {
-    console.log('🎉  All whiskies processed!')
+    console.log('\n  All whiskies priced!')
   }
 }
 
-main().catch(err => { console.error('\n❌ ', err.message); process.exit(1) })
+main().catch(err => { console.error('ERROR:', err.message); process.exit(1) })

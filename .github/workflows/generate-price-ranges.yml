@@ -1,0 +1,43 @@
+name: Generate Price Ranges
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_offset:
+        description: 'Skip first N whiskies (for resuming). Default: 0'
+        required: false
+        default: '0'
+      batch_limit:
+        description: 'Max whiskies to process this run. Default: 6100 (all)'
+        required: false
+        default: '6100'
+      reprice:
+        description: 'Re-process rows that already have a price_band? (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 420  # 7h max — 6100 whiskies × 4s = ~6.8h
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+
+      - name: Generate price ranges
+        env:
+          SUPABASE_URL:         ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GEMINI_KEY:           ${{ secrets.VITE_GEMINI_KEY }}
+          BATCH_LIMIT:          ${{ github.event.inputs.batch_limit }}
+          START_OFFSET:         ${{ github.event.inputs.start_offset }}
+          REPRICE:              ${{ github.event.inputs.reprice }}
+          SLEEP_MS:             4000
+        run: node scripts/generate-price-ranges.js
