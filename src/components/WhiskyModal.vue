@@ -63,16 +63,15 @@
               <div class="view-field" v-if="form.price || cataloguePriceRange">
                 <div class="view-label">{{ t.price }}</div>
                 <div class="view-value">
+                  <!-- Always show as tappable badge — label is price_band if available, else form.price -->
                   <button
-                    v-if="cataloguePriceRange"
                     class="price-range-btn"
                     :title="`Search prices for ${form.name}`"
                     @click.stop="openPriceSearch"
                   >
-                    <span class="price-range-value">{{ cataloguePriceRange }}</span>
+                    <span class="price-range-value">{{ cataloguePriceRange || form.price }}</span>
                     <span class="price-range-icon">🛒</span>
                   </button>
-                  <span v-else>{{ form.price }}</span>
                 </div>
               </div>
               <div class="view-field" v-if="isJournal && form.date">
@@ -419,12 +418,14 @@ const isJournal = computed(() => (props.editing?.list || props.list) === 'journa
 const cataloguePriceRange = computed(() => cataloguePicked.value?.price_band || null)
 
 function openPriceSearch() {
-  const query = [form.name, form.distillery].filter(Boolean).join(' ').trim()
+  // Use name + distillery from catalogue if available, else fall back to form values
+  const query = [
+    cataloguePicked.value?.name || form.name,
+    cataloguePicked.value?.distillery || form.distillery,
+  ].filter(Boolean).join(' ').trim()
   if (!query) return
-  // Google Shopping deep link — works as a universal deep link on Android/iOS
-  // Falls back to Google Search with shopping filter on desktop
-  const encoded = encodeURIComponent(query + ' whisky buy price')
-  const url = 
+  const url = `https://www.google.com/search?q=${encodeURIComponent(query + ' whisky price')}&tbm=shop`
+  // Use location.href rather than window.open — more reliable in PWA/Android WebView
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
