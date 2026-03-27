@@ -60,14 +60,14 @@
                 class="tl-see-more"
                 @click.stop="expand(m.key)"
               >
-                +{{ m.entries.length - PREVIEW_COUNT }} more
+                <span>+{{ m.entries.length - PREVIEW_COUNT }} more</span>
               </button>
               <button
                 v-if="expandedKeys.has(m.key)"
                 class="tl-collapse"
                 @click.stop="collapse(m.key)"
               >
-                ↑ less
+                <span>↑ less</span>
               </button>
             </div>
           </div>
@@ -197,7 +197,10 @@ function openEntry(w) {
   border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
+  /* Use dvh where supported, fall back to vh; also respect safe-area insets on Android */
   max-height: 70vh;
+  max-height: 70dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-shadow: 0 -8px 40px rgba(0,0,0,0.25);
 }
 
@@ -251,8 +254,9 @@ function openEntry(w) {
 /* Scroll area — horizontal only */
 .tl-scroll {
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   flex: 1;
+  min-height: 0;
   padding: 24px 24px 20px;
   -webkit-overflow-scrolling: touch;
   background: var(--bg-modal);
@@ -318,10 +322,24 @@ function openEntry(w) {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 5px 10px 5px 14px;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
+  padding: 5px 18px 5px 10px;
   width: 120px;
   text-align: center;
+  position: relative;
+  border-radius: 2px 0 0 2px;
+  box-sizing: border-box;
+}
+/* Arrow tip using a pseudo-element — universally supported on Android */
+.tl-month-arrow::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-style: solid;
+  border-width: 14px 0 14px 10px;
+  border-color: transparent transparent transparent var(--amber);
 }
 .tl-dot {
   width: 10px;
@@ -398,7 +416,7 @@ function openEntry(w) {
   background: var(--bg-input);
   border: 0.5px dashed var(--border-hi);
   border-radius: 8px;
-  padding: 0 8px;
+  padding: 0;
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 600;
@@ -411,15 +429,23 @@ function openEntry(w) {
   flex-shrink: 0;
   transition: all 0.15s;
   font-family: 'Inter', sans-serif;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+  overflow: hidden;
+}
+/* Use transform rotation instead of writing-mode for Android compatibility */
+.tl-see-more > span {
+  display: block;
+  transform: rotate(90deg);
+  white-space: nowrap;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--amber-light);
 }
 .tl-see-more:hover { background: rgba(200,130,42,0.08); border-color: var(--amber); }
 .tl-collapse {
   background: none;
   border: 0.5px solid var(--border);
   border-radius: 8px;
-  padding: 0 8px;
+  padding: 0;
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 500;
@@ -432,9 +458,15 @@ function openEntry(w) {
   flex-shrink: 0;
   transition: all 0.15s;
   font-family: 'Inter', sans-serif;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
+  overflow: hidden;
+}
+.tl-collapse > span {
+  display: block;
+  transform: rotate(-90deg);
+  white-space: nowrap;
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--peat-light);
 }
 .tl-collapse:hover { border-color: var(--border-hi); color: var(--text-primary); }
 .tl-separator {
