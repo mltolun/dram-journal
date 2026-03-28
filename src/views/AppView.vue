@@ -326,7 +326,6 @@ function onSaved(w) {
   .wishlist-layout { grid-template-columns: 1fr; }
   .recs-col { position: static; }
   .wishlist-grid { grid-template-columns: repeat(2, minmax(0, 255px)) !important; }
-  .wishlist-layout { grid-template-columns: 1fr 240px; }
 }
 @media (max-width: 600px) {
   .wishlist-grid { grid-template-columns: 1fr !important; }
