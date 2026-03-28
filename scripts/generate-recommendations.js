@@ -227,12 +227,56 @@ async function buildEmailMap(userIds) {
   return map
 }
 
+// ─── Catalogue fallback for users with few journal entries ───────────────────
+
+function parsePriceBandAvg(priceBand) {
+  if (!priceBand) return null
+  const nums = priceBand.match(/\d+/g)?.map(Number)
+  if (!nums?.length) return null
+  return nums.reduce((a, b) => a + b, 0) / nums.length
+}
+
+function selectRandomCatalogueRecs(catalogue, journal, wishlist, count = 5) {
+  const triedNames = new Set([
+    ...journal.map(w => w.name?.toLowerCase().trim()),
+    ...wishlist.map(w => w.name?.toLowerCase().trim()),
+  ])
+
+  const available = catalogue.filter(c => !triedNames.has(c.name?.toLowerCase().trim()))
+
+  // Prefer whiskies in the €35–€70 range (centred around €50)
+  const around50 = available.filter(c => {
+    const avg = parsePriceBandAvg(c.price_band)
+    return avg !== null && avg >= 35 && avg <= 70
+  })
+
+  const pool = around50.length >= count ? around50 : available
+  const shuffled = [...pool].sort(() => Math.random() - 0.5)
+
+  return shuffled.slice(0, count).map(c => ({
+    name:        c.name,
+    distillery:  c.distillery || '—',
+    origin:      [c.region, c.country].filter(Boolean).join(', '),
+    type:        c.type || 'other',
+    age:         c.age  || null,
+    price:       c.price_band || null,
+    reason:      'A well-regarded whisky around the €50 mark — a great bottle to explore and start building your tasting journal.',
+    dulzor:      c.dulzor    ?? 0,
+    ahumado:     c.ahumado   ?? 0,
+    cuerpo:      c.cuerpo    ?? 0,
+    frutado:     c.frutado   ?? 0,
+    especiado:   c.especiado ?? 0,
+    catalogue_id: c.id,
+    photo_url:   c.photo_url ?? null,
+  }))
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log('🥃 Starting weekly update generation...')
   console.log(`   Model: ${GEMMA_MODEL}`)
-  console.log(`   Min journal entries required: ${MIN_JOURNAL_ENTRIES}`)
+  console.log(`   Min journal entries for AI recs: ${MIN_JOURNAL_ENTRIES} (else catalogue fallback ~€50)`)
   console.log(`   Emails enabled: ${SEND_EMAILS}`)
   console.log('')
 
@@ -265,14 +309,15 @@ async function main() {
     }
   }
 
-  const userIds = Object.keys(byUser)
-  console.log(`   Found ${userIds.length} users with journal entries`)
+  const userIds = Object.keys(emailByUserId)
+  console.log(`   Found ${Object.keys(byUser).length} users with journal entries`)
+  console.log(`   Total users to process: ${userIds.length}`)
   console.log('')
 
   // 3b. Fetch catalogue entries for recommendation grounding
   const { data: catalogue, error: catalogueError } = await sb
     .from('catalogue')
-    .select('id, name, distillery, type, country, region, photo_url')
+    .select('id, name, distillery, type, country, region, photo_url, price_band, age, dulzor, ahumado, cuerpo, frutado, especiado')
     .order('name', { ascending: true })
 
   if (catalogueError) {
@@ -283,89 +328,92 @@ async function main() {
   console.log('')
 
   let processed = 0
-  let skipped   = 0
   let errors    = 0
 
   // 4. Process each user
   for (const userId of userIds) {
-    const { journal, wishlist } = byUser[userId]
+    const { journal = [], wishlist = [] } = byUser[userId] || {}
     const userEmail = emailByUserId[userId]
 
-    if (journal.length < MIN_JOURNAL_ENTRIES) {
-      console.log(`   ⊘ User ${userId.slice(0, 8)}… — only ${journal.length} journal entries, skipping`)
-      skipped++
-      continue
-    }
-
-    console.log(`   ◎ User ${userId.slice(0, 8)}… — ${journal.length} journal, ${wishlist.length} wishlist`)
+    const hasEnoughEntries = journal.length >= MIN_JOURNAL_ENTRIES
+    console.log(`   ◎ User ${userId.slice(0, 8)}… — ${journal.length} journal, ${wishlist.length} wishlist${hasEnoughEntries ? '' : ' (catalogue fallback)'}`)
 
     try {
-      // 5. Generate recommendations via Gemma 3 27B
-      const prompt = buildPrompt(journal, wishlist, catalogueList)
-      const raw    = await callGemma(prompt)
-      const recs   = parseGemmaResponse(raw)
-
-      if (!Array.isArray(recs) || recs.length === 0) {
-        throw new Error('Gemma returned empty or non-array recommendations')
-      }
-      // Cap at 3 regardless of what the model returns
-      const recsSliced = recs.slice(0, 3)
-
-      // Enrich recommendations with catalogue photo_url + catalogue_id.
-      // Since Gemma is now prompted to use exact catalogue names, Pass 1 should
-      // hit most of the time. Passes 2-4 are safety nets for minor deviations.
-      const enriched = await Promise.all(recsSliced.map(async (rec) => {
-        const recName = rec.name.trim()
-        const recDist = (rec.distillery || '').toLowerCase().trim()
-
-        // Pass 1: exact name + distillery (case-insensitive)
-        const { data: exact } = await sb
-          .from('catalogue')
-          .select('id, name, distillery, photo_url')
-          .ilike('name', recName)
-          .ilike('distillery', rec.distillery || '')
-          .maybeSingle()
-
-        if (exact) {
-          console.log(`     ✓ catalogue match (exact): ${rec.name}`)
-          return { ...rec, name: exact.name, distillery: exact.distillery, catalogue_id: exact.id, photo_url: exact.photo_url }
-        }
-
-        // Pass 2: name contains wildcard match (handles suffix differences)
-        const nameWords = recName.split(' ').filter(w => w.length > 2)
-        const { data: fuzzyRows } = await sb
-          .from('catalogue')
-          .select('id, name, distillery, photo_url')
-          .ilike('name', `%${nameWords.join('%')}%`)
-
-        if (fuzzyRows?.length) {
-          const best = fuzzyRows.find(
-            r => r.distillery?.toLowerCase().trim() === recDist
-          ) || fuzzyRows[0]
-          console.log(`     ~ catalogue match (fuzzy name): ${rec.name} → ${best.name}`)
-          return { ...rec, name: best.name, distillery: best.distillery, catalogue_id: best.id, photo_url: best.photo_url }
-        }
-
-        // Pass 3: distillery match only — if only one entry exists for this distillery
-        if (recDist) {
-          const { data: distRows } = await sb
-            .from('catalogue')
-            .select('id, name, distillery, photo_url')
-            .ilike('distillery', rec.distillery || '')
-
-          if (distRows?.length === 1) {
-            console.log(`     ~ catalogue match (distillery only): ${rec.name} → ${distRows[0].name}`)
-            return { ...rec, name: distRows[0].name, distillery: distRows[0].distillery, catalogue_id: distRows[0].id, photo_url: distRows[0].photo_url }
-          }
-        }
-
-        console.warn(`     ✗ no catalogue match: ${rec.name} (${rec.distillery})`)
-        return { ...rec, catalogue_id: null, photo_url: null }
-      }))
-
-      // 6. Upsert recommendations
+      let enriched
       const generatedAt = new Date().toISOString()
 
+      if (hasEnoughEntries) {
+        // 5a. Generate recommendations via Gemma 3 27B
+        const prompt = buildPrompt(journal, wishlist, catalogueList)
+        const raw    = await callGemma(prompt)
+        const recs   = parseGemmaResponse(raw)
+
+        if (!Array.isArray(recs) || recs.length === 0) {
+          throw new Error('Gemma returned empty or non-array recommendations')
+        }
+        // Cap at 3 regardless of what the model returns
+        const recsSliced = recs.slice(0, 3)
+
+        // Enrich recommendations with catalogue photo_url + catalogue_id.
+        // Since Gemma is now prompted to use exact catalogue names, Pass 1 should
+        // hit most of the time. Passes 2-4 are safety nets for minor deviations.
+        enriched = await Promise.all(recsSliced.map(async (rec) => {
+          const recName = rec.name.trim()
+          const recDist = (rec.distillery || '').toLowerCase().trim()
+
+          // Pass 1: exact name + distillery (case-insensitive)
+          const { data: exact } = await sb
+            .from('catalogue')
+            .select('id, name, distillery, photo_url')
+            .ilike('name', recName)
+            .ilike('distillery', rec.distillery || '')
+            .maybeSingle()
+
+          if (exact) {
+            console.log(`     ✓ catalogue match (exact): ${rec.name}`)
+            return { ...rec, name: exact.name, distillery: exact.distillery, catalogue_id: exact.id, photo_url: exact.photo_url }
+          }
+
+          // Pass 2: name contains wildcard match (handles suffix differences)
+          const nameWords = recName.split(' ').filter(w => w.length > 2)
+          const { data: fuzzyRows } = await sb
+            .from('catalogue')
+            .select('id, name, distillery, photo_url')
+            .ilike('name', `%${nameWords.join('%')}%`)
+
+          if (fuzzyRows?.length) {
+            const best = fuzzyRows.find(
+              r => r.distillery?.toLowerCase().trim() === recDist
+            ) || fuzzyRows[0]
+            console.log(`     ~ catalogue match (fuzzy name): ${rec.name} → ${best.name}`)
+            return { ...rec, name: best.name, distillery: best.distillery, catalogue_id: best.id, photo_url: best.photo_url }
+          }
+
+          // Pass 3: distillery match only — if only one entry exists for this distillery
+          if (recDist) {
+            const { data: distRows } = await sb
+              .from('catalogue')
+              .select('id, name, distillery, photo_url')
+              .ilike('distillery', rec.distillery || '')
+
+            if (distRows?.length === 1) {
+              console.log(`     ~ catalogue match (distillery only): ${rec.name} → ${distRows[0].name}`)
+              return { ...rec, name: distRows[0].name, distillery: distRows[0].distillery, catalogue_id: distRows[0].id, photo_url: distRows[0].photo_url }
+            }
+          }
+
+          console.warn(`     ✗ no catalogue match: ${rec.name} (${rec.distillery})`)
+          return { ...rec, catalogue_id: null, photo_url: null }
+        }))
+
+        console.log(`     ✓ ${enriched.length} AI recommendations saved`)
+      } else {
+        // 5b. Fallback: pick 5 random whiskies ~€50 from the catalogue
+        enriched = selectRandomCatalogueRecs(catalogueList, journal, wishlist)
+        console.log(`     ✓ ${enriched.length} catalogue recommendations selected (~€50)`)
+      }
+
+      // 6. Upsert recommendations
       const { error: upsertError } = await sb
         .from('recommendations')
         .upsert({
@@ -375,7 +423,6 @@ async function main() {
         }, { onConflict: 'user_id' })
 
       if (upsertError) throw new Error(`Supabase upsert failed: ${upsertError.message}`)
-      console.log(`     ✓ ${recs.length} recommendations saved`)
 
       // 7. Fetch follower activity for this user (last 7 days)
       const followerActivity = await fetchFollowerActivity(userId)
@@ -391,7 +438,7 @@ async function main() {
       // 8. Send combined weekly email
       if (SEND_EMAILS && userEmail) {
         try {
-          await sendWeeklyEmail(userEmail, recs, followerActivity, authorEmailMap, generatedAt)
+          await sendWeeklyEmail(userEmail, enriched, followerActivity, authorEmailMap, generatedAt)
           console.log(`     ✉ Email sent to ${userEmail}`)
         } catch (emailErr) {
           console.error(`     ⚠ Email failed for ${userEmail}: ${emailErr.message}`)
@@ -412,7 +459,7 @@ async function main() {
   }
 
   console.log('')
-  console.log(`✓ Done — ${processed} processed, ${skipped} skipped, ${errors} errors`)
+  console.log(`✓ Done — ${processed} processed, ${errors} errors`)
 
   // Clean up activity_feed rows that have now been included in this week's emails.
   // We delete anything older than 7 days — by the time the next Monday run fires,
