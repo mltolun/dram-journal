@@ -12,6 +12,11 @@
           :class="{ active: activeList === 'wishlist' }"
           @click="$emit('setList', 'wishlist')"
         ><HeartIcon :size="13" /> <span class="tab-label">{{ t.wishlist }}</span></button>
+        <button
+          class="list-tab"
+          :class="{ active: activeList === 'timeline' }"
+          @click="$emit('setList', 'timeline')"
+        ><CalendarIcon :size="13" /> <span class="tab-label">Timeline</span></button>
       </div>
       <button
         v-if="selectedCount > 0"
@@ -29,8 +34,7 @@
         :disabled="selectedCount < 2"
         @click="$emit('compare')"
       ><Columns2Icon :size="14" /> <span class="btn-label">{{ t.compare }}</span></button>
-      <button v-if="activeList === 'journal'" class="btn-t btn-outline" @click="$emit('timeline')"><CalendarIcon :size="14" /> <span class="btn-label">Timeline</span></button>
-      <button
+<button
         v-if="activeList === 'journal'"
         class="btn-t btn-outline btn-filter"
         :class="{ active: filtersOpen }"
@@ -61,7 +65,7 @@ import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as C
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function, filtersOpen: Boolean, filterCount: { type: Number, default: 0 } })
-const emit = defineEmits(['add', 'compare', 'scan', 'setList', 'timeline', 'filter'])
+const emit = defineEmits(['add', 'compare', 'scan', 'setList', 'filter'])
 
 const addOpen = ref(false)
 const addWrap = ref(null)

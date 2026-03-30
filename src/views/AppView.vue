@@ -18,7 +18,6 @@
       @compare="toggleCompare"
       @scan="scanOpen = true"
       @set-list="setActiveList"
-      @timeline="timelineOpen = true"
       @filter="filtersOpen = !filtersOpen"
     />
     <div v-if="activeList === 'journal' && filtersOpen" class="filter-bar">
@@ -111,6 +110,12 @@
         />
       </div>
 
+      <!-- Timeline full view -->
+      <TimelinePanel
+        v-if="activeList === 'timeline'"
+        @open-entry="openViewModal"
+      />
+
       <!-- Trash section — only shown on journal tab when there are trashed items -->
       <template v-if="activeList === 'journal' && trash.length > 0">
         <div class="trash-divider">
@@ -152,13 +157,7 @@
       @close="shareModalWhisky = null"
     />
 
-    <TimelinePanel
-      v-if="timelineOpen"
-      @close="timelineOpen = false"
-      @open-entry="openViewModal"
-    />
-
-    <ScanModal
+<ScanModal
       v-if="scanOpen"
       :list="activeList"
       @close="scanOpen = false"
@@ -203,7 +202,6 @@ const isViewMode    = ref(false)
 const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
-const timelineOpen  = ref(false)
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 const filtersOpen      = ref(false)

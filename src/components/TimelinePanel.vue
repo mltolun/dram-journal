@@ -1,23 +1,18 @@
 <template>
-  <div class="tl-overlay" @click="handleOverlayClick">
-    <div class="tl-panel" ref="panelEl">
-
-      <div class="tl-header">
-        <span class="tl-title">Timeline</span>
-        <div class="tl-ranges">
-          <button
-            v-for="r in RANGES" :key="r.key"
-            class="tl-range-btn"
-            :class="{ active: range === r.key }"
-            @click.stop="setRange(r.key)"
-          >{{ r.label }}</button>
-        </div>
-        <button class="tl-close" type="button" @click.stop="emit('close')">
-          <XIcon :size="16" />
-        </button>
+  <div class="tl-view">
+    <div class="tl-header">
+      <span class="tl-title">Timeline</span>
+      <div class="tl-ranges">
+        <button
+          v-for="r in RANGES" :key="r.key"
+          class="tl-range-btn"
+          :class="{ active: range === r.key }"
+          @click="setRange(r.key)"
+        >{{ r.label }}</button>
       </div>
+    </div>
 
-      <div class="tl-scroll">
+    <div class="tl-scroll" ref="scrollEl">
         <div v-if="loading" class="tl-loading">
           <div class="tl-spinner"></div>
           <span>Loading…</span>
@@ -41,7 +36,7 @@
                 v-for="w in visibleEntries(m)"
                 :key="w.id"
                 class="tl-bottle"
-                @click.stop="openEntry(w)"
+                @click="openEntry(w)"
                 :title="w.name"
               >
                 <div class="tl-thumb">
@@ -56,40 +51,37 @@
               </button>
 
               <button
-                v-if="!expandedKeys.has(m.key) && m.entries.length > PREVIEW_COUNT"
+                v-if="!expandedKeys.has(m.key) && m.entries.length > previewCount"
                 class="tl-see-more"
-                @click.stop="expand(m.key)"
+                @click="expand(m.key)"
               >
-                <span>+{{ m.entries.length - PREVIEW_COUNT }} more</span>
+                <span>+{{ m.entries.length - previewCount }} more</span>
               </button>
               <button
                 v-if="expandedKeys.has(m.key)"
                 class="tl-collapse"
-                @click.stop="collapse(m.key)"
+                @click="collapse(m.key)"
               >
                 <span>↑ less</span>
               </button>
             </div>
           </div>
         </div>
-      </div>
-
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { journal } from '../composables/useWhiskies.js'
-import { X as XIcon } from 'lucide-vue-next'
+const emit = defineEmits(['open-entry'])
 
-const emit = defineEmits(['close', 'open-entry'])
-
-const panelEl      = ref(null)
-const loading      = ref(true)
-const range        = ref('last_6')
-const expandedKeys = ref(new Set())
-const PREVIEW_COUNT = 2
+const loading        = ref(true)
+const range          = ref('last_6')
+const expandedKeys   = ref(new Set())
+const scrollEl       = ref(null)
+const scrollWidth    = ref(0)
 
 const RANGES = [
   { key: 'last_6',    label: '6 months'  },
@@ -97,18 +89,32 @@ const RANGES = [
   { key: 'this_year', label: 'This year' },
 ]
 
-// Only show spinner briefly — data is already in memory
+// Observe scroll container width to compute how many bottles fit per month
+let ro = null
 onMounted(() => {
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => { loading.value = false })
+    requestAnimationFrame(() => {
+      loading.value = false
+      if (scrollEl.value) {
+        ro = new ResizeObserver(entries => {
+          scrollWidth.value = entries[0].contentRect.width
+        })
+        ro.observe(scrollEl.value)
+      }
+    })
   })
 })
+onUnmounted(() => { if (ro) ro.disconnect() })
 
-function handleOverlayClick(e) {
-  if (panelEl.value && !panelEl.value.contains(e.target)) {
-    emit('close')
-  }
-}
+// How many bottles to show per month before collapsing.
+// bottle card = 116px wide + 6px gap = 122px; month padding = 12px each side.
+// Divide available width equally among months; fit as many bottles as possible.
+const previewCount = computed(() => {
+  const n = months.value.length
+  if (!scrollWidth.value || !n) return 2
+  const perMonth = scrollWidth.value / n
+  return Math.max(1, Math.floor((perMonth - 24) / 122))
+})
 
 function setRange(key) {
   loading.value = true
@@ -134,7 +140,7 @@ function collapse(key) {
 function visibleEntries(m) {
   return expandedKeys.value.has(m.key)
     ? m.entries
-    : m.entries.slice(0, PREVIEW_COUNT)
+    : m.entries.slice(0, previewCount.value)
 }
 
 function getRangeStart(key) {
@@ -181,27 +187,10 @@ function openEntry(w) {
 </script>
 
 <style scoped>
-.tl-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 200;
+.tl-view {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-end;
-}
-.tl-panel {
-  background: var(--bg-modal);
-  border-top: 0.5px solid var(--border);
-  border-radius: 16px 16px 0 0;
-  display: flex;
-  flex-direction: column;
-  /* Use dvh where supported, fall back to vh; also respect safe-area insets on Android */
-  max-height: 70vh;
-  max-height: 70dvh;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-shadow: 0 -8px 40px rgba(0,0,0,0.25);
+  min-height: 0;
 }
 
 /* Header */
@@ -235,22 +224,6 @@ function openEntry(w) {
 }
 .tl-range-btn:hover { border-color: var(--border-hi); color: var(--text-primary); }
 .tl-range-btn.active { background: var(--amber); border-color: var(--amber); color: #fff; }
-.tl-close {
-  background: none;
-  border: 0.5px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  flex-shrink: 0;
-  z-index: 10;
-}
-.tl-close:hover { border-color: var(--border-hi); color: var(--text-primary); }
-
 /* Scroll area — horizontal only */
 .tl-scroll {
   overflow-x: auto;
@@ -260,7 +233,6 @@ function openEntry(w) {
   padding: 24px 24px 20px;
   -webkit-overflow-scrolling: touch;
   background: var(--bg-modal);
-  border-radius: 0 0 16px 16px;
 }
 .tl-loading {
   display: flex;
