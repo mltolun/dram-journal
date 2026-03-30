@@ -421,7 +421,7 @@ async function main() {
         console.log(`     ✓ ${enriched.length} AI recommendations saved`)
       } else {
         // 5b. Fallback: pick 5 random whiskies ~€50 from the catalogue
-        enriched = selectRandomCatalogueRecs(catalogueList, journal, wishlist)
+        enriched = selectRandomCatalogueRecs(catalogueList, journal, wishlist, 3)
         console.log(`     ✓ ${enriched.length} catalogue recommendations selected (~€50)`)
       }
 

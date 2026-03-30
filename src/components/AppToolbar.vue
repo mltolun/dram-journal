@@ -30,6 +30,12 @@
         @click="$emit('compare')"
       ><Columns2Icon :size="14" /> <span class="btn-label">{{ t.compare }}</span></button>
       <button v-if="activeList === 'journal'" class="btn-t btn-outline" @click="$emit('timeline')"><CalendarIcon :size="14" /> <span class="btn-label">Timeline</span></button>
+      <button
+        v-if="activeList === 'journal'"
+        class="btn-t btn-outline btn-filter"
+        :class="{ active: filtersOpen }"
+        @click="$emit('filter')"
+      ><SlidersHorizontalIcon :size="14" /> <span class="btn-label">Filters</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
       <div class="add-wrap" ref="addWrap">
         <button class="btn-t btn-primary" @click.stop="addOpen = !addOpen">
           <PlusIcon :size="14" /> <span class="btn-label">{{ t.add }}</span> <ChevronDownIcon :size="12" />
@@ -51,11 +57,11 @@
 
 <script setup>
 import { useI18n } from '../composables/useI18n.js'
-import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, Search as SearchIcon } from 'lucide-vue-next'
+import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, Search as SearchIcon, SlidersHorizontal as SlidersHorizontalIcon } from 'lucide-vue-next'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 const { t } = useI18n()
-defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function })
-const emit = defineEmits(['add', 'compare', 'scan', 'setList', 'timeline'])
+defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function, filtersOpen: Boolean, filterCount: { type: Number, default: 0 } })
+const emit = defineEmits(['add', 'compare', 'scan', 'setList', 'timeline', 'filter'])
 
 const addOpen = ref(false)
 const addWrap = ref(null)
@@ -156,4 +162,22 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 }
 .add-option:hover { background: rgba(200,130,42,0.08); color: var(--text-primary); }
 .add-option + .add-option { border-top: 0.5px solid var(--border); }
+.btn-filter.active { background: rgba(200,130,42,0.12); color: var(--amber); border-color: rgba(200,130,42,0.4); }
+.filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--amber);
+  color: var(--peat);
+  font-size: 0.6rem;
+  font-weight: 700;
+  margin-left: 2px;
+}
+@media (max-width: 680px) {
+  .add-wrap { flex: 1; }
+}
 </style>

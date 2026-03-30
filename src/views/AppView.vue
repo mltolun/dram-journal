@@ -12,12 +12,34 @@
       :compare-open="compareOpen"
       :active-list="activeList"
       :on-clear-selected="clearSelected"
+      :filters-open="filtersOpen"
+      :filter-count="activeFilterCount"
       @add="openAddModal"
       @compare="toggleCompare"
       @scan="scanOpen = true"
       @set-list="setActiveList"
       @timeline="timelineOpen = true"
+      @filter="filtersOpen = !filtersOpen"
     />
+    <div v-if="activeList === 'journal' && filtersOpen" class="filter-bar">
+      <select v-model="filterCountry" class="filter-select">
+        <option value="">All countries</option>
+        <option v-for="c in availableCountries" :key="c" :value="c">{{ c }}</option>
+      </select>
+      <select v-model="filterRegion" class="filter-select">
+        <option value="">All regions</option>
+        <option v-for="r in availableRegions" :key="r" :value="r">{{ r }}</option>
+      </select>
+      <select v-model="filterDistillery" class="filter-select">
+        <option value="">All distilleries</option>
+        <option v-for="d in availableDistilleries" :key="d" :value="d">{{ d }}</option>
+      </select>
+      <select v-model="filterAge" class="filter-select">
+        <option value="">All ages</option>
+        <option v-for="a in availableAges" :key="a" :value="a">{{ a === 'NAS' ? 'NAS' : a + ' yo' }}</option>
+      </select>
+      <button v-if="activeFilterCount > 0" class="btn-clear-filters" @click="clearFilters">Clear filters</button>
+    </div>
     <div class="grid-area">
       <!-- Wishlist: two-column layout — items left (4-col grid), recs right (column) -->
       <div v-if="activeList === 'wishlist'" class="wishlist-layout">
@@ -145,7 +167,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { useWhiskies, journal, wishlist, trash } from '../composables/useWhiskies.js'
@@ -181,9 +203,82 @@ const isViewMode    = ref(false)
 const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
-const timelineOpen      = ref(false)
+const timelineOpen  = ref(false)
 
-const activeItems = computed(() => activeList.value === 'wishlist' ? wishlist.value : journal.value)
+// ── Filters ──────────────────────────────────────────────────────────────────
+const filtersOpen      = ref(false)
+const filterCountry    = ref('')
+const filterRegion     = ref('')
+const filterDistillery = ref('')
+const filterAge        = ref('')
+
+function parseAge(v) {
+  const m = String(v || '').match(/\d+/)
+  return m ? parseInt(m[0]) : null
+}
+
+// Cascading filter options: each dropdown shows only values available given upstream selections
+const availableCountries = computed(() =>
+  [...new Set(journal.value.map(w => w.origin).filter(Boolean))].sort()
+)
+const afterCountry = computed(() => {
+  if (!filterCountry.value) return journal.value
+  return journal.value.filter(w => w.origin === filterCountry.value)
+})
+const availableRegions = computed(() =>
+  [...new Set(afterCountry.value.map(w => w.region).filter(Boolean))].sort()
+)
+const afterCountryAndRegion = computed(() => {
+  if (!filterRegion.value) return afterCountry.value
+  return afterCountry.value.filter(w => w.region === filterRegion.value)
+})
+const availableDistilleries = computed(() =>
+  [...new Set(afterCountryAndRegion.value.map(w => w.distillery).filter(Boolean))].sort()
+)
+const availableAges = computed(() => {
+  const ages = new Set()
+  journal.value.forEach(w => {
+    const a = parseAge(w.age)
+    ages.add(a !== null ? String(a) : 'NAS')
+  })
+  return [...ages].sort((a, b) => {
+    if (a === 'NAS') return 1
+    if (b === 'NAS') return -1
+    return parseInt(a) - parseInt(b)
+  })
+})
+
+// Reset downstream filters when upstream selection changes
+watch(filterCountry, () => {
+  if (filterRegion.value && !availableRegions.value.includes(filterRegion.value)) filterRegion.value = ''
+  if (filterDistillery.value && !availableDistilleries.value.includes(filterDistillery.value)) filterDistillery.value = ''
+})
+watch(filterRegion, () => {
+  if (filterDistillery.value && !availableDistilleries.value.includes(filterDistillery.value)) filterDistillery.value = ''
+})
+
+const filteredJournal = computed(() => {
+  let items = afterCountryAndRegion.value
+  if (filterDistillery.value) items = items.filter(w => w.distillery === filterDistillery.value)
+  if (filterAge.value === 'NAS') {
+    items = items.filter(w => parseAge(w.age) === null)
+  } else if (filterAge.value) {
+    const age = parseInt(filterAge.value)
+    items = items.filter(w => parseAge(w.age) === age)
+  }
+  return items
+})
+
+const activeFilterCount = computed(() =>
+  [filterCountry, filterRegion, filterDistillery, filterAge]
+    .filter(f => f.value !== '').length
+)
+
+function clearFilters() {
+  filterCountry.value = filterRegion.value = filterDistillery.value = filterAge.value = ''
+}
+
+const activeItems = computed(() => activeList.value === 'wishlist' ? wishlist.value : filteredJournal.value)
 
 const selectedWhiskies = computed(() =>
   selected.value.map(id => journal.value.find(w => w.id === id)).filter(Boolean)
@@ -201,6 +296,8 @@ function setActiveList(list) {
   activeList.value = list
   selected.value = []
   compareOpen.value = false
+  filtersOpen.value = false
+  clearFilters()
 }
 
 function toggleSelect(id) {
@@ -283,6 +380,46 @@ function onSaved(w) {
 </script>
 
 <style scoped>
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 24px;
+  border-bottom: 0.5px solid var(--border);
+  background: rgba(200,130,42,0.03);
+}
+.filter-select {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 0.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  outline: none;
+  max-width: 160px;
+}
+.filter-select:focus { border-color: var(--amber); }
+.btn-clear-filters {
+  margin-left: auto;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(200,130,42,0.3);
+  background: transparent;
+  color: var(--amber-light);
+  font-size: 0.7rem;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-clear-filters:hover { background: rgba(200,130,42,0.1); color: var(--amber); }
+@media (max-width: 680px) {
+  .filter-bar { padding: 8px 12px; gap: 6px; }
+  .filter-select { max-width: 100%; flex: 1 1 40%; }
+  .btn-clear-filters { margin-left: 0; width: 100%; text-align: center; }
+}
 .trash-divider {
   display: flex;
   align-items: center;

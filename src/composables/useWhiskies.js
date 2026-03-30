@@ -63,7 +63,7 @@ export function useWhiskies() {
     const { data, error } = await sb
       .from('whiskies')
       .select(WHISKY_SELECT)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) { setSync('error'); throw error }
 
