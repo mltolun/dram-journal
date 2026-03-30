@@ -20,7 +20,11 @@ export function useMessages() {
     unreadCount.value = inbox.value.filter(m => !m.read).length
   }
 
-  async function sendMessage(recipientId, recipientEmail, whisky) {
+  async function sendMessage(recipientId, recipientEmail, whisky, message = '') {
+    const payload = message.trim()
+      ? { ...whisky, _message: message.trim() }
+      : whisky
+
     const { error } = await sb
       .from('direct_messages')
       .insert({
@@ -28,7 +32,7 @@ export function useMessages() {
         recipient_id:   recipientId,
         sender_email:   currentUser.value.email,
         recipient_email: recipientEmail,
-        whisky_payload: whisky,
+        whisky_payload: payload,
       })
     if (error) throw error
 
@@ -40,6 +44,7 @@ export function useMessages() {
       meta:       JSON.stringify({
         whisky_name:  whisky.name,
         distillery:   whisky.distillery || '',
+        message:      message.trim() || '',
       }),
     })
   }

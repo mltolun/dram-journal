@@ -39,7 +39,16 @@
           they'll appear here.
         </div>
 
-        <div v-else class="follower-list">
+        <div v-else>
+          <textarea
+            v-model="message"
+            class="share-message"
+            placeholder="Add a message (optional)…"
+            rows="2"
+            maxlength="280"
+          ></textarea>
+
+          <div class="follower-list">
           <button
             v-for="sub in myFollowers"
             :key="sub.id"
@@ -53,6 +62,7 @@
               {{ sentTo.has(sub.follower_id) ? '✓ Sent' : sendingTo === sub.follower_id ? '…' : 'Send →' }}
             </span>
           </button>
+          </div>
         </div>
 
         <div v-if="sendError" class="share-tip" style="color:#E24B4A;">{{ sendError }}</div>
@@ -87,6 +97,7 @@ const tip       = ref('')
 const sentTo    = ref(new Set())
 const sendingTo = ref(null)
 const sendError = ref('')
+const message   = ref('')
 
 onMounted(async () => {
   tip.value = t.value.generatingLink
@@ -125,7 +136,7 @@ async function doSend(sub) {
   sendingTo.value = sub.follower_id
   sendError.value = ''
   try {
-    await sendMessage(sub.follower_id, sub.follower_email, props.whisky)
+    await sendMessage(sub.follower_id, sub.follower_email, props.whisky, message.value)
     sentTo.value = new Set([...sentTo.value, sub.follower_id])
     toast(`Sent to ${sub.follower_email}!`)
   } catch (err) {
@@ -197,6 +208,25 @@ async function doSend(sub) {
   text-align: center;
   padding: 20px 0;
 }
+
+.share-message {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(200, 130, 42, 0.04);
+  border: 0.5px solid var(--border-hi);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  resize: none;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.share-message::placeholder { color: var(--peat-light); }
+.share-message:focus { border-color: var(--amber); }
 
 .follower-list {
   display: flex;

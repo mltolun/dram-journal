@@ -60,8 +60,14 @@ function filterCatalogueForUser(catalogue, journal, wishlist) {
     ...journal.map(w => w.name?.toLowerCase().trim()),
     ...wishlist.map(w => w.name?.toLowerCase().trim()),
   ])
+  const triedIds = new Set([
+    ...journal.map(w => w.catalogue_id).filter(Boolean),
+    ...wishlist.map(w => w.catalogue_id).filter(Boolean),
+  ])
 
-  const available = catalogue.filter(c => !triedNames.has(c.name?.toLowerCase().trim()))
+  const available = catalogue.filter(c =>
+    !triedNames.has(c.name?.toLowerCase().trim()) && !triedIds.has(c.id)
+  )
 
   // Determine the user's preferred types from their journal (weighted by rating)
   const typeScores = {}
@@ -241,8 +247,14 @@ function selectRandomCatalogueRecs(catalogue, journal, wishlist, count = 5) {
     ...journal.map(w => w.name?.toLowerCase().trim()),
     ...wishlist.map(w => w.name?.toLowerCase().trim()),
   ])
+  const triedIds = new Set([
+    ...journal.map(w => w.catalogue_id).filter(Boolean),
+    ...wishlist.map(w => w.catalogue_id).filter(Boolean),
+  ])
 
-  const available = catalogue.filter(c => !triedNames.has(c.name?.toLowerCase().trim()))
+  const available = catalogue.filter(c =>
+    !triedNames.has(c.name?.toLowerCase().trim()) && !triedIds.has(c.id)
+  )
 
   // Prefer whiskies in the €35–€70 range (centred around €50)
   const around50 = available.filter(c => {
@@ -411,6 +423,26 @@ async function main() {
         // 5b. Fallback: pick 5 random whiskies ~€50 from the catalogue
         enriched = selectRandomCatalogueRecs(catalogueList, journal, wishlist)
         console.log(`     ✓ ${enriched.length} catalogue recommendations selected (~€50)`)
+      }
+
+      // Post-enrichment safety check: remove anything the user already has,
+      // in case the AI ignored the catalogue filter or fuzzy matching resolved
+      // to a whisky already in their journal/wishlist.
+      const journalCatalogueIds = new Set([
+        ...journal.map(w => w.catalogue_id).filter(Boolean),
+        ...wishlist.map(w => w.catalogue_id).filter(Boolean),
+      ])
+      const journalNames = new Set([
+        ...journal.map(w => w.name?.toLowerCase().trim()),
+        ...wishlist.map(w => w.name?.toLowerCase().trim()),
+      ])
+      const before = enriched.length
+      enriched = enriched.filter(r =>
+        (!r.catalogue_id || !journalCatalogueIds.has(r.catalogue_id)) &&
+        !journalNames.has(r.name?.toLowerCase().trim())
+      )
+      if (enriched.length < before) {
+        console.warn(`     ⚠ Post-filter removed ${before - enriched.length} recommendation(s) already in user's journal/wishlist`)
       }
 
       // 6. Upsert recommendations

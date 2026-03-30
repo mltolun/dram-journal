@@ -176,9 +176,10 @@ Sláinte 🥃`
 
 // ── Direct message ────────────────────────────────────────────────────────────
 
-function directMessageHtml(fromEmail, whiskyName, distillery) {
+function directMessageHtml(fromEmail, whiskyName, distillery, message) {
   const name = fromEmail.split('@')[0]
   const sub  = distillery ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${PEAT_LIGHT};margin-bottom:14px;">${distillery}</div>` : ''
+  const msg  = message ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;margin-top:12px;padding:10px 14px;background:rgba(200,130,42,0.08);border-radius:6px;">${message}</div>` : ''
   return shell(`
     <tr>
       <td style="padding:28px 32px 8px;">
@@ -196,7 +197,8 @@ function directMessageHtml(fromEmail, whiskyName, distillery) {
           ${whiskyName}
         </div>
         ${sub}
-        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">
+        ${msg}
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;${message ? 'margin-top:12px;' : ''}">
           Open the app to see the full tasting profile and add it to your wishlist.
         </div>
       </td>
@@ -214,11 +216,11 @@ function directMessageHtml(fromEmail, whiskyName, distillery) {
     </tr>`)
 }
 
-function directMessageText(fromEmail, whiskyName, distillery) {
+function directMessageText(fromEmail, whiskyName, distillery, message) {
   const name = fromEmail.split('@')[0]
   return `THE DRAM JOURNAL — A friend shared a dram
 
-${name} thinks you'd enjoy: ${whiskyName}${distillery ? ' (' + distillery + ')' : ''}
+${name} thinks you'd enjoy: ${whiskyName}${distillery ? ' (' + distillery + ')' : ''}${message ? '\n\n"' + message + '"' : ''}
 
 Open the app to see the full tasting profile: ${APP_URL}
 
@@ -349,8 +351,8 @@ async function main() {
         await sendEmail(
           n.to_email,
           `🥃 ${n.from_email.split('@')[0]} shared a whisky with you — The Dram Journal`,
-          directMessageHtml(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || ''),
-          directMessageText(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || ''),
+          directMessageHtml(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || '', meta.message || ''),
+          directMessageText(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || '', meta.message || ''),
         )
         console.log(`   ✉ direct_message → ${n.to_email} (${meta.whisky_name})`)
       } else if (n.type.startsWith('feature_request_')) {

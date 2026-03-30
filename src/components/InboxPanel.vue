@@ -108,6 +108,9 @@
               <template v-if="msg.whisky_payload.age"> · {{ msg.whisky_payload.age }}</template>
             </div>
             <div v-if="expanded === msg.id" class="inbox-detail">
+              <div v-if="msg.whisky_payload._message" class="inbox-sender-message">
+                {{ msg.whisky_payload._message }}
+              </div>
               <div v-if="msg.whisky_payload.notes" class="inbox-notes">
                 "{{ msg.whisky_payload.notes }}"
               </div>
@@ -493,6 +496,16 @@ function formatDate(iso) {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 0.5px solid var(--border);
+}
+.inbox-sender-message {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: rgba(200,130,42,0.06);
+  border-radius: 6px;
 }
 .inbox-notes {
   font-family: 'Inter', sans-serif;
