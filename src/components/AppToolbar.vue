@@ -182,6 +182,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
   margin-left: 2px;
 }
 @media (max-width: 680px) {
-  .add-wrap { flex: 1; }
+  .add-wrap { flex: 1; display: flex; }
+  .add-wrap > button { flex: 1; justify-content: center; }
 }
 </style>
