@@ -40,9 +40,9 @@
                 <div class="view-label">{{ t.region }}</div>
                 <div class="view-value">{{ form.region }}</div>
               </div>
-              <div class="view-field" v-if="form.age">
+              <div class="view-field">
                 <div class="view-label">{{ t.ageMaturation }}</div>
-                <div class="view-value">{{ form.age }}</div>
+                <div class="view-value">{{ form.age || 'NAS' }}</div>
               </div>
               <div class="view-field" v-if="form.abv">
                 <div class="view-label">{{ t.abv }}</div>

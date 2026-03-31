@@ -24,7 +24,7 @@
       </div>
       <div class="wcard-distillery">{{ whisky.distillery || '—' }}</div>
       <div class="wcard-name">{{ whisky.name }}</div>
-      <div v-if="whisky.age || whisky.abv" class="wcard-age">{{ whisky.age ? whisky.age + ' yo' : '' }}{{ whisky.age && whisky.abv ? " · " : "" }}{{ whisky.abv ? whisky.abv + '% abv' : '' }}</div>
+      <div class="wcard-age">{{ whisky.age ? whisky.age + ' yo' : 'NAS' }}{{ whisky.abv ? ' · ' + whisky.abv + ' abv' : '' }}</div>
       <!-- Flavour bars for journal and wishlist entries -->
       <div v-if="!isTrash" class="wcard-bars">
         <div v-for="a in ATTRS" :key="a" class="bar-row-s">
