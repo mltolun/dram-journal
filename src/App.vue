@@ -1,6 +1,7 @@
 <template>
   <RouterView />
   <InstallPrompt />
+  <BadgeToast />
   <Teleport to="body">
     <Transition name="toast">
       <div v-if="toastVisible" class="toast">{{ toastMsg }}</div>
@@ -15,6 +16,7 @@ import { sb } from './lib/supabase.js'
 import { currentUser } from './composables/useAuth.js'
 import { useToast } from './composables/useToast.js'
 import InstallPrompt from './components/InstallPrompt.vue'
+import BadgeToast from './components/BadgeToast.vue'
 
 const router = useRouter()
 const { toastMsg, toastVisible } = useToast()

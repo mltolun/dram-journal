@@ -24,6 +24,7 @@
           >
             <span class="avatar-letter">{{ avatarLetter }}</span>
             <span class="avatar-sync-dot" :style="{ background: syncColor }"></span>
+            <span v-if="earnedCount > 0" class="avatar-badge-count">{{ earnedCount }}/{{ badges.length }}</span>
           </div>
 
           <transition name="menu">
@@ -112,6 +113,7 @@ import FeatureRequestPanel from './FeatureRequestPanel.vue'
 import AdminFeaturePanel from './AdminFeaturePanel.vue'
 import StatsPanel from './StatsPanel.vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
+import { useBadges } from '../composables/useBadges.js'
 import { Inbox as InboxIcon, Download as DownloadIcon, Users as UsersIcon, Lightbulb as LightbulbIcon, Settings as SettingsIcon, Globe as GlobeIcon, LogOut as LogOutIcon, Sun as SunIcon, Moon as MoonIcon, BarChart2 as BarChart2Icon } from 'lucide-vue-next'
 
 const { signOut } = useAuth()
@@ -132,6 +134,7 @@ const adminOpen   = ref(false)
 const statsOpen   = ref(false)
 
 const { isAdmin: isAdminFn } = useFeatureRequests()
+const { earnedCount, badges } = useBadges()
 
 // Must be a computed so Vue re-evaluates when currentUser resolves after auth
 const isAdmin = computed(() => isAdminFn())
@@ -263,6 +266,22 @@ async function doSignOut() {
   border-radius: 50%;
   border: 1.5px solid var(--bg);
   transition: background 0.3s;
+}
+.avatar-badge-count {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  background: var(--bg-modal, #1e1408);
+  border: 0.5px solid var(--amber, #A8620A);
+  color: var(--amber-light, #E8A84C);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.44rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 4px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* Dropdown menu */

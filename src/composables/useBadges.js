@@ -4,6 +4,7 @@ import { journal } from './useWhiskies.js'
 import { myFollowers } from './useSubscriptions.js'
 import { currentUser } from './useAuth.js'
 import { useToast } from './useToast.js'
+import { useBadgeToast } from './useBadgeToast.js'
 
 // ── Badge definitions ─────────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ export async function loadEarnedBadges() {
 export async function checkBadges() {
   if (!currentUser.value) return
   const { toast } = useToast()
+  const { badgeToast } = useBadgeToast()
   const j = journal.value
   const f = myFollowers.value
 
@@ -132,8 +134,8 @@ export async function checkBadges() {
       }
     }
 
-    // In-app toast
-    toast(`${def.icon} Badge unlocked: ${def.name}!`)
+    // In-app badge celebration toast
+    badgeToast(def.icon, def.name, def.desc)
 
     // Queue email — picked up by the daily process-notifications cron
     await sb.from('pending_notifications').insert({
