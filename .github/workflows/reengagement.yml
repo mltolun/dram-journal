@@ -1,0 +1,35 @@
+name: Re-engagement
+
+on:
+  schedule:
+    # Runs daily at midnight UTC.
+    # The script itself handles per-user timing (preferred day, streak warning window).
+    - cron: '0 0 * * *'
+  # Manual trigger for testing (add SEND_EMAILS=false env var below for a dry run)
+  workflow_dispatch:
+
+jobs:
+  reengagement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+        working-directory: ${{ github.workspace }}
+
+      - name: Process re-engagement
+        env:
+          SUPABASE_URL:         ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM:           ${{ secrets.EMAIL_FROM }}
+          # Set to 'false' here to do a dry run without actually sending emails
+          # SEND_EMAILS: 'false'
+        run: node scripts/process-reengagement.js
