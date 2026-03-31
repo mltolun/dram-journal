@@ -25,6 +25,7 @@ import { chromium } from 'playwright'
 import { createClient } from '@supabase/supabase-js'
 
 const TWITTER_USERNAME    = process.env.TWITTER_USERNAME
+const TWITTER_EMAIL       = process.env.TWITTER_EMAIL
 const TWITTER_PASSWORD    = process.env.TWITTER_PASSWORD
 const SUPABASE_URL        = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
@@ -150,7 +151,7 @@ async function login(page) {
   // Step 1b: sometimes Twitter asks for phone/email to verify identity
   const verifyInput = page.locator('input[data-testid="ocfEnterTextTextInput"]')
   if (await verifyInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await verifyInput.fill(TWITTER_USERNAME)
+    await verifyInput.fill(TWITTER_EMAIL || TWITTER_USERNAME)
     await page.keyboard.press('Enter')
     await page.waitForTimeout(2000)
   }
