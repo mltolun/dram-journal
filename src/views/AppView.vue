@@ -170,6 +170,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { useWhiskies, journal, wishlist, trash } from '../composables/useWhiskies.js'
+import { myFollowers } from '../composables/useSubscriptions.js'
+import { loadEarnedBadges, checkBadges } from '../composables/useBadges.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
@@ -287,6 +289,28 @@ onMounted(async () => {
   const session = await getSession()
   if (session) {
     await loadWhiskies()
+    await loadEarnedBadges()
+    await checkBadges() // catch badges already earned from existing entries
+
+    // Watch badge-relevant values and check for unlocks after any mutation
+    watch(
+      () => {
+        const j = journal.value
+        const f = myFollowers.value
+        return [
+          j.length,
+          j.filter(w => w.rating != null).length,
+          j.filter(w => (w.ahumado ?? 0) >= 4).length,
+          j.filter(w =>
+            (w.dulzor ?? 0) > 0 && (w.ahumado ?? 0) > 0 && (w.cuerpo ?? 0) > 0 &&
+            (w.frutado ?? 0) > 0 && (w.especiado ?? 0) > 0
+          ).length,
+          new Set(j.map(w => w.origin).filter(Boolean)).size,
+          f.length,
+        ].join(',')
+      },
+      checkBadges,
+    )
   }
 })
 

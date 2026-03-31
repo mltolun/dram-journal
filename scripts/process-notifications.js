@@ -227,6 +227,51 @@ Open the app to see the full tasting profile: ${APP_URL}
 Sláinte 🥃`
 }
 
+// ── Badge earned ─────────────────────────────────────────────────────────────
+
+function badgeEarnedHtml(badgeIcon, badgeName, badgeDesc) {
+  return shell(`
+    <tr>
+      <td style="padding:28px 32px 8px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
+                    text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
+          ✦ Badge unlocked
+        </div>
+        <div style="font-size:40px;line-height:1;margin-bottom:14px;">${badgeIcon}</div>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
+                    font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:8px;">
+          ${badgeName}
+        </div>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
+          ${badgeDesc}
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:20px 32px 28px;">
+        <a href="${APP_URL}"
+           style="display:inline-block;background:${AMBER};color:${PEAT};
+                  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  text-transform:uppercase;text-decoration:none;padding:11px 26px;
+                  border-radius:7px;font-weight:500;">
+          View My Badges →
+        </a>
+      </td>
+    </tr>`)
+}
+
+function badgeEarnedText(badgeIcon, badgeName, badgeDesc) {
+  return `THE DRAM JOURNAL — Badge unlocked
+
+${badgeIcon} ${badgeName}
+
+${badgeDesc}
+
+Open the app to view your stats: ${APP_URL}
+
+Sláinte 🥃`
+}
+
 // ── Feature request status update ────────────────────────────────────────────
 
 const STATUS_COPY = {
@@ -355,6 +400,15 @@ async function main() {
           directMessageText(n.from_email, meta.whisky_name || 'a whisky', meta.distillery || '', meta.message || ''),
         )
         console.log(`   ✉ direct_message → ${n.to_email} (${meta.whisky_name})`)
+      } else if (n.type === 'badge_earned') {
+        const meta = n.meta ? JSON.parse(n.meta) : {}
+        await sendEmail(
+          n.to_email,
+          `${meta.badge_icon || '🏆'} You unlocked a badge: ${meta.badge_name || 'Achievement'} — The Dram Journal`,
+          badgeEarnedHtml(meta.badge_icon || '🏆', meta.badge_name || 'Achievement', meta.badge_desc || ''),
+          badgeEarnedText(meta.badge_icon || '🏆', meta.badge_name || 'Achievement', meta.badge_desc || ''),
+        )
+        console.log(`   ✉ badge_earned → ${n.to_email} (${meta.badge_name})`)
       } else if (n.type.startsWith('feature_request_')) {
         const status = n.type.replace('feature_request_', '')
         const meta   = n.meta ? JSON.parse(n.meta) : {}

@@ -50,6 +50,10 @@
               </div>
 
               <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item" @click="openStats">
+                <BarChart2Icon :size="14" /> Stats &amp; Badges
+              </button>
+              <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doExport">
                 <DownloadIcon :size="14" /> {{ t.exportCsv }}
               </button>
@@ -87,6 +91,7 @@
 
   <SubscriptionsPanel v-if="subsOpen" @close="subsOpen = false" />
   <InboxPanel v-if="inboxOpen" @close="inboxOpen = false" />
+  <StatsPanel v-if="statsOpen" @close="statsOpen = false" />
   <FeatureRequestPanel v-if="featureOpen" @close="featureOpen = false" />
   <AdminFeaturePanel v-if="adminOpen" @close="adminOpen = false" />
 </template>
@@ -105,8 +110,9 @@ import SubscriptionsPanel from './SubscriptionsPanel.vue'
 import InboxPanel from './InboxPanel.vue'
 import FeatureRequestPanel from './FeatureRequestPanel.vue'
 import AdminFeaturePanel from './AdminFeaturePanel.vue'
+import StatsPanel from './StatsPanel.vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
-import { Inbox as InboxIcon, Download as DownloadIcon, Users as UsersIcon, Lightbulb as LightbulbIcon, Settings as SettingsIcon, Globe as GlobeIcon, LogOut as LogOutIcon, Sun as SunIcon, Moon as MoonIcon } from 'lucide-vue-next'
+import { Inbox as InboxIcon, Download as DownloadIcon, Users as UsersIcon, Lightbulb as LightbulbIcon, Settings as SettingsIcon, Globe as GlobeIcon, LogOut as LogOutIcon, Sun as SunIcon, Moon as MoonIcon, BarChart2 as BarChart2Icon } from 'lucide-vue-next'
 
 const { signOut } = useAuth()
 const { theme, THEMES } = useTheme()
@@ -123,6 +129,7 @@ const subsOpen    = ref(false)
 const inboxOpen   = ref(false)
 const featureOpen = ref(false)
 const adminOpen   = ref(false)
+const statsOpen   = ref(false)
 
 const { isAdmin: isAdminFn } = useFeatureRequests()
 
@@ -191,6 +198,11 @@ function openAdminPanel() {
 function openSubscriptions() {
   menuOpen.value = false
   subsOpen.value = true
+}
+
+function openStats() {
+  menuOpen.value = false
+  statsOpen.value = true
 }
 
 function doExport() {
