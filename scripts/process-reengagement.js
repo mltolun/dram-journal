@@ -216,6 +216,11 @@ async function main() {
 
   let sent = 0, skipped = 0, errors = 0
 
+  function skip(email, reason) {
+    console.log(`   · skip  ${email} — ${reason}`)
+    skipped++
+  }
+
   for (const [userId, raw] of Object.entries(userRaw)) {
     const email = emailMap[userId]
     if (!email) continue
@@ -258,17 +263,19 @@ async function main() {
     await sb.from('user_streaks').upsert(streakRow)
 
     // ── Skip active users — no nudge needed ──────────────────────────────
-    if (segment === 'active') { skipped++; continue }
+    if (segment === 'active') { skip(email, `active (last entry ${Math.round(daysSince)}d ago)`); continue }
 
     // ── Sunset policy: stop after 3 ignored emails for churned users ──────
     if (segment === 'churned' && (existingRec.reengagement_emails_sent ?? 0) >= 3) {
-      skipped++; continue
+      skip(email, `sunset (${existingRec.reengagement_emails_sent} emails ignored)`); continue
     }
 
     // ── Frequency cap: max 1 re-engagement email per 7 days ──────────────
     if (existingRec.last_reengagement_sent_at) {
       const daysSinceEmail = (today - new Date(existingRec.last_reengagement_sent_at)) / 86400000
-      if (daysSinceEmail < 7) { skipped++; continue }
+      if (daysSinceEmail < 7) {
+        skip(email, `freq-cap (last email ${Math.round(daysSinceEmail)}d ago)`); continue
+      }
     }
 
     // ── Personalized send-day filter ──────────────────────────────────────
@@ -281,7 +288,8 @@ async function main() {
       existingRec.streak_warned_week !== thisWeek
 
     if (prefDow !== null && todayDow !== prefDow && !wantStreakWarn) {
-      skipped++; continue
+      const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+      skip(email, `wrong day (prefers ${DOW[prefDow]}, today is ${DOW[todayDow]})`); continue
     }
 
     // ── Decide which email to send ────────────────────────────────────────
@@ -327,12 +335,12 @@ async function main() {
       payload.stats = stats
     }
 
-    if (!emailType) { skipped++; continue }
+    if (!emailType) { skip(email, `no trigger (${segment}, streak=${streak}, no badge close)`); continue }
 
     // ── Send ──────────────────────────────────────────────────────────────
 
     if (!SEND_EMAILS) {
-      console.log(`   [dry-run] ${emailType} → ${email} (${segment}, streak=${streak})`)
+      console.log(`   [dry-run] would send ${emailType} → ${email} (${segment}, streak=${streak})`)
       skipped++
       continue
     }
