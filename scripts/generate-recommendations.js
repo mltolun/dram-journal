@@ -493,10 +493,9 @@ async function main() {
   console.log('')
   console.log(`✓ Done — ${processed} processed, ${errors} errors`)
 
-  // Clean up activity_feed rows that have now been included in this week's emails.
-  // We delete anything older than 7 days — by the time the next Monday run fires,
-  // all recipients will have received these items already.
-  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  // Clean up all activity_feed rows — they have now been included in this week's
+  // emails, so there is nothing to keep until the next run.
+  const cutoff = new Date().toISOString()
   const { error: cleanupError } = await sb
     .from('activity_feed')
     .delete()
