@@ -389,18 +389,76 @@ Open your journal: ${APP_URL}
 Sláinte 🥃`
 }
 
+// ── Email 5: Onboarding nudge ─────────────────────────────────────────────────
+// For users who signed up but never logged a single whisky
+
+function onboardingHtml() {
+  return shell(`
+    <tr>
+      <td style="padding:28px 32px 8px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
+                    text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
+          ✦ Start your journey
+        </div>
+        <div style="font-size:36px;line-height:1;margin-bottom:12px;">🥃</div>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
+                    font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:10px;">
+          Log your first dram
+        </div>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
+                    line-height:1.6;margin-bottom:16px;">
+          Your journal is ready — just add your first whisky to get started.
+          No tasting notes required; a name and a rating is all it takes.
+        </div>
+        <div style="padding:12px 16px;background:rgba(200,130,42,0.06);border-radius:8px;
+                    border:1px solid rgba(200,130,42,0.15);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;
+                      text-transform:uppercase;color:${AMBER};margin-bottom:4px;">✦ First badge waiting</div>
+          <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${CREAM};line-height:1.5;">
+            🥃 Log one whisky to earn <span style="color:${AMBER_LIGHT};">First Dram</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:20px 32px 28px;">
+        <a href="${APP_URL}"
+           style="display:inline-block;background:${AMBER};color:${PEAT};
+                  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
+                  text-transform:uppercase;text-decoration:none;padding:11px 26px;
+                  border-radius:7px;font-weight:500;">
+          Log My First Dram →
+        </a>
+      </td>
+    </tr>`)
+}
+
+function onboardingText() {
+  return `THE DRAM JOURNAL — Log your first dram 🥃
+
+Your journal is ready — just add the first whisky you've been drinking.
+No tasting notes required; a name and a rating is all it takes.
+
+Log one whisky to earn the First Dram badge 🥃
+
+Open your journal: ${APP_URL}
+
+Sláinte 🥃`
+}
+
 // ── Send via Resend ───────────────────────────────────────────────────────────
 
 /**
  * Sends a re-engagement email via Resend.
  *
  * @param {string} toEmail
- * @param {'streak_warning'|'badge_proximity'|'lapsed'|'final'} type
+ * @param {'streak_warning'|'badge_proximity'|'lapsed'|'final'|'onboarding'} type
  * @param {Object} payload
  *   streak_warning:  { streak, daysLeft, badge? }
  *   badge_proximity: { badge: { icon, name, rem, target } }
  *   lapsed:          { friendActivity, stats, daysSince }
  *   final:           { stats }
+ *   onboarding:      {} (no payload needed)
  */
 export async function sendReengagementEmail(toEmail, type, payload) {
   if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY env var is not set')
@@ -431,6 +489,11 @@ export async function sendReengagementEmail(toEmail, type, payload) {
     subject = `🥃 Your journal is still here — The Dram Journal`
     html    = finalNudgeHtml({ stats })
     text    = finalNudgeText({ stats })
+
+  } else if (type === 'onboarding') {
+    subject = `🥃 Log your first dram — The Dram Journal`
+    html    = onboardingHtml()
+    text    = onboardingText()
 
   } else {
     throw new Error(`Unknown re-engagement email type: ${type}`)

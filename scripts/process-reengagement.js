@@ -202,12 +202,13 @@ async function main() {
 
   // ── Fetch all user emails via admin API ───────────────────────────────────
 
+  // emailMap: user_id → { email, createdAt }
   const emailMap = {}
   let page = 1
   while (true) {
     const { data: { users }, error } = await sb.auth.admin.listUsers({ page, perPage: 1000 })
     if (error || !users?.length) break
-    for (const u of users) if (u.email) emailMap[u.id] = u.email
+    for (const u of users) if (u.email) emailMap[u.id] = { email: u.email, createdAt: u.created_at }
     if (users.length < 1000) break
     page++
   }
@@ -221,9 +222,49 @@ async function main() {
     skipped++
   }
 
-  for (const [userId, raw] of Object.entries(userRaw)) {
-    const email = emailMap[userId]
-    if (!email) continue
+  for (const [userId, { email, createdAt }] of Object.entries(emailMap)) {
+    const raw = userRaw[userId]
+
+    // ── Users with no journal entries: onboarding nudge ───────────────────
+    if (!raw) {
+      // Give new users 48h before nudging
+      const accountAgeDays = (today - new Date(createdAt)) / 86400000
+      if (accountAgeDays < 2) { skip(email, 'too new (< 48h)'); continue }
+
+      const existingRec = streakByUser[userId] ?? {}
+
+      // Same sunset and frequency-cap rules as other segments
+      if ((existingRec.reengagement_emails_sent ?? 0) >= 3) {
+        skip(email, 'sunset (3 onboarding emails ignored)'); continue
+      }
+      if (existingRec.last_reengagement_sent_at) {
+        const daysSinceEmail = (today - new Date(existingRec.last_reengagement_sent_at)) / 86400000
+        if (daysSinceEmail < 7) { skip(email, `freq-cap (last email ${Math.round(daysSinceEmail)}d ago)`); continue }
+      }
+
+      if (!SEND_EMAILS) {
+        console.log(`   [dry-run] would send onboarding → ${email}`)
+        skipped++; continue
+      }
+
+      try {
+        await sendReengagementEmail(email, 'onboarding', {})
+        await sb.from('user_streaks').upsert({
+          user_id:                   userId,
+          current_streak:            0,
+          best_streak:               0,
+          reengagement_emails_sent:  (existingRec.reengagement_emails_sent ?? 0) + 1,
+          last_reengagement_sent_at: today.toISOString(),
+          updated_at:                today.toISOString(),
+        })
+        console.log(`   ✉ onboarding → ${email}`)
+        sent++
+      } catch (err) {
+        console.error(`   ✗ Failed for ${email}: ${err.message}`)
+        errors++
+      }
+      continue
+    }
 
     const stats = {
       total:      raw.dates.length,
