@@ -9,6 +9,12 @@ function syncLocaleFromUser(user) {
   if (storedLocale && ['en', 'es'].includes(storedLocale)) {
     const { setLocale } = useI18n()
     setLocale(storedLocale)
+  } else {
+    // One-time migration: if user has no locale in user_metadata but has one in localStorage, persist it silently
+    const localLocale = localStorage.getItem('dj_locale')
+    if (localLocale && ['en', 'es'].includes(localLocale)) {
+      sb.auth.updateUser({ data: { locale: localLocale } })
+    }
   }
 }
 
