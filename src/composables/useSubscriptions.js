@@ -127,8 +127,8 @@ export function useSubscriptions() {
       whisky_id:         isUuid ? whiskyId : null,
       whisky_name:       whiskyName,
       whisky_distillery: distillery ?? null,
-      rating:            rating     ?? null,
-      notes:             notes      ?? null,
+      rating:            rating ?? null,
+      notes:             notes  ?? null,
     })
 
     if (error) console.error('activity_feed insert failed:', error.message)

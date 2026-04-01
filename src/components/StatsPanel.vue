@@ -56,10 +56,43 @@
         </div>
       </div>
 
+      <!-- Flavour Profile Wheel -->
+      <div class="stats-section">
+        <div class="stats-section-label">{{ t.statsFlavorWheel }}</div>
+        <div v-if="flavorProfile" class="flavor-wheel-wrap">
+          <FlavorWheel :profile="flavorProfile" />
+          <div class="flavor-wheel-sub">{{ t.statsFlavorWheelSub }} · {{ flavorProfile.count }}</div>
+        </div>
+        <div v-else class="flavor-empty">{{ t.statsNotEnoughData }}</div>
+      </div>
+
       <!-- Regional Passport -->
       <div class="stats-section" v-if="passport.length">
         <div class="stats-section-label">{{ t.statsPassport }}</div>
-        <div class="passport-list">
+
+        <!-- Continent summary headline -->
+        <div v-if="continentPassport.length > 1" class="passport-headline">
+          {{ t.statsContinentHeadline(passport.length, continentPassport.length) }}
+        </div>
+
+        <!-- Continent groups -->
+        <div v-if="continentPassport.length > 1" class="continent-groups">
+          <div v-for="group in continentPassport" :key="group.continent" class="continent-group">
+            <div class="continent-label">{{ continentLabel(group.continent) }}</div>
+            <div class="passport-list">
+              <div v-for="p in group.countries" :key="p.country" class="passport-row">
+                <div class="passport-country">{{ p.country }}</div>
+                <div class="passport-bar-wrap">
+                  <div class="passport-bar" :style="{ width: (p.count / passport[0].count * 100) + '%' }"></div>
+                </div>
+                <div class="passport-count">{{ p.count }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flat list fallback (single continent or ungrouped) -->
+        <div v-else class="passport-list">
           <div v-for="p in passport" :key="p.country" class="passport-row">
             <div class="passport-country">{{ p.country }}</div>
             <div class="passport-bar-wrap">
@@ -79,14 +112,29 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { journal } from '../composables/useWhiskies.js'
 import { useBadges } from '../composables/useBadges.js'
 import { useI18n } from '../composables/useI18n.js'
+import FlavorWheel from './FlavorWheel.vue'
 
 defineEmits(['close'])
 
-const { badges, earnedCount, passport } = useBadges()
+const { badges, earnedCount, passport, flavorProfile, continentPassport } = useBadges()
 const { t } = useI18n()
+
+const CONTINENT_KEY_MAP = {
+  'British Isles': 'statsContinentBritishIsles',
+  'Europe':        'statsContinentEurope',
+  'Americas':      'statsContinentAmericas',
+  'Asia':          'statsContinentAsia',
+  'Rest of World': 'statsContinentRestOfWorld',
+}
+
+function continentLabel(continent) {
+  const key = CONTINENT_KEY_MAP[continent]
+  return key ? t.value[key] : continent
+}
 </script>
 
 <style scoped>
@@ -346,6 +394,60 @@ const { t } = useI18n()
   width: 24px;
   text-align: right;
   flex-shrink: 0;
+}
+
+/* ── Flavour Wheel ── */
+.flavor-wheel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.flavor-wheel-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  color: var(--peat-light, #8A7060);
+  text-align: center;
+  font-style: italic;
+}
+
+.flavor-empty {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--peat-light, #8A7060);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* ── Passport enhancements ── */
+.passport-headline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary, #C0A882);
+  margin-bottom: 14px;
+}
+
+.continent-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.continent-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.continent-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber, #A8620A);
+  margin-bottom: 4px;
 }
 
 /* ── Footer ── */

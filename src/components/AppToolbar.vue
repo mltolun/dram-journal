@@ -17,6 +17,11 @@
           :class="{ active: activeList === 'timeline' }"
           @click="$emit('setList', 'timeline')"
         ><CalendarIcon :size="13" /> <span class="tab-label">Timeline</span></button>
+        <button
+          class="list-tab"
+          :class="{ active: activeList === 'feed' }"
+          @click="$emit('setList', 'feed')"
+        ><UsersIcon :size="13" /> <span class="tab-label">{{ t.feed }}</span></button>
       </div>
       <button
         v-if="selectedCount > 0"
@@ -61,7 +66,7 @@
 
 <script setup>
 import { useI18n } from '../composables/useI18n.js'
-import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, Search as SearchIcon, SlidersHorizontal as SlidersHorizontalIcon } from 'lucide-vue-next'
+import { BookOpen as BookOpenIcon, Heart as HeartIcon, X as XIcon, Columns2 as Columns2Icon, Share2 as Share2Icon, Camera as CameraIcon, Plus as PlusIcon, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, Search as SearchIcon, SlidersHorizontal as SlidersHorizontalIcon, Users as UsersIcon } from 'lucide-vue-next'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 const { t } = useI18n()
 defineProps({ selectedCount: Number, compareOpen: Boolean, activeList: String, onClearSelected: Function, filtersOpen: Boolean, filterCount: { type: Number, default: 0 } })

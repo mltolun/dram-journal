@@ -6,6 +6,31 @@ import { currentUser } from './useAuth.js'
 import { useToast } from './useToast.js'
 import { useBadgeToast } from './useBadgeToast.js'
 
+// ── Continent mapping for passport grouping ───────────────────────────────────
+
+const CONTINENT_MAP = {
+  // British Isles
+  Scotland: 'British Isles', Ireland: 'British Isles',
+  England: 'British Isles', Wales: 'British Isles',
+  // Americas
+  USA: 'Americas', 'United States': 'Americas', Canada: 'Americas',
+  Mexico: 'Americas', 'United States of America': 'Americas',
+  // Asia
+  Japan: 'Asia', India: 'Asia', Taiwan: 'Asia',
+  'South Korea': 'Asia', Korea: 'Asia', China: 'Asia',
+  // Europe
+  France: 'Europe', Germany: 'Europe', Belgium: 'Europe',
+  Netherlands: 'Europe', Sweden: 'Europe', Finland: 'Europe',
+  Denmark: 'Europe', Switzerland: 'Europe', Austria: 'Europe',
+  Spain: 'Europe', Italy: 'Europe', Norway: 'Europe',
+  Iceland: 'Europe', 'Czech Republic': 'Europe', Czechia: 'Europe',
+  // Rest of World
+  Australia: 'Rest of World', 'New Zealand': 'Rest of World',
+  'South Africa': 'Rest of World', Israel: 'Rest of World',
+}
+
+const CONTINENT_ORDER = ['British Isles', 'Americas', 'Asia', 'Europe', 'Rest of World']
+
 // ── Badge definitions ─────────────────────────────────────────────────────────
 
 const BADGE_DEFS = [
@@ -176,5 +201,34 @@ export function useBadges() {
       .map(([country, count]) => ({ country, count }))
   })
 
-  return { badges, earnedCount, passport }
+  const flavorProfile = computed(() => {
+    const entries = journal.value.filter(w =>
+      (w.dulzor ?? 0) > 0 && (w.ahumado ?? 0) > 0 && (w.cuerpo ?? 0) > 0 &&
+      (w.frutado ?? 0) > 0 && (w.especiado ?? 0) > 0
+    )
+    if (entries.length < 3) return null
+    const avg = key => entries.reduce((s, w) => s + (w[key] ?? 0), 0) / entries.length
+    return {
+      dulzor:    avg('dulzor'),
+      ahumado:   avg('ahumado'),
+      cuerpo:    avg('cuerpo'),
+      frutado:   avg('frutado'),
+      especiado: avg('especiado'),
+      count:     entries.length,
+    }
+  })
+
+  const continentPassport = computed(() => {
+    const byContinent = {}
+    for (const p of passport.value) {
+      const continent = CONTINENT_MAP[p.country] || 'Rest of World'
+      if (!byContinent[continent]) byContinent[continent] = []
+      byContinent[continent].push(p)
+    }
+    return CONTINENT_ORDER
+      .filter(c => byContinent[c])
+      .map(c => ({ continent: c, countries: byContinent[c] }))
+  })
+
+  return { badges, earnedCount, passport, flavorProfile, continentPassport }
 }

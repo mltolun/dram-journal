@@ -116,6 +116,9 @@
         @open-entry="openViewModal"
       />
 
+      <!-- Community Feed -->
+      <FeedPanel v-if="activeList === 'feed'" />
+
       <!-- Trash section — only shown on journal tab when there are trashed items -->
       <template v-if="activeList === 'journal' && trash.length > 0">
         <div class="trash-divider">
@@ -187,6 +190,7 @@ import ShareModal          from '../components/ShareModal.vue'
 import ScanModal           from '../components/ScanModal.vue'
 import RecommendationsPanel from '../components/RecommendationsPanel.vue'
 import TimelinePanel from '../components/TimelinePanel.vue'
+import FeedPanel from '../components/FeedPanel.vue'
 
 const { getSession } = useAuth()
 const { loadWhiskies, deleteWhisky, moveToJournal, moveToTrash, restoreFromTrash } = useWhiskies()
