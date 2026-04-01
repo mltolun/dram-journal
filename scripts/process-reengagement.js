@@ -208,7 +208,7 @@ async function main() {
   while (true) {
     const { data: { users }, error } = await sb.auth.admin.listUsers({ page, perPage: 1000 })
     if (error || !users?.length) break
-    for (const u of users) if (u.email) emailMap[u.id] = { email: u.email, createdAt: u.created_at }
+    for (const u of users) if (u.email) emailMap[u.id] = { email: u.email, createdAt: u.created_at, locale: u.user_metadata?.locale || 'en' }
     if (users.length < 1000) break
     page++
   }
@@ -222,7 +222,7 @@ async function main() {
     skipped++
   }
 
-  for (const [userId, { email, createdAt }] of Object.entries(emailMap)) {
+  for (const [userId, { email, createdAt, locale }] of Object.entries(emailMap)) {
     const raw = userRaw[userId]
 
     // ── Users with no journal entries: onboarding nudge ───────────────────
@@ -248,7 +248,7 @@ async function main() {
       }
 
       try {
-        await sendReengagementEmail(email, 'onboarding', {})
+        await sendReengagementEmail(email, 'onboarding', {}, locale)
         await sb.from('user_streaks').upsert({
           user_id:                   userId,
           current_streak:            0,
@@ -387,7 +387,7 @@ async function main() {
     }
 
     try {
-      await sendReengagementEmail(email, emailType, payload)
+      await sendReengagementEmail(email, emailType, payload, locale)
 
       // Persist send state
       const update = {

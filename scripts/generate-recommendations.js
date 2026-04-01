@@ -296,9 +296,13 @@ async function main() {
   const { data: { users: allUsers }, error: usersError } = await sb.auth.admin.listUsers({ perPage: 1000 })
   if (usersError) throw new Error(`Failed to fetch users: ${usersError.message}`)
 
-  const emailByUserId = {}
+  const emailByUserId  = {}
+  const localeByUserId = {}
   for (const u of allUsers) {
-    if (u.email) emailByUserId[u.id] = u.email
+    if (u.email) {
+      emailByUserId[u.id]  = u.email
+      localeByUserId[u.id] = u.user_metadata?.locale || 'en'
+    }
   }
   console.log(`   Fetched emails for ${Object.keys(emailByUserId).length} users`)
 
@@ -470,7 +474,7 @@ async function main() {
       // 8. Send combined weekly email
       if (SEND_EMAILS && userEmail) {
         try {
-          await sendWeeklyEmail(userEmail, enriched, followerActivity, authorEmailMap, generatedAt)
+          await sendWeeklyEmail(userEmail, enriched, followerActivity, authorEmailMap, generatedAt, localeByUserId[userId] || 'en')
           console.log(`     ✉ Email sent to ${userEmail}`)
         } catch (emailErr) {
           console.error(`     ⚠ Email failed for ${userEmail}: ${emailErr.message}`)

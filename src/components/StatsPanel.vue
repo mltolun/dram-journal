@@ -3,7 +3,7 @@
     <div class="stats-panel">
 
       <div class="stats-header">
-        <div class="stats-title">My Dram Stats</div>
+        <div class="stats-title">{{ t.statsTitle }}</div>
         <button class="stats-close" @click="$emit('close')">✕</button>
       </div>
 
@@ -11,23 +11,23 @@
       <div class="summary-row">
         <div class="summary-stat">
           <div class="summary-num">{{ journal.length }}</div>
-          <div class="summary-lbl">Drams</div>
+          <div class="summary-lbl">{{ t.statsDrams }}</div>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-stat">
           <div class="summary-num">{{ passport.length }}</div>
-          <div class="summary-lbl">Countries</div>
+          <div class="summary-lbl">{{ t.statsCountries }}</div>
         </div>
         <div class="summary-divider"></div>
         <div class="summary-stat">
           <div class="summary-num">{{ earnedCount }}<span class="summary-denom">/{{ badges.length }}</span></div>
-          <div class="summary-lbl">Badges</div>
+          <div class="summary-lbl">{{ t.statsBadges }}</div>
         </div>
       </div>
 
       <!-- Achievements -->
       <div class="stats-section">
-        <div class="stats-section-label">✦ Achievements</div>
+        <div class="stats-section-label">{{ t.statsAchievements }}</div>
         <div class="badge-grid">
           <div
             v-for="b in badges"
@@ -37,8 +37,8 @@
           >
             <div class="badge-icon">{{ b.icon }}</div>
             <div class="badge-body">
-              <div class="badge-name">{{ b.name }}</div>
-              <div class="badge-desc">{{ b.desc }}</div>
+              <div class="badge-name">{{ t.badges[b.id]?.name ?? b.name }}</div>
+              <div class="badge-desc">{{ t.badges[b.id]?.desc ?? b.desc }}</div>
               <template v-if="!b.earned">
                 <div class="badge-progress">
                   <div class="badge-progress-track">
@@ -50,7 +50,7 @@
                   <div class="badge-progress-text">{{ b.current }}/{{ b.target }}</div>
                 </div>
               </template>
-              <div v-else class="badge-earned-label">Earned</div>
+              <div v-else class="badge-earned-label">{{ t.statsEarned }}</div>
             </div>
           </div>
         </div>
@@ -58,7 +58,7 @@
 
       <!-- Regional Passport -->
       <div class="stats-section" v-if="passport.length">
-        <div class="stats-section-label">🌍 Regional Passport</div>
+        <div class="stats-section-label">{{ t.statsPassport }}</div>
         <div class="passport-list">
           <div v-for="p in passport" :key="p.country" class="passport-row">
             <div class="passport-country">{{ p.country }}</div>
@@ -73,7 +73,7 @@
         </div>
       </div>
 
-      <div class="stats-footer">Keep exploring — more badges unlock as you taste!</div>
+      <div class="stats-footer">{{ t.statsFooter }}</div>
     </div>
   </div>
 </template>
@@ -81,10 +81,12 @@
 <script setup>
 import { journal } from '../composables/useWhiskies.js'
 import { useBadges } from '../composables/useBadges.js'
+import { useI18n } from '../composables/useI18n.js'
 
 defineEmits(['close'])
 
 const { badges, earnedCount, passport } = useBadges()
+const { t } = useI18n()
 </script>
 
 <style scoped>

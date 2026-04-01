@@ -26,6 +26,147 @@ const PEAT        = '#FFFFFF'
 const PEAT_LIGHT  = '#6B6B6B'
 const CREAM       = '#111111'
 
+// ── Strings (i18n) ────────────────────────────────────────────────────────────
+
+const STRINGS = {
+  en: {
+    footerManage: 'Manage notification preferences in your journal settings',
+    // Streak warning
+    streakTag:        '✦ Streak at risk',
+    streakUrgency0:   'Tonight is the last chance to keep it going.',
+    streakUrgency1:   'You have 1 day left — log one dram tomorrow.',
+    streakUrgencyN:   (n) => `You have ${n} days left to keep it alive.`,
+    streakHeadline:   (streak, label) => `Your ${streak}-week streak ends ${label}`,
+    streakDayTonight: 'tonight',
+    streakDayTomorrow:'tomorrow',
+    streakDayIn:      (n) => `in ${n} days`,
+    streakBody:       "You haven't logged a dram this week.",
+    streakCount:      (n) => `${n} week${n !== 1 ? 's' : ''} and counting`,
+    streakAlsoClose:  '✦ Also close',
+    streakAlsoBody:   (rem, plural) => `You're <strong>${rem} dram${plural}</strong> away from`,
+    streakAlsoBodyTxt:(rem, plural, name) => `you're ${rem} dram${plural} away from the ${name} badge`,
+    streakCta:        'Log a dram now →',
+    // Badge proximity
+    badgeTag:    '✦ Almost there',
+    badgeBody:   (rem, plural) => `You need <strong style="color:${CREAM};">${rem} more dram${plural}</strong> to unlock this badge.`,
+    badgeBodyTxt:(rem, plural) => `You're ${rem} dram${plural} away from unlocking this badge.`,
+    badgeProgress:'Progress',
+    badgeCta:    'Continue your journey →',
+    // Lapsed
+    lapsedTag:         '✦ While you were away',
+    lapsedHeadline:    (daysText) => `It's been ${daysText} since your last dram`,
+    lapsedDaysCouple:  'a couple of weeks',
+    lapsedBody:        "Here's where your journal stands — and what your friends have been tasting.",
+    lapsedWhiskyLabel: (total) => `whisky${total !== 1 ? 'ies' : 'y'} tasted`,
+    lapsedCountryLabel:(n) => `countr${n !== 1 ? 'ies' : 'y'} explored`,
+    lapsedFriendsTag:  '✦ Friends this week',
+    lapsedNoFriends:   'No recent activity from your friends this week.',
+    lapsedCta:         'Open Your Journal →',
+    lapsedFriendsHdr:  'FRIENDS THIS WEEK',
+    lapsedNoFriendsTxt:'No recent activity from your friends.',
+    lapsedYourJournal: 'YOUR JOURNAL',
+    // Final nudge
+    finalTag:     '✦ Come back when you\'re ready',
+    finalHeadline:'Your Dram Journal is waiting for you',
+    finalBody:    "No pressure — your journal will be here whenever you're ready. Here's a reminder of what you've built so far.",
+    finalCta:     'Return to Your Journal →',
+    finalTxtHdr:  'Your journal is still here',
+    finalTxtBody: "No pressure — your Dram Journal will be here whenever you're ready.",
+    // Onboarding
+    onboardingTag:      '✦ Start your journey',
+    onboardingHeadline: 'Log your first dram',
+    onboardingBody:     'Your journal is ready — just add your first whisky to get started. No tasting notes required; a name and a rating is all it takes.',
+    onboardingBadgeTag: '✦ First badge waiting',
+    onboardingBadgeBody:'🥃 Log one whisky to earn',
+    onboardingBadgeName:'First Dram',
+    onboardingCta:      'Log My First Dram →',
+    onboardingTxtHdr:   'Log your first dram 🥃',
+    onboardingTxtBody:  "Your journal is ready — just add the first whisky you've been drinking. No tasting notes required; a name and a rating is all it takes.",
+    onboardingTxtBadge: 'Log one whisky to earn the First Dram badge 🥃',
+    // Subjects
+    subjectStreak:    (streak, label) => `🔥 Your ${streak}-week streak ends ${label} — The Dram Journal`,
+    subjectBadge:     (icon, rem, plural, name) => `${icon} You're ${rem} dram${plural} from ${name} — The Dram Journal`,
+    subjectLapsed:    '🥃 While you were away — The Dram Journal',
+    subjectFinal:     '🥃 Your journal is still here — The Dram Journal',
+    subjectOnboarding:'🥃 Log your first dram — The Dram Journal',
+    // Plain-text header prefix
+    txtBrand: 'THE DRAM JOURNAL',
+    txtSignoff: 'Sláinte 🥃',
+    txtOpenJournal: 'Open your journal',
+    txtLogJournal: 'Log a dram',
+  },
+  es: {
+    footerManage: 'Gestiona tus preferencias de notificación en la configuración',
+    // Streak warning
+    streakTag:        '✦ Racha en riesgo',
+    streakUrgency0:   'Esta noche es tu última oportunidad.',
+    streakUrgency1:   'Te queda 1 día — registra un dram mañana.',
+    streakUrgencyN:   (n) => `Te quedan ${n} días para mantenerla viva.`,
+    streakHeadline:   (streak, label) => `Tu racha de ${streak} semanas termina ${label}`,
+    streakDayTonight: 'esta noche',
+    streakDayTomorrow:'mañana',
+    streakDayIn:      (n) => `en ${n} días`,
+    streakBody:       'No has registrado un dram esta semana.',
+    streakCount:      (n) => `${n} semana${n !== 1 ? 's' : ''} y contando`,
+    streakAlsoClose:  '✦ También cerca',
+    streakAlsoBody:   (rem, plural) => `Te faltan <strong>${rem} dram${plural}</strong> para`,
+    streakAlsoBodyTxt:(rem, plural, name) => `te faltan ${rem} dram${plural} para la insignia ${name}`,
+    streakCta:        'Registra un dram ahora →',
+    // Badge proximity
+    badgeTag:    '✦ Casi lo tienes',
+    badgeBody:   (rem, plural) => `Necesitas <strong style="color:${CREAM};">${rem} dram${plural} más</strong> para desbloquear esta insignia.`,
+    badgeBodyTxt:(rem, plural) => `Te faltan ${rem} dram${plural} para desbloquear esta insignia.`,
+    badgeProgress:'Progreso',
+    badgeCta:    'Continúa tu camino →',
+    // Lapsed
+    lapsedTag:         '✦ Mientras estabas fuera',
+    lapsedHeadline:    (daysText) => `Han pasado ${daysText} desde tu último dram`,
+    lapsedDaysCouple:  'un par de semanas',
+    lapsedBody:        'Aquí está el estado de tu diario — y lo que tus amigos han estado probando.',
+    lapsedWhiskyLabel: (total) => `whisky${total !== 1 ? 's' : ''} probado${total !== 1 ? 's' : ''}`,
+    lapsedCountryLabel:(n) => `país${n !== 1 ? 'es' : ''} explorado${n !== 1 ? 's' : ''}`,
+    lapsedFriendsTag:  '✦ Amigos esta semana',
+    lapsedNoFriends:   'Sin actividad reciente de tus amigos esta semana.',
+    lapsedCta:         'Abrir Mi Diario →',
+    lapsedFriendsHdr:  'AMIGOS ESTA SEMANA',
+    lapsedNoFriendsTxt:'Sin actividad reciente de tus amigos.',
+    lapsedYourJournal: 'TU DIARIO',
+    // Final nudge
+    finalTag:     '✦ Vuelve cuando estés listo',
+    finalHeadline:'Tu Dram Journal te espera',
+    finalBody:    'Sin prisas — tu diario estará aquí cuando estés listo. Un recordatorio de lo que has construido.',
+    finalCta:     'Volver a Mi Diario →',
+    finalTxtHdr:  'Tu diario te espera',
+    finalTxtBody: 'Sin prisas — tu Dram Journal estará aquí cuando estés listo.',
+    // Onboarding
+    onboardingTag:      '✦ Comienza tu camino',
+    onboardingHeadline: 'Registra tu primer dram',
+    onboardingBody:     'Tu diario está listo — solo añade tu primer whisky para empezar. No hacen falta notas de cata; basta con el nombre y una valoración.',
+    onboardingBadgeTag: '✦ Primera insignia esperando',
+    onboardingBadgeBody:'🥃 Registra un whisky para ganar',
+    onboardingBadgeName:'Primer Dram',
+    onboardingCta:      'Registrar Mi Primer Dram →',
+    onboardingTxtHdr:   'Registra tu primer dram 🥃',
+    onboardingTxtBody:  'Tu diario está listo — añade el primer whisky que hayas probado. No hacen falta notas de cata; basta con el nombre y una valoración.',
+    onboardingTxtBadge: 'Registra un whisky para ganar la insignia Primer Dram 🥃',
+    // Subjects
+    subjectStreak:    (streak, label) => `🔥 Tu racha de ${streak} semanas termina ${label} — The Dram Journal`,
+    subjectBadge:     (icon, rem, plural, name) => `${icon} Te faltan ${rem} dram${plural} para ${name} — The Dram Journal`,
+    subjectLapsed:    '🥃 Mientras estabas fuera — The Dram Journal',
+    subjectFinal:     '🥃 Tu diario te espera — The Dram Journal',
+    subjectOnboarding:'🥃 Registra tu primer dram — The Dram Journal',
+    // Plain-text header prefix
+    txtBrand: 'THE DRAM JOURNAL',
+    txtSignoff: 'Sláinte 🥃',
+    txtOpenJournal: 'Abrir tu diario',
+    txtLogJournal: 'Registrar un dram',
+  },
+}
+
+// Active strings — set at the start of sendReengagementEmail based on locale.
+// Sequential sends (no parallelism) make this safe.
+let _s = STRINGS.en
+
 // ── Shared shell ──────────────────────────────────────────────────────────────
 
 function shell(body) {
@@ -61,7 +202,7 @@ function shell(body) {
             <td style="padding:16px 32px;border-top:1px solid rgba(200,130,42,0.15);background:#FAFAFA;">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.06em;
                           color:#999999;text-align:center;">
-                Manage notification preferences in your journal settings ·
+                ${_s.footerManage} ·
                 <a href="${APP_URL}" style="color:${AMBER_LIGHT};text-decoration:none;">dramjournal.online</a>
               </div>
             </td>
@@ -79,12 +220,16 @@ function shell(body) {
 
 function streakWarningHtml({ streak, daysLeft, badge }) {
   const urgencyLine = daysLeft === 0
-    ? 'Tonight is the last chance to keep it going.'
+    ? _s.streakUrgency0
     : daysLeft === 1
-    ? 'You have 1 day left — log one dram tomorrow.'
-    : `You have ${daysLeft} days left to keep it alive.`
+    ? _s.streakUrgency1
+    : _s.streakUrgencyN(daysLeft)
 
-  const dayLabel = daysLeft === 0 ? 'tonight' : daysLeft === 1 ? 'tomorrow' : `in ${daysLeft} days`
+  const dayLabel = daysLeft === 0
+    ? _s.streakDayTonight
+    : daysLeft === 1
+    ? _s.streakDayTomorrow
+    : _s.streakDayIn(daysLeft)
 
   const badgeHint = badge ? `
     <tr>
@@ -92,9 +237,9 @@ function streakWarningHtml({ streak, daysLeft, badge }) {
         <div style="padding:12px 16px;background:rgba(200,130,42,0.06);border-radius:8px;
                     border:1px solid rgba(200,130,42,0.15);">
           <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;
-                      text-transform:uppercase;color:${AMBER};margin-bottom:4px;">✦ Also close</div>
+                      text-transform:uppercase;color:${AMBER};margin-bottom:4px;">${_s.streakAlsoClose}</div>
           <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${CREAM};line-height:1.5;">
-            ${badge.icon} You're <strong>${badge.rem} dram${badge.rem > 1 ? 's' : ''}</strong> away from
+            ${badge.icon} ${_s.streakAlsoBody(badge.rem, badge.rem > 1 ? 's' : '')}
             <span style="color:${AMBER_LIGHT};">${badge.name}</span>
           </div>
         </div>
@@ -106,19 +251,19 @@ function streakWarningHtml({ streak, daysLeft, badge }) {
       <td style="padding:28px 32px 8px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:#CC4400;margin-bottom:10px;">
-          ✦ Streak at risk
+          ${_s.streakTag}
         </div>
         <div style="font-size:36px;line-height:1;margin-bottom:12px;">🔥</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:10px;">
-          Your ${streak}-week streak ends ${dayLabel}
+          ${_s.streakHeadline(streak, dayLabel)}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
-          You haven't logged a dram this week. ${urgencyLine}
+          ${_s.streakBody} ${urgencyLine}
         </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;
                     color:${AMBER_LIGHT};margin-top:10px;letter-spacing:0.06em;">
-          ${streak} week${streak !== 1 ? 's' : ''} and counting
+          ${_s.streakCount(streak)}
         </div>
       </td>
     </tr>
@@ -129,7 +274,7 @@ function streakWarningHtml({ streak, daysLeft, badge }) {
                   font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
-          Log a dram now →
+          ${_s.streakCta}
         </a>
       </td>
     </tr>
@@ -137,20 +282,27 @@ function streakWarningHtml({ streak, daysLeft, badge }) {
 }
 
 function streakWarningText({ streak, daysLeft, badge }) {
+  const dayLabel = daysLeft === 0
+    ? _s.streakDayTonight
+    : daysLeft === 1
+    ? _s.streakDayTomorrow
+    : _s.streakDayIn(daysLeft)
   const urgency = daysLeft === 0
-    ? 'Tonight is the last chance.'
-    : `You have ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left.`
+    ? _s.streakUrgency0
+    : daysLeft === 1
+    ? _s.streakUrgency1
+    : _s.streakUrgencyN(daysLeft)
   const badgeLine = badge
-    ? `\n\nAlso: you're ${badge.rem} dram${badge.rem !== 1 ? 's' : ''} away from the ${badge.name} badge ${badge.icon}`
+    ? `\n\n${_s.streakAlsoBodyTxt(badge.rem, badge.rem !== 1 ? 's' : '', badge.name)}`
     : ''
-  return `THE DRAM JOURNAL — Streak at risk 🔥
+  return `${_s.txtBrand} — ${_s.streakTag} 🔥
 
-Your ${streak}-week streak ends this week and you haven't logged a dram yet.
-${urgency} One dram is all it takes.${badgeLine}
+${_s.streakHeadline(streak, dayLabel)}. ${_s.streakBody}
+${urgency}${badgeLine}
 
-Log a dram: ${APP_URL}
+${_s.txtLogJournal}: ${APP_URL}
 
-Sláinte 🥃`
+${_s.txtSignoff}`
 }
 
 // ── Email 2: Badge Proximity ──────────────────────────────────────────────────
@@ -165,7 +317,7 @@ function badgeProximityHtml({ badge }) {
       <td style="padding:28px 32px 8px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
-          ✦ Almost there
+          ${_s.badgeTag}
         </div>
         <div style="font-size:40px;line-height:1;margin-bottom:14px;">${badge.icon}</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
@@ -174,12 +326,12 @@ function badgeProximityHtml({ badge }) {
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                     line-height:1.6;margin-bottom:16px;">
-          You need <strong style="color:${CREAM};">${badge.rem} more dram${plural}</strong> to unlock this badge.
+          ${_s.badgeBody(badge.rem, plural)}
         </div>
         <div style="background:#F3F3F3;border-radius:8px;padding:12px 16px;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;
                       text-transform:uppercase;color:${PEAT_LIGHT};margin-bottom:8px;">
-            Progress
+            ${_s.badgeProgress}
           </div>
           <div style="background:#E0E0E0;border-radius:4px;height:6px;overflow:hidden;">
             <div style="background:${AMBER};width:${pct}%;height:6px;border-radius:4px;"></div>
@@ -198,7 +350,7 @@ function badgeProximityHtml({ badge }) {
                   font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
-          Continue your journey →
+          ${_s.badgeCta}
         </a>
       </td>
     </tr>`)
@@ -206,16 +358,16 @@ function badgeProximityHtml({ badge }) {
 
 function badgeProximityText({ badge }) {
   const plural = badge.rem !== 1 ? 's' : ''
-  return `THE DRAM JOURNAL — Almost there
+  return `${_s.txtBrand} — ${_s.badgeTag}
 
 ${badge.icon} ${badge.name}
 
-You're ${badge.rem} dram${plural} away from unlocking this badge.
-Progress: ${badge.target - badge.rem} / ${badge.target}
+${_s.badgeBodyTxt(badge.rem, plural)}
+${_s.badgeProgress}: ${badge.target - badge.rem} / ${badge.target}
 
-Open your journal: ${APP_URL}
+${_s.txtOpenJournal}: ${APP_URL}
 
-Sláinte 🥃`
+${_s.txtSignoff}`
 }
 
 // ── Email 3: Lapsed digest ────────────────────────────────────────────────────
@@ -224,11 +376,11 @@ Sláinte 🥃`
 function lapsedHtml({ friendActivity, stats, daysSince }) {
   const daysText = daysSince >= 20
     ? `${Math.round(daysSince)} days`
-    : 'a couple of weeks'
+    : _s.lapsedDaysCouple
 
   const statCells = [
-    { icon: '🥃', value: stats.total,     label: `whisky${stats.total !== 1 ? 'ies' : 'y'} tasted` },
-    { icon: '🌍', value: stats.countries, label: `countr${stats.countries !== 1 ? 'ies' : 'y'} explored` },
+    { icon: '🥃', value: stats.total,     label: _s.lapsedWhiskyLabel(stats.total) },
+    { icon: '🌍', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
   ].map(s => `
     <td style="text-align:center;padding:10px 16px;">
       <div style="font-size:20px;">${s.icon}</div>
@@ -254,7 +406,7 @@ function lapsedHtml({ friendActivity, stats, daysSince }) {
       }).join('')
     : `<tr><td style="padding:12px 0;">
          <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">
-           No recent activity from your friends this week.
+           ${_s.lapsedNoFriends}
          </div>
        </td></tr>`
 
@@ -263,14 +415,14 @@ function lapsedHtml({ friendActivity, stats, daysSince }) {
       <td style="padding:28px 32px 12px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
-          ✦ While you were away
+          ${_s.lapsedTag}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:19px;
                     font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:8px;">
-          It's been ${daysText} since your last dram
+          ${_s.lapsedHeadline(daysText)}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
-          Here's where your journal stands — and what your friends have been tasting.
+          ${_s.lapsedBody}
         </div>
       </td>
     </tr>
@@ -286,7 +438,7 @@ function lapsedHtml({ friendActivity, stats, daysSince }) {
         <div style="border-top:1px solid rgba(200,130,42,0.15);margin-bottom:14px;"></div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:8px;">
-          ✦ Friends this week
+          ${_s.lapsedFriendsTag}
         </div>
         <table cellpadding="0" cellspacing="0" border="0" width="100%">
           ${actRows}
@@ -300,31 +452,31 @@ function lapsedHtml({ friendActivity, stats, daysSince }) {
                   font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
-          Open Your Journal →
+          ${_s.lapsedCta}
         </a>
       </td>
     </tr>`)
 }
 
 function lapsedText({ friendActivity, stats, daysSince }) {
-  const daysText = daysSince >= 20 ? `${Math.round(daysSince)} days` : 'a couple of weeks'
+  const daysText = daysSince >= 20 ? `${Math.round(daysSince)} days` : _s.lapsedDaysCouple
   const friendLines = friendActivity && friendActivity.length > 0
-    ? '\n\nFRIENDS THIS WEEK\n' + friendActivity.slice(0, 6).map(a =>
+    ? '\n\n' + _s.lapsedFriendsHdr + '\n' + friendActivity.slice(0, 6).map(a =>
         `  • ${a.whisky_name}${a.whisky_distillery ? ' (' + a.whisky_distillery + ')' : ''}${a.type === 'rating' ? ' — ' + a.rating + '/5' : ''}`
       ).join('\n')
-    : '\n\nNo recent activity from your friends.'
-  return `THE DRAM JOURNAL — While you were away
+    : '\n\n' + _s.lapsedNoFriendsTxt
+  return `${_s.txtBrand} — ${_s.lapsedTag}
 
-It's been ${daysText} since your last dram.
+${_s.lapsedHeadline(daysText)}.
 
-YOUR JOURNAL
-  🥃 ${stats.total} whisky${stats.total !== 1 ? 'ies' : 'y'} tasted
-  🌍 ${stats.countries} countr${stats.countries !== 1 ? 'ies' : 'y'} explored
+${_s.lapsedYourJournal}
+  🥃 ${stats.total} ${_s.lapsedWhiskyLabel(stats.total)}
+  🌍 ${stats.countries} ${_s.lapsedCountryLabel(stats.countries)}
 ${friendLines}
 
-Open your journal: ${APP_URL}
+${_s.txtOpenJournal}: ${APP_URL}
 
-Sláinte 🥃`
+${_s.txtSignoff}`
 }
 
 // ── Email 4: Final nudge ──────────────────────────────────────────────────────
@@ -332,8 +484,8 @@ Sláinte 🥃`
 
 function finalNudgeHtml({ stats }) {
   const statCells = [
-    { icon: '🥃', value: stats.total,     label: `whisky${stats.total !== 1 ? 'ies' : 'y'} tasted` },
-    { icon: '🌍', value: stats.countries, label: `countr${stats.countries !== 1 ? 'ies' : 'y'} explored` },
+    { icon: '🥃', value: stats.total,     label: _s.lapsedWhiskyLabel(stats.total) },
+    { icon: '🌍', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
   ].map(s => `
     <td style="text-align:center;padding:10px 16px;">
       <div style="font-size:20px;">${s.icon}</div>
@@ -347,16 +499,15 @@ function finalNudgeHtml({ stats }) {
       <td style="padding:28px 32px 8px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
-          ✦ Come back when you're ready
+          ${_s.finalTag}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:19px;
                     font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:12px;">
-          Your Dram Journal is waiting for you
+          ${_s.finalHeadline}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                     line-height:1.6;margin-bottom:18px;">
-          No pressure — your journal will be here whenever you're ready.
-          Here's a reminder of what you've built so far.
+          ${_s.finalBody}
         </div>
         <table cellpadding="0" cellspacing="0" border="0">
           <tr>${statCells}</tr>
@@ -370,23 +521,23 @@ function finalNudgeHtml({ stats }) {
                   font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
-          Return to Your Journal →
+          ${_s.finalCta}
         </a>
       </td>
     </tr>`)
 }
 
 function finalNudgeText({ stats }) {
-  return `THE DRAM JOURNAL — Your journal is still here
+  return `${_s.txtBrand} — ${_s.finalTxtHdr}
 
-No pressure — your Dram Journal will be here whenever you're ready.
+${_s.finalTxtBody}
 
-  🥃 ${stats.total} whisky${stats.total !== 1 ? 'ies' : 'y'} tasted
-  🌍 ${stats.countries} countr${stats.countries !== 1 ? 'ies' : 'y'} explored
+  🥃 ${stats.total} ${_s.lapsedWhiskyLabel(stats.total)}
+  🌍 ${stats.countries} ${_s.lapsedCountryLabel(stats.countries)}
 
-Open your journal: ${APP_URL}
+${_s.txtOpenJournal}: ${APP_URL}
 
-Sláinte 🥃`
+${_s.txtSignoff}`
 }
 
 // ── Email 5: Onboarding nudge ─────────────────────────────────────────────────
@@ -398,24 +549,23 @@ function onboardingHtml() {
       <td style="padding:28px 32px 8px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
-          ✦ Start your journey
+          ${_s.onboardingTag}
         </div>
         <div style="font-size:36px;line-height:1;margin-bottom:12px;">🥃</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:10px;">
-          Log your first dram
+          ${_s.onboardingHeadline}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                     line-height:1.6;margin-bottom:16px;">
-          Your journal is ready — just add your first whisky to get started.
-          No tasting notes required; a name and a rating is all it takes.
+          ${_s.onboardingBody}
         </div>
         <div style="padding:12px 16px;background:rgba(200,130,42,0.06);border-radius:8px;
                     border:1px solid rgba(200,130,42,0.15);">
           <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;
-                      text-transform:uppercase;color:${AMBER};margin-bottom:4px;">✦ First badge waiting</div>
+                      text-transform:uppercase;color:${AMBER};margin-bottom:4px;">${_s.onboardingBadgeTag}</div>
           <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${CREAM};line-height:1.5;">
-            🥃 Log one whisky to earn <span style="color:${AMBER_LIGHT};">First Dram</span>
+            ${_s.onboardingBadgeBody} <span style="color:${AMBER_LIGHT};">${_s.onboardingBadgeName}</span>
           </div>
         </div>
       </td>
@@ -427,23 +577,22 @@ function onboardingHtml() {
                   font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                   text-transform:uppercase;text-decoration:none;padding:11px 26px;
                   border-radius:7px;font-weight:500;">
-          Log My First Dram →
+          ${_s.onboardingCta}
         </a>
       </td>
     </tr>`)
 }
 
 function onboardingText() {
-  return `THE DRAM JOURNAL — Log your first dram 🥃
+  return `${_s.txtBrand} — ${_s.onboardingTxtHdr}
 
-Your journal is ready — just add the first whisky you've been drinking.
-No tasting notes required; a name and a rating is all it takes.
+${_s.onboardingTxtBody}
 
-Log one whisky to earn the First Dram badge 🥃
+${_s.onboardingTxtBadge}
 
-Open your journal: ${APP_URL}
+${_s.txtOpenJournal}: ${APP_URL}
 
-Sláinte 🥃`
+${_s.txtSignoff}`
 }
 
 // ── Send via Resend ───────────────────────────────────────────────────────────
@@ -459,9 +608,12 @@ Sláinte 🥃`
  *   lapsed:          { friendActivity, stats, daysSince }
  *   final:           { stats }
  *   onboarding:      {} (no payload needed)
+ * @param {string} [locale='en']  — 'en' or 'es'
  */
-export async function sendReengagementEmail(toEmail, type, payload) {
+export async function sendReengagementEmail(toEmail, type, payload, locale = 'en') {
   if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY env var is not set')
+
+  _s = STRINGS[locale] ?? STRINGS.en
 
   const { streak = 0, daysLeft = 3, badge = null,
           friendActivity = [], stats = {}, daysSince = 0 } = payload
@@ -469,29 +621,33 @@ export async function sendReengagementEmail(toEmail, type, payload) {
   let subject, html, text
 
   if (type === 'streak_warning') {
-    const dayLabel = daysLeft === 0 ? 'tonight' : daysLeft === 1 ? 'tomorrow' : `in ${daysLeft} days`
-    subject = `🔥 Your ${streak}-week streak ends ${dayLabel} — The Dram Journal`
+    const dayLabel = daysLeft === 0
+      ? _s.streakDayTonight
+      : daysLeft === 1
+      ? _s.streakDayTomorrow
+      : _s.streakDayIn(daysLeft)
+    subject = _s.subjectStreak(streak, dayLabel)
     html    = streakWarningHtml({ streak, daysLeft, badge })
     text    = streakWarningText({ streak, daysLeft, badge })
 
   } else if (type === 'badge_proximity') {
     const plural = badge.rem !== 1 ? 's' : ''
-    subject = `${badge.icon} You're ${badge.rem} dram${plural} from ${badge.name} — The Dram Journal`
+    subject = _s.subjectBadge(badge.icon, badge.rem, plural, badge.name)
     html    = badgeProximityHtml({ badge })
     text    = badgeProximityText({ badge })
 
   } else if (type === 'lapsed') {
-    subject = `🥃 While you were away — The Dram Journal`
+    subject = _s.subjectLapsed
     html    = lapsedHtml({ friendActivity, stats, daysSince })
     text    = lapsedText({ friendActivity, stats, daysSince })
 
   } else if (type === 'final') {
-    subject = `🥃 Your journal is still here — The Dram Journal`
+    subject = _s.subjectFinal
     html    = finalNudgeHtml({ stats })
     text    = finalNudgeText({ stats })
 
   } else if (type === 'onboarding') {
-    subject = `🥃 Log your first dram — The Dram Journal`
+    subject = _s.subjectOnboarding
     html    = onboardingHtml()
     text    = onboardingText()
 
@@ -502,13 +658,17 @@ export async function sendReengagementEmail(toEmail, type, payload) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Content-Type':  'application/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({ from: EMAIL_FROM, to: [toEmail], subject, html, text }),
   })
 
   const data = await res.json()
-  if (!res.ok) throw new Error(`Resend error ${res.status}: ${data.message || JSON.stringify(data)}`)
+
+  if (!res.ok) {
+    throw new Error(`Resend API error ${res.status}: ${data.message || JSON.stringify(data)}`)
+  }
+
   return data
 }

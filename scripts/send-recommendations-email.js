@@ -28,6 +28,68 @@ const ATTR_LABELS = {
 
 const ATTRS = ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']
 
+// ── Strings (i18n) ────────────────────────────────────────────────────────────
+
+const STRINGS = {
+  en: {
+    attrLabels: { dulzor: 'Sweetness', ahumado: 'Smokiness', cuerpo: 'Body', frutado: 'Fruitiness', especiado: 'Spiciness' },
+    companion:        'Your personal whisky companion',
+    weeklyTag:        '✦ Weekly Update',
+    weeklyHeadline:   'Your picks &amp; what\'s new with friends',
+    weeklyBody:       'Your AI sommelier has selected five whiskies matched to your palate, plus a roundup of what your friends have been tasting this week.',
+    picksTag:         '✦ Your picks this week',
+    friendsTag:       '✦ Friends this week',
+    friendsHeadline:  'What your friends are tasting',
+    friendsBody:      'Updates from people you follow in The Dram Journal.',
+    noFriends:        'Your friends had no new activity this week — check back next Monday.',
+    openJournalCta:   'Open My Journal →',
+    generatedOn:      (dateStr) => `Generated on ${dateStr}`,
+    footerSub:        'Sent every Monday · Manage followers in app settings',
+    rated:            'Rated',
+    addedToJournal:   'Added to journal',
+    subject:          '🥃 Your weekly dram update — The Dram Journal',
+    txtHeader:        'THE DRAM JOURNAL — WEEKLY UPDATE',
+    txtPicksHdr:      'YOUR PICKS THIS WEEK',
+    txtPicksIntro:    "Based on your tasting journal, here are 3 personalised whisky recommendations:",
+    txtFriendsHdr:    'FRIENDS THIS WEEK',
+    txtRated:         'Rated',
+    txtAdded:         'Added to journal',
+    txtGeneratedOn:   (dateStr) => `Generated on ${dateStr}`,
+    txtOpen:          'Open your journal at https://dramjournal.online',
+    txtSignoff:       'Sláinte 🥃',
+  },
+  es: {
+    attrLabels: { dulzor: 'Dulzura', ahumado: 'Ahumado', cuerpo: 'Cuerpo', frutado: 'Frutado', especiado: 'Especiado' },
+    companion:        'Tu compañero personal de whisky',
+    weeklyTag:        '✦ Actualización Semanal',
+    weeklyHeadline:   'Tus selecciones &amp; novedades de amigos',
+    weeklyBody:       'Tu sumiller de IA ha seleccionado cinco whiskies adaptados a tu paladar, más un resumen de lo que tus amigos han estado probando esta semana.',
+    picksTag:         '✦ Tus selecciones esta semana',
+    friendsTag:       '✦ Amigos esta semana',
+    friendsHeadline:  'Lo que están probando tus amigos',
+    friendsBody:      'Novedades de las personas que sigues en The Dram Journal.',
+    noFriends:        'Tus amigos no tuvieron actividad nueva esta semana — vuelve el próximo lunes.',
+    openJournalCta:   'Abrir Mi Diario →',
+    generatedOn:      (dateStr) => `Generado el ${dateStr}`,
+    footerSub:        'Enviado cada lunes · Gestiona seguidores en la configuración',
+    rated:            'Valoró',
+    addedToJournal:   'Añadió al diario',
+    subject:          '🥃 Tu actualización semanal — The Dram Journal',
+    txtHeader:        'THE DRAM JOURNAL — ACTUALIZACIÓN SEMANAL',
+    txtPicksHdr:      'TUS SELECCIONES ESTA SEMANA',
+    txtPicksIntro:    'Basado en tu diario de catas, aquí tienes 3 recomendaciones de whisky personalizadas:',
+    txtFriendsHdr:    'AMIGOS ESTA SEMANA',
+    txtRated:         'Valoró',
+    txtAdded:         'Añadió al diario',
+    txtGeneratedOn:   (dateStr) => `Generado el ${dateStr}`,
+    txtOpen:          'Abre tu diario en https://dramjournal.online',
+    txtSignoff:       'Sláinte 🥃',
+  },
+}
+
+// Active strings — set at the start of sendWeeklyEmail based on locale.
+let _s = STRINGS.en
+
 // Colour palette
 const AMBER       = '#A8620A'
 const AMBER_LIGHT = '#C07820'
@@ -69,7 +131,7 @@ function barRow(label, value) {
 
 function recCard(rec) {
   const typeLabel = TYPE_LABELS[rec.type] || rec.type || ''
-  const bars = ATTRS.map(a => barRow(ATTR_LABELS[a], rec[a])).join('')
+  const bars = ATTRS.map(a => barRow(_s.attrLabels[a], rec[a])).join('')
 
   return `
   <table cellpadding="0" cellspacing="0" border="0" width="100%"
@@ -142,7 +204,7 @@ function groupActivity(events, authorEmailMap) {
     const groups = typeOrder.map(type => ({
       type,
       icon:   type === 'rating' ? '⭐' : '📖',
-      label:  type === 'rating' ? 'Rated' : 'Added to journal',
+      label:  type === 'rating' ? _s.rated : _s.addedToJournal,
       events: u.byType[type],
     }))
     return { userId: uid, authorName: u.authorName, groups }
@@ -226,7 +288,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
     ? groupActivity(followerActivity, authorEmailMap).map(activityUserBlock).join('')
     : `<tr><td style="padding:16px 0;font-family:'Inter',Arial,sans-serif;font-size:12px;
                       color:${PEAT_LIGHT};line-height:1.6;">
-         Your friends had no new activity this week — check back next Monday.
+         ${_s.noFriends}
        </td></tr>`
 
   const activitySection = `
@@ -242,15 +304,15 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
             <td style="padding:24px 32px 8px;">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                           text-transform:uppercase;color:${AMBER};margin-bottom:8px;">
-                ✦ Friends this week
+                ${_s.friendsTag}
               </div>
               <div style="font-family:'Inter',Arial,sans-serif;font-size:17px;
                           font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:6px;">
-                What your friends are tasting
+                ${_s.friendsHeadline}
               </div>
               <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};
                           line-height:1.6;">
-                Updates from people you follow in The Dram Journal.
+                ${_s.friendsBody}
               </div>
             </td>
           </tr>
@@ -295,7 +357,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
                     </div>
                     <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.22em;
                                 text-transform:uppercase;color:${PEAT_LIGHT};margin-top:4px;">
-                      Your personal whisky companion
+                      ${_s.companion}
                     </div>
                   </td>
                   <td align="right" valign="top">
@@ -311,16 +373,15 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
             <td style="padding:28px 32px 20px;">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                           text-transform:uppercase;color:${AMBER};margin-bottom:8px;">
-                ✦ Weekly Update
+                ${_s.weeklyTag}
               </div>
               <div style="font-family:'Inter',Arial,sans-serif;font-size:20px;
                           font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:10px;">
-                Your picks &amp; what's new with friends
+                ${_s.weeklyHeadline}
               </div>
               <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                           line-height:1.6;">
-                Your AI sommelier has selected five whiskies matched to your palate,
-                plus a roundup of what your friends have been tasting this week.
+                ${_s.weeklyBody}
               </div>
             </td>
           </tr>
@@ -330,7 +391,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
             <td style="padding:0 32px 12px;">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;
                           text-transform:uppercase;color:${AMBER};margin-bottom:4px;">
-                ✦ Your picks this week
+                ${_s.picksTag}
               </div>
             </td>
           </tr>
@@ -352,7 +413,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
                         font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em;
                         text-transform:uppercase;text-decoration:none;padding:12px 28px;
                         border-radius:7px;font-weight:500;">
-                Open My Journal →
+                ${_s.openJournalCta}
               </a>
             </td>
           </tr>
@@ -366,11 +427,11 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
                   <td>
                     <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.1em;
                                 color:${PEAT_LIGHT};">
-                      Generated on ${dateStr}
+                      ${_s.generatedOn(dateStr)}
                     </div>
                     <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.06em;
                                 color:#999999;margin-top:4px;">
-                      Sent every Monday · Manage followers in app settings
+                      ${_s.footerSub}
                     </div>
                   </td>
                   <td align="right">
@@ -402,7 +463,7 @@ function buildEmailText(recs, followerActivity, authorEmailMap, generatedAt) {
   })
 
   const recLines = recs.map((rec, i) => {
-    const attrs = ATTRS.map(a => `${ATTR_LABELS[a]}: ${rec[a] || 0}/5`).join(' · ')
+    const attrs = ATTRS.map(a => `${_s.attrLabels[a]}: ${rec[a] || 0}/5`).join(' · ')
     return [
       `${i + 1}. ${rec.name}`,
       `   ${rec.distillery || ''}${rec.age ? ' · ' + rec.age : ''}${rec.price ? ' · ' + rec.price : ''}`,
@@ -416,7 +477,7 @@ function buildEmailText(recs, followerActivity, authorEmailMap, generatedAt) {
     const userGroups = groupActivity(followerActivity, authorEmailMap)
     const actLines = userGroups.map(ug => {
       const typeLines = ug.groups.map(g => {
-        const label = g.type === 'rating' ? 'Rated' : 'Added to journal'
+        const label = g.type === 'rating' ? _s.txtRated : _s.txtAdded
         const items = g.events.map(e => {
           const detail = g.type === 'rating'
             ? `"${e.whisky_name}" ${e.rating}/5${e.distillery ? ' (' + e.distillery + ')' : ''}`
@@ -428,21 +489,21 @@ function buildEmailText(recs, followerActivity, authorEmailMap, generatedAt) {
       return `${ug.authorName}\n${typeLines}`
     }).join('\n\n')
 
-    activityText = `\n\nFRIENDS THIS WEEK\n-----------------\n${actLines}`
+    activityText = `\n\n${_s.txtFriendsHdr}\n-----------------\n${actLines}`
   }
 
-  return `THE DRAM JOURNAL — WEEKLY UPDATE
+  return `${_s.txtHeader}
 ==================================
 
-YOUR PICKS THIS WEEK
-Based on your tasting journal, here are 3 personalised whisky recommendations:
+${_s.txtPicksHdr}
+${_s.txtPicksIntro}
 
 ${recLines}${activityText}
 
-Generated on ${dateStr}
-Open your journal at https://dramjournal.online
+${_s.txtGeneratedOn(dateStr)}
+${_s.txtOpen}
 
-Sláinte 🥃`
+${_s.txtSignoff}`
 }
 
 // ─── Resend API call ──────────────────────────────────────────────────────────
@@ -455,14 +516,17 @@ Sláinte 🥃`
  * @param {Array}  followerActivity - activity_feed rows from followed users
  * @param {Object} authorEmailMap   - map of user_id → email for activity authors
  * @param {string} generatedAt      - ISO timestamp
+ * @param {string} [locale='en']    - 'en' or 'es'
  */
-export async function sendWeeklyEmail(toEmail, recs, followerActivity, authorEmailMap, generatedAt) {
+export async function sendWeeklyEmail(toEmail, recs, followerActivity, authorEmailMap, generatedAt, locale = 'en') {
   if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY env var is not set')
+
+  _s = STRINGS[locale] ?? STRINGS.en
 
   const html = buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt)
   const text = buildEmailText(recs, followerActivity, authorEmailMap, generatedAt)
 
-  const subject = '🥃 Your weekly dram update — The Dram Journal'
+  const subject = _s.subject
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',

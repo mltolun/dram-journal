@@ -337,6 +337,27 @@ const TRANSLATIONS = {
     frAdminDueDateLabel: 'Due date',
     frAdminAccessDenied: 'Access denied',
     frAdminFilterAll: 'All',
+
+    // Stats & Badges panel
+    statsAndBadges: 'Stats & Badges',
+    statsTitle: 'My Dram Stats',
+    statsDrams: 'Drams',
+    statsCountries: 'Countries',
+    statsBadges: 'Badges',
+    statsAchievements: '✦ Achievements',
+    statsEarned: 'Earned',
+    statsPassport: '🌍 Regional Passport',
+    statsFooter: 'Keep exploring — more badges unlock as you taste!',
+    badges: {
+      first_dram:       { name: 'First Dram',           desc: 'Log your first whisky' },
+      tenner:           { name: 'The Tenner',            desc: '10 whiskies in your journal' },
+      century:          { name: 'Century Club',          desc: '100 whiskies in your journal' },
+      globe_trotter:    { name: 'Globe Trotter',         desc: 'Taste whiskies from 5+ countries' },
+      peat_freak:       { name: 'Peat Freak',            desc: '10 whiskies with smokiness rated 4+' },
+      the_critic:       { name: 'The Critic',            desc: 'Rate 50 whiskies' },
+      flavor_arch:      { name: 'Flavor Archaeologist',  desc: 'Complete all 5 flavor attributes on 20 entries' },
+      social_butterfly: { name: 'Social Butterfly',      desc: '5 people follow your journal' },
+    },
   },
 
   es: {
@@ -656,5 +677,26 @@ const TRANSLATIONS = {
     frAdminDueDateLabel: 'Fecha límite',
     frAdminAccessDenied: 'Acceso denegado',
     frAdminFilterAll: 'Todo',
+
+    // Stats & Badges panel
+    statsAndBadges: 'Estadísticas e Insignias',
+    statsTitle: 'Mis Estadísticas',
+    statsDrams: 'Drams',
+    statsCountries: 'Países',
+    statsBadges: 'Insignias',
+    statsAchievements: '✦ Logros',
+    statsEarned: 'Obtenida',
+    statsPassport: '🌍 Pasaporte Regional',
+    statsFooter: '¡Sigue explorando — desbloqueas más insignias al degustar!',
+    badges: {
+      first_dram:       { name: 'Primer Dram',           desc: 'Registra tu primer whisky' },
+      tenner:           { name: 'El Diez',               desc: '10 whiskies en tu diario' },
+      century:          { name: 'Club del Centenar',     desc: '100 whiskies en tu diario' },
+      globe_trotter:    { name: 'Trotamundos',           desc: 'Prueba whiskies de 5+ países' },
+      peat_freak:       { name: 'Fanático del Turba',    desc: '10 whiskies con ahumado de 4+' },
+      the_critic:       { name: 'El Crítico',            desc: 'Valora 50 whiskies' },
+      flavor_arch:      { name: 'Arqueólogo del Sabor',  desc: 'Completa los 5 atributos de sabor en 20 entradas' },
+      social_butterfly: { name: 'Alma de la Fiesta',     desc: '5 personas siguen tu diario' },
+    },
   },
 }

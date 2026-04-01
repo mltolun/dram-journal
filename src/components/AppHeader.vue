@@ -52,7 +52,7 @@
 
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="openStats">
-                <BarChart2Icon :size="14" /> Stats &amp; Badges
+                <BarChart2Icon :size="14" /> {{ t.statsAndBadges }}
               </button>
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doExport">
@@ -105,6 +105,7 @@ import { useTheme } from '../composables/useTheme.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
 import { exportCSV } from '../utils/csv.js'
+import { sb } from '../lib/supabase.js'
 import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
 import { useMessages, unreadCount } from '../composables/useMessages.js'
 import SubscriptionsPanel from './SubscriptionsPanel.vue'
@@ -215,8 +216,9 @@ function doExport() {
   toast(t.value.csvExported)
 }
 
-function doToggleLocale() {
+async function doToggleLocale() {
   toggleLocale()
+  await sb.auth.updateUser({ data: { locale: locale.value } })
 }
 
 async function doSignOut() {
