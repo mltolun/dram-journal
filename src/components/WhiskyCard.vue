@@ -1,5 +1,7 @@
 <template>
+  <!-- ── Gallery (default) card ── -->
   <div
+    v-if="!compact"
     class="wcard"
     :class="{
       selected,
@@ -35,7 +37,6 @@
           <div class="bar-val-s">{{ whisky[a] || 0 }}</div>
         </div>
       </div>
-
     </div>
 
     <div class="wcard-actions">
@@ -55,6 +56,42 @@
       </template>
     </div>
   </div>
+
+  <!-- ── Compact list row ── -->
+  <div
+    v-else
+    class="wcard-row"
+    :class="{ selected, trash: isTrash }"
+    :style="selectColor ? `border-left-color:${selectColor}` : ''"
+    @click="isTrash ? null : $emit('toggle')"
+  >
+    <span class="wcard-type wcard-row-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
+
+    <div class="wcard-row-info">
+      <span class="wcard-row-name">{{ whisky.name }}</span>
+      <span class="wcard-row-meta">{{ whisky.distillery || '—' }} · {{ whisky.age ? whisky.age + ' yo' : 'NAS' }}{{ whisky.abv ? ' · ' + whisky.abv : '' }}</span>
+    </div>
+
+    <span v-if="whisky.rating" class="wcard-row-rating">★ {{ whisky.rating }}</span>
+    <span v-if="isTrash" class="wcard-trash-pill wcard-row-trash">🗑 {{ daysLeft }}d</span>
+
+    <div class="wcard-row-actions" @click.stop>
+      <template v-if="isTrash">
+        <button class="wcard-btn" @click="$emit('restore')" :aria-label="t.trashRestore"><RotateCcwIcon :size="11" /></button>
+        <button class="wcard-btn del" @click="$emit('delete')" :title="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
+      </template>
+      <template v-else-if="isWishlist">
+        <button class="wcard-btn" @click="$emit('share')" :aria-label="t.share"><Share2Icon :size="11" /></button>
+        <button class="wcard-btn" @click="$emit('move')" :aria-label="t.moveToJournal"><ArrowUpIcon :size="11" /></button>
+        <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.delete"><Trash2Icon :size="11" /></button>
+      </template>
+      <template v-else>
+        <button class="wcard-btn" @click="$emit('share')" :aria-label="t.share"><Share2Icon :size="11" /></button>
+        <button class="wcard-btn" @click="$emit('view')" :aria-label="t.view"><EyeIcon :size="11" /></button>
+        <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.delete"><Trash2Icon :size="11" /></button>
+      </template>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -65,7 +102,7 @@ import { useI18n } from '../composables/useI18n.js'
 import { daysUntilFlush } from '../composables/useWhiskies.js'
 import placeholderImg from '../assets/bottle-placeholder.jpg'
 
-const props = defineProps({ whisky: Object, selected: Boolean, selectColor: String })
+const props = defineProps({ whisky: Object, selected: Boolean, selectColor: String, compact: Boolean })
 defineEmits(['toggle', 'view', 'delete', 'share', 'move', 'restore'])
 
 const { t } = useI18n()
@@ -144,5 +181,72 @@ const daysLeft   = computed(() => daysUntilFlush(props.whisky))
 .wcard-btn.restore:hover {
   border-color: #1D9E75;
   color: #6ecb9a;
+}
+
+/* ── Compact list row ── */
+.wcard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.wcard-row:hover {
+  background: rgba(200, 130, 42, 0.03);
+  border-color: var(--border-hi);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.wcard-row.selected { border-left-color: var(--amber); background: rgba(200,130,42,0.04); }
+.wcard-row.trash { opacity: 0.7; cursor: default; border-style: dashed; }
+.wcard-row-type { flex-shrink: 0; }
+.wcard-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wcard-row-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+.wcard-row-meta {
+  font-size: 0.68rem;
+  color: var(--peat-light);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wcard-row-rating {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--amber-light);
+  flex-shrink: 0;
+}
+.wcard-row-trash { flex-shrink: 0; }
+.wcard-row-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.wcard-row-actions .wcard-btn {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
 }
 </style>

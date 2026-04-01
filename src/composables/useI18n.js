@@ -358,6 +358,14 @@ const TRANSLATIONS = {
     statsContinentAsia: '🌏 Asia',
     statsContinentRestOfWorld: '🌐 Rest of World',
 
+    // Dashboard / sidebar
+    quickStats: 'Quick Stats',
+    totalDrams: 'Total Drams',
+    logNewDram: 'Log new dram',
+    galleryView: 'Gallery',
+    listView: 'List',
+    searchPlaceholder: 'Search by name, distillery or region…',
+
     // Community Feed tab
     feed: 'Feed',
     feedNoFollows: 'Follow some friends to see their activity here',
@@ -719,6 +727,14 @@ const TRANSLATIONS = {
     statsContinentAmericas: '🌎 Américas',
     statsContinentAsia: '🌏 Asia',
     statsContinentRestOfWorld: '🌐 Resto del mundo',
+
+    // Dashboard / sidebar
+    quickStats: 'Estadísticas',
+    totalDrams: 'Total Drams',
+    logNewDram: 'Registrar dram',
+    galleryView: 'Galería',
+    listView: 'Lista',
+    searchPlaceholder: 'Buscar por nombre, destilería o región…',
 
     // Community Feed tab
     feed: 'Feed',

@@ -1,143 +1,178 @@
 <template>
-  <!-- Auth screens -->
+  <!-- Auth screen -->
   <div v-if="!currentUser" style="position:fixed;inset:0;z-index:500;background:var(--peat);display:flex;align-items:center;justify-content:center;">
     <AuthBox />
   </div>
 
-  <!-- Main app -->
-  <div v-else>
-    <AppHeader />
-    <AppToolbar
-      :selected-count="selected.length"
-      :compare-open="compareOpen"
-      :active-list="activeList"
-      :on-clear-selected="clearSelected"
-      :filters-open="filtersOpen"
-      :filter-count="activeFilterCount"
-      @add="openAddModal"
-      @compare="toggleCompare"
-      @scan="scanOpen = true"
-      @set-list="setActiveList"
-      @filter="filtersOpen = !filtersOpen"
-    />
-    <div v-if="activeList === 'journal' && filtersOpen" class="filter-bar">
-      <select v-model="filterCountry" class="filter-select">
-        <option value="">All countries</option>
-        <option v-for="c in availableCountries" :key="c" :value="c">{{ c }}</option>
-      </select>
-      <select v-model="filterRegion" class="filter-select">
-        <option value="">All regions</option>
-        <option v-for="r in availableRegions" :key="r" :value="r">{{ r }}</option>
-      </select>
-      <select v-model="filterDistillery" class="filter-select">
-        <option value="">All distilleries</option>
-        <option v-for="d in availableDistilleries" :key="d" :value="d">{{ d }}</option>
-      </select>
-      <select v-model="filterAge" class="filter-select">
-        <option value="">All ages</option>
-        <option v-for="a in availableAges" :key="a" :value="a">{{ a === 'NAS' ? 'NAS' : a + ' yo' }}</option>
-      </select>
-      <button v-if="activeFilterCount > 0" class="btn-clear-filters" @click="clearFilters">Clear filters</button>
-    </div>
-    <div class="grid-area">
-      <!-- Wishlist: two-column layout — items left (4-col grid), recs right (column) -->
-      <div v-if="activeList === 'wishlist'" class="wishlist-layout">
-        <div class="wishlist-col">
-          <div class="wishlist-section-lbl">✦ {{ t.wishlist }}</div>
-          <div class="whisky-grid wishlist-grid">
-        <template v-if="activeList === 'wishlist'">
-            <div class="empty-grid" v-if="activeItems.length === 0">
-              <div class="empty-icon">✦</div>
-              <div class="empty-text">{{ t.emptyWishlist }}</div>
+  <!-- Main app: sidebar + content -->
+  <div v-else class="app-layout">
+
+    <!-- Fixed left sidebar (becomes bottom nav on mobile) -->
+    <AppSidebar :active-list="activeList" @set-list="setActiveList" />
+
+    <!-- Main scrollable column -->
+    <div class="main-content">
+      <AppHeader />
+
+      <AppToolbar
+        :selected-count="selected.length"
+        :compare-open="compareOpen"
+        :active-list="activeList"
+        :on-clear-selected="clearSelected"
+        :filters-open="filtersOpen"
+        :filter-count="activeFilterCount"
+        @compare="toggleCompare"
+        @filter="filtersOpen = !filtersOpen"
+      />
+
+      <!-- Cascading filter bar (journal only) -->
+      <div v-if="activeList === 'journal' && filtersOpen" class="filter-bar">
+        <select v-model="filterCountry" class="filter-select">
+          <option value="">All countries</option>
+          <option v-for="c in availableCountries" :key="c" :value="c">{{ c }}</option>
+        </select>
+        <select v-model="filterRegion" class="filter-select">
+          <option value="">All regions</option>
+          <option v-for="r in availableRegions" :key="r" :value="r">{{ r }}</option>
+        </select>
+        <select v-model="filterDistillery" class="filter-select">
+          <option value="">All distilleries</option>
+          <option v-for="d in availableDistilleries" :key="d" :value="d">{{ d }}</option>
+        </select>
+        <select v-model="filterAge" class="filter-select">
+          <option value="">All ages</option>
+          <option v-for="a in availableAges" :key="a" :value="a">{{ a === 'NAS' ? 'NAS' : a + ' yo' }}</option>
+        </select>
+        <button v-if="activeFilterCount > 0" class="btn-clear-filters" @click="clearFilters">Clear filters</button>
+      </div>
+
+      <!-- Grid area -->
+      <div class="grid-area">
+
+        <!-- ── View-toggle row (journal only) ── -->
+        <div v-if="activeList === 'journal'" class="view-toggle-row">
+          <button
+            class="view-toggle-btn"
+            :class="{ active: viewMode === 'gallery' }"
+            @click="viewMode = 'gallery'"
+            :aria-pressed="viewMode === 'gallery'"
+            :aria-label="t.galleryView"
+          ><LayoutGridIcon :size="13" aria-hidden="true" /> {{ t.galleryView }}</button>
+          <button
+            class="view-toggle-btn"
+            :class="{ active: viewMode === 'list' }"
+            @click="viewMode = 'list'"
+            :aria-pressed="viewMode === 'list'"
+            :aria-label="t.listView"
+          ><ListIcon :size="13" aria-hidden="true" /> {{ t.listView }}</button>
+        </div>
+
+        <!-- ── Wishlist: two-column layout ── -->
+        <div v-if="activeList === 'wishlist'" class="wishlist-layout">
+          <div class="wishlist-col">
+            <div class="wishlist-section-lbl">✦ {{ t.wishlist }}</div>
+            <div class="whisky-grid wishlist-grid">
+              <div class="empty-grid" v-if="activeItems.length === 0">
+                <div class="empty-icon">✦</div>
+                <div class="empty-text">{{ t.emptyWishlist }}</div>
+              </div>
+              <WhiskyCard
+                v-for="w in activeItems"
+                :key="w.id"
+                :whisky="w"
+                :selected="false"
+                :select-color="null"
+                @view="openViewModal(w)"
+                @delete="doDelete(w)"
+                @share="openShareModal(w)"
+                @move="doMoveToJournal(w)"
+              />
             </div>
+          </div>
+          <div class="recs-col">
+            <RecommendationsPanel />
+          </div>
+        </div>
+
+        <!-- ── Journal grid ── -->
+        <div
+          v-if="activeList === 'journal'"
+          class="whisky-grid"
+          :class="{ 'list-view': viewMode === 'list' }"
+        >
+          <template v-if="activeItems.length === 0">
+            <div class="empty-grid">
+              <div class="empty-icon">🥃</div>
+              <div class="empty-text">{{ t.emptyJournal }}</div>
+            </div>
+          </template>
+          <WhiskyCard
+            v-for="w in activeItems"
+            :key="w.id"
+            :whisky="w"
+            :selected="selected.includes(w.id)"
+            :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
+            :compact="viewMode === 'list'"
+            @toggle="toggleSelect(w.id)"
+            @view="openViewModal(w)"
+            @delete="doDelete(w)"
+            @share="openShareModal(w)"
+          />
+        </div>
+
+        <!-- ── Timeline ── -->
+        <TimelinePanel v-if="activeList === 'timeline'" @open-entry="openViewModal" />
+
+        <!-- ── Community Feed ── -->
+        <FeedPanel v-if="activeList === 'feed'" />
+
+        <!-- ── Trash (journal tab) ── -->
+        <template v-if="activeList === 'journal' && trash.length > 0">
+          <div class="trash-divider">
+            <span>🗑 {{ t.trashSection }} · {{ t.trashAutoFlush }}</span>
+          </div>
+          <div class="whisky-grid trash-grid" :class="{ 'list-view': viewMode === 'list' }">
             <WhiskyCard
-              v-for="w in activeItems"
+              v-for="w in trash"
               :key="w.id"
               :whisky="w"
               :selected="false"
               :select-color="null"
-              @view="openViewModal(w)"
-              @delete="doDelete(w)"
-              @share="openShareModal(w)"
-              @move="doMoveToJournal(w)"
+              :compact="viewMode === 'list'"
+              @restore="doRestore(w)"
+              @delete="doHardDelete(w)"
             />
-          </template>
-          <template v-else>
-            <template v-if="activeItems.length === 0">
-              <div class="empty-grid">
-                <div class="empty-icon">🥃</div>
-                <div class="empty-text">{{ t.emptyJournal }}</div>
-              </div>
-            </template>
-            <WhiskyCard
-              v-for="w in activeItems"
-              :key="w.id"
-              :whisky="w"
-              :selected="selected.includes(w.id)"
-              :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
-              @toggle="toggleSelect(w.id)"
-              @view="openViewModal(w)"
-              @delete="doDelete(w)"
-              @share="openShareModal(w)"
-              @move="doMoveToJournal(w)"
-            />
-          </template>
-        </div>
-        </div><!-- /wishlist-col -->
-        <div class="recs-col">
-          <RecommendationsPanel />
-        </div>
-      </div><!-- /wishlist-layout -->
-
-      <!-- Journal grid — plain, no two-column wrapper -->
-      <div v-if="activeList === 'journal'" class="whisky-grid">
-        <template v-if="activeItems.length === 0">
-          <div class="empty-grid">
-            <div class="empty-icon">🥃</div>
-            <div class="empty-text">{{ t.emptyJournal }}</div>
           </div>
         </template>
-        <WhiskyCard
-          v-for="w in activeItems"
-          :key="w.id"
-          :whisky="w"
-          :selected="selected.includes(w.id)"
-          :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
-          @toggle="toggleSelect(w.id)"
-          @view="openViewModal(w)"
-          @delete="doDelete(w)"
-          @share="openShareModal(w)"
-        />
-      </div>
 
-      <!-- Timeline full view -->
-      <TimelinePanel
-        v-if="activeList === 'timeline'"
-        @open-entry="openViewModal"
-      />
+      </div><!-- /grid-area -->
+    </div><!-- /main-content -->
 
-      <!-- Community Feed -->
-      <FeedPanel v-if="activeList === 'feed'" />
-
-      <!-- Trash section — only shown on journal tab when there are trashed items -->
-      <template v-if="activeList === 'journal' && trash.length > 0">
-        <div class="trash-divider">
-          <span>🗑 {{ t.trashSection }} · {{ t.trashAutoFlush }}</span>
+    <!-- ── Floating Action Button ── -->
+    <div class="fab-wrap" ref="fabWrap">
+      <button
+        class="fab"
+        @click.stop="fabOpen = !fabOpen"
+        :aria-label="t.logNewDram"
+        :aria-expanded="fabOpen"
+      >
+        <PlusIcon :size="22" aria-hidden="true" />
+      </button>
+      <transition name="fab-menu">
+        <div v-if="fabOpen" class="fab-menu" role="menu">
+          <button class="fab-menu-item" @click.stop="chooseFab('add')" role="menuitem">
+            <SearchIcon :size="14" aria-hidden="true" />
+            Search catalogue
+          </button>
+          <button class="fab-menu-item" @click.stop="chooseFab('scan')" role="menuitem">
+            <CameraIcon :size="14" aria-hidden="true" />
+            {{ t.scan }} bottle
+          </button>
         </div>
-        <div class="whisky-grid trash-grid">
-          <WhiskyCard
-            v-for="w in trash"
-            :key="w.id"
-            :whisky="w"
-            :selected="false"
-            :select-color="null"
-            @restore="doRestore(w)"
-            @delete="doHardDelete(w)"
-          />
-        </div>
-      </template>
+      </transition>
     </div>
 
+    <!-- ── Panels ── -->
     <ComparePanel
       v-if="compareOpen && selected.length > 0"
       :whiskies="selectedWhiskies"
@@ -160,16 +195,17 @@
       @close="shareModalWhisky = null"
     />
 
-<ScanModal
+    <ScanModal
       v-if="scanOpen"
       :list="activeList"
       @close="scanOpen = false"
     />
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { useWhiskies, journal, wishlist, trash } from '../composables/useWhiskies.js'
@@ -178,27 +214,36 @@ import { loadEarnedBadges, checkBadges } from '../composables/useBadges.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
+import { searchQuery } from '../composables/useSearch.js'
 import { COLOR_HEX } from '../lib/constants.js'
+import {
+  Plus as PlusIcon,
+  Search as SearchIcon,
+  Camera as CameraIcon,
+  LayoutGrid as LayoutGridIcon,
+  List as ListIcon,
+} from 'lucide-vue-next'
 
-import AuthBox      from '../components/AuthBox.vue'
-import AppHeader    from '../components/AppHeader.vue'
-import AppToolbar   from '../components/AppToolbar.vue'
-import WhiskyCard   from '../components/WhiskyCard.vue'
-import WhiskyModal  from '../components/WhiskyModal.vue'
-import ComparePanel from '../components/ComparePanel.vue'
+import AuthBox             from '../components/AuthBox.vue'
+import AppHeader           from '../components/AppHeader.vue'
+import AppToolbar          from '../components/AppToolbar.vue'
+import AppSidebar          from '../components/AppSidebar.vue'
+import WhiskyCard          from '../components/WhiskyCard.vue'
+import WhiskyModal         from '../components/WhiskyModal.vue'
+import ComparePanel        from '../components/ComparePanel.vue'
 import ShareModal          from '../components/ShareModal.vue'
 import ScanModal           from '../components/ScanModal.vue'
 import RecommendationsPanel from '../components/RecommendationsPanel.vue'
-import TimelinePanel from '../components/TimelinePanel.vue'
-import FeedPanel from '../components/FeedPanel.vue'
+import TimelinePanel       from '../components/TimelinePanel.vue'
+import FeedPanel           from '../components/FeedPanel.vue'
 
 const { getSession } = useAuth()
 const { loadWhiskies, deleteWhisky, moveToJournal, moveToTrash, restoreFromTrash } = useWhiskies()
 const { deletePhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
-
 const route = useRoute()
+
 const activeList    = ref('journal')
 const selected      = ref([])
 const compareOpen   = ref(false)
@@ -208,6 +253,24 @@ const isViewMode    = ref(false)
 const shareModalWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
+const viewMode      = ref('gallery') // 'gallery' | 'list'
+
+// FAB
+const fabOpen = ref(false)
+const fabWrap = ref(null)
+
+function chooseFab(action) {
+  fabOpen.value = false
+  if (action === 'add') openAddModal()
+  else scanOpen.value = true
+}
+
+function onFabClickOutside(e) {
+  if (fabWrap.value && !fabWrap.value.contains(e.target)) fabOpen.value = false
+}
+
+onMounted(() => document.addEventListener('click', onFabClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', onFabClickOutside))
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 const filtersOpen      = ref(false)
@@ -221,7 +284,6 @@ function parseAge(v) {
   return m ? parseInt(m[0]) : null
 }
 
-// Cascading filter options: each dropdown shows only values available given upstream selections
 const availableCountries = computed(() =>
   [...new Set(journal.value.map(w => w.origin).filter(Boolean))].sort()
 )
@@ -252,7 +314,6 @@ const availableAges = computed(() => {
   })
 })
 
-// Reset downstream filters when upstream selection changes
 watch(filterCountry, () => {
   if (filterRegion.value && !availableRegions.value.includes(filterRegion.value)) filterRegion.value = ''
   if (filterDistillery.value && !availableDistilleries.value.includes(filterDistillery.value)) filterDistillery.value = ''
@@ -269,6 +330,16 @@ const filteredJournal = computed(() => {
   } else if (filterAge.value) {
     const age = parseInt(filterAge.value)
     items = items.filter(w => parseAge(w.age) === age)
+  }
+  // Search query filter (name, distillery, origin/region)
+  const q = searchQuery.value.trim().toLowerCase()
+  if (q) {
+    items = items.filter(w =>
+      w.name?.toLowerCase().includes(q) ||
+      w.distillery?.toLowerCase().includes(q) ||
+      w.origin?.toLowerCase().includes(q) ||
+      w.region?.toLowerCase().includes(q)
+    )
   }
   return items
 })
@@ -294,9 +365,8 @@ onMounted(async () => {
   if (session) {
     await loadWhiskies()
     await loadEarnedBadges()
-    await checkBadges() // catch badges already earned from existing entries
+    await checkBadges()
 
-    // Watch badge-relevant values and check for unlocks after any mutation
     watch(
       () => {
         const j = journal.value
@@ -324,6 +394,7 @@ function setActiveList(list) {
   compareOpen.value = false
   filtersOpen.value = false
   clearFilters()
+  searchQuery.value = ''
 }
 
 function toggleSelect(id) {
@@ -364,7 +435,7 @@ function openShareModal(w) {
 }
 
 async function doDelete(w) {
-  if (w.list === "wishlist") {
+  if (w.list === 'wishlist') {
     if (!confirm(`Delete "${w.name}" from your wishlist?`)) return
     await deleteWhisky(w.id)
     if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
@@ -377,7 +448,7 @@ async function doDelete(w) {
     selected.value = selected.value.filter(id => id !== w.id)
     toast(t.value.trashMoved(w.name))
   } catch (err) {
-    console.error("moveToTrash failed:", err)
+    console.error('moveToTrash failed:', err)
     toast(`⚠ Could not move to trash: ${err.message}`)
   }
 }
@@ -406,6 +477,36 @@ function onSaved(w) {
 </script>
 
 <style scoped>
+/* ── View toggle ── */
+.view-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: transparent;
+  border: 0.5px solid var(--border);
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.view-toggle-btn:hover { border-color: var(--border-hi); color: var(--text-primary); }
+.view-toggle-btn.active {
+  background: rgba(200, 130, 42, 0.1);
+  border-color: var(--amber);
+  color: var(--amber-light);
+}
+
+/* ── Filter bar ── */
 .filter-bar {
   display: flex;
   align-items: center;
@@ -441,11 +542,8 @@ function onSaved(w) {
   transition: all 0.15s;
 }
 .btn-clear-filters:hover { background: rgba(200,130,42,0.1); color: var(--amber); }
-@media (max-width: 680px) {
-  .filter-bar { padding: 8px 12px; gap: 6px; }
-  .filter-select { max-width: 100%; flex: 1 1 40%; }
-  .btn-clear-filters { margin-left: 0; width: 100%; text-align: center; }
-}
+
+/* ── Trash divider ── */
 .trash-divider {
   display: flex;
   align-items: center;
@@ -460,24 +558,17 @@ function onSaved(w) {
   opacity: 0.5;
 }
 .trash-divider::before,
-.trash-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-.trash-grid {
-  opacity: 0.85;
-}
+.trash-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.trash-grid { opacity: 0.85; }
+
+/* ── Wishlist two-column ── */
 .wishlist-layout {
   display: grid;
   grid-template-columns: 1fr 260px;
   gap: 24px;
   align-items: start;
 }
-.wishlist-col {
-  min-width: 0;
-}
+.wishlist-col { min-width: 0; }
 .wishlist-grid {
   grid-template-columns: repeat(3, minmax(0, 255px)) !important;
 }
@@ -485,10 +576,85 @@ function onSaved(w) {
   position: sticky;
   top: 70px;
 }
+
+/* ── FAB ── */
+.fab-wrap {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--amber);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(200, 130, 42, 0.45);
+  transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+  flex-shrink: 0;
+}
+.fab:hover {
+  background: var(--amber-light);
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 24px rgba(200, 130, 42, 0.55);
+}
+.fab:active { transform: scale(0.96); }
+.fab-menu {
+  background: var(--bg-modal);
+  border: 0.5px solid var(--border-hi);
+  border-radius: 10px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+  min-width: 170px;
+}
+.fab-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+.fab-menu-item:hover { background: rgba(200,130,42,0.08); color: var(--text-primary); }
+.fab-menu-item + .fab-menu-item { border-top: 0.5px solid var(--border); }
+
+/* FAB menu transition */
+.fab-menu-enter-active { transition: opacity 0.15s, transform 0.15s; }
+.fab-menu-leave-active { transition: opacity 0.1s, transform 0.1s; }
+.fab-menu-enter-from,
+.fab-menu-leave-to { opacity: 0; transform: scale(0.92) translateY(6px); }
+
+/* ── Responsive ── */
 @media (max-width: 1100px) {
   .wishlist-layout { grid-template-columns: 1fr; }
   .recs-col { position: static; }
   .wishlist-grid { grid-template-columns: repeat(2, minmax(0, 255px)) !important; }
+}
+@media (max-width: 768px) {
+  .fab-wrap { bottom: calc(64px + env(safe-area-inset-bottom) + 1rem); }
+}
+@media (max-width: 680px) {
+  .filter-bar { padding: 8px 12px; gap: 6px; }
+  .filter-select { max-width: 100%; flex: 1 1 40%; }
+  .btn-clear-filters { margin-left: 0; width: 100%; text-align: center; }
 }
 @media (max-width: 600px) {
   .wishlist-grid { grid-template-columns: 1fr !important; }

@@ -97,6 +97,19 @@ body {
 .forgot-link { font-size:0.7rem; color:var(--peat-light); text-align:center; margin-top:0.8rem; cursor:pointer; transition:color 0.2s; }
 .forgot-link:hover { color:var(--amber-light); }
 
+/* ── DASHBOARD LAYOUT ── */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+.main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── HEADER ── */
 header { padding:12px 24px; border-bottom:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
 .brand-title { font-size:1rem; font-weight:600; letter-spacing:-0.025em; color:var(--text-primary); }
@@ -142,8 +155,10 @@ header { padding:12px 24px; border-bottom:0.5px solid var(--border); display:fle
 .btn-share-wl:hover { border-color:var(--border-hi); color:var(--text-primary); }
 
 /* ── WHISKY GRID ── */
-.grid-area { padding:20px 24px 2rem; }
-.whisky-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); gap:12px; }
+.grid-area { padding:20px 24px 5rem; }
+.whisky-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); gap:18px; }
+/* List view: single column of compact rows */
+.whisky-grid.list-view { grid-template-columns: 1fr; gap:6px; }
 
 /* Cards */
 .wcard { background:var(--bg-card); border:0.5px solid var(--border); border-radius:12px; padding:0; cursor:pointer; transition:all 0.18s; position:relative; display:flex; flex-direction:column; overflow:hidden; box-shadow:var(--shadow-card); }
@@ -300,6 +315,11 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(200,130,42,0.2); border-radius:2px; }
 
+@media(max-width:768px) {
+  /* Push content above the bottom tab bar */
+  .main-content { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+}
+
 @media(max-width:680px) {
   header { padding:10px 16px; }
   .brand-title { font-size:0.95rem; }
@@ -307,8 +327,9 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   .toolbar-left { width:100%; }
   .toolbar-right { display:flex; gap:5px; flex-wrap:nowrap; width:100%; }
   .btn-t { flex:1; padding:6px 8px; font-size:0.7rem; }
-  .grid-area { padding:14px 12px 2rem; }
+  .grid-area { padding:14px 12px 5rem; }
   .whisky-grid { grid-template-columns:1fr; gap:10px; }
+  .whisky-grid.list-view { gap:5px; }
   .compare-panel { padding:1.2rem; }
   .share-body { grid-template-columns:1fr; }
   .share-hero, .share-body { padding-left:1.2rem; padding-right:1.2rem; }
