@@ -45,7 +45,6 @@
           >
             <span class="avatar-letter">{{ avatarLetter }}</span>
             <span class="avatar-sync-dot" :style="{ background: syncColor }"></span>
-            <span v-if="earnedCount > 0" class="avatar-badge-count">{{ earnedCount }}/{{ badges.length }}</span>
           </div>
 
           <transition name="menu">
@@ -85,13 +84,6 @@
                 </button>
               </template>
               <div class="avatar-menu-divider"></div>
-              <button class="avatar-menu-item" @click="menuOpen = false; statsOpen = true" role="menuitem">
-                <BarChart2Icon :size="14" aria-hidden="true" /> {{ t.statsAndBadges }}
-              </button>
-              <button class="avatar-menu-item" @click="menuOpen = false; subsOpen = true" role="menuitem">
-                <UsersIcon :size="14" aria-hidden="true" /> {{ t.friendsFollowers }}
-                <span v-if="pendingRequests.length" class="menu-badge">{{ pendingRequests.length }}</span>
-              </button>
               <button class="avatar-menu-item" @click="menuOpen = false; featureOpen = true" role="menuitem">
                 <LightbulbIcon :size="14" aria-hidden="true" /> {{ t.featureRequests }}
               </button>
@@ -131,8 +123,7 @@ import { pendingRequests } from '../composables/useSubscriptions.js'
 import InboxPanel from './InboxPanel.vue'
 import AdminFeaturePanel from './AdminFeaturePanel.vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
-import { statsOpen, subsOpen, featureOpen } from '../composables/usePanels.js'
-import { useBadges } from '../composables/useBadges.js'
+import { featureOpen } from '../composables/usePanels.js'
 import { searchQuery } from '../composables/useSearch.js'
 import {
   Inbox as InboxIcon,
@@ -143,8 +134,6 @@ import {
   Sun as SunIcon,
   Moon as MoonIcon,
   Search as SearchIcon,
-  BarChart2 as BarChart2Icon,
-  Users as UsersIcon,
   Lightbulb as LightbulbIcon,
 } from 'lucide-vue-next'
 
@@ -161,7 +150,6 @@ const inboxOpen  = ref(false)
 const adminOpen  = ref(false)
 
 const { isAdmin: isAdminFn } = useFeatureRequests()
-const { earnedCount, badges } = useBadges()
 
 const isAdmin = computed(() => isAdminFn())
 
@@ -308,21 +296,6 @@ async function doSignOut() {
   border-radius: 50%;
   border: 1.5px solid var(--bg);
   transition: background 0.3s;
-}
-.avatar-badge-count {
-  position: absolute;
-  top: -5px; left: -5px;
-  background: var(--bg-modal, #1e1408);
-  border: 0.5px solid var(--amber, #A8620A);
-  color: var(--amber-light, #E8A84C);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.44rem;
-  font-weight: 700;
-  border-radius: 999px;
-  padding: 1px 4px;
-  line-height: 1.5;
-  white-space: nowrap;
-  pointer-events: none;
 }
 
 /* ── Dropdown menu ── */
