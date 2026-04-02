@@ -1,10 +1,12 @@
 <template>
-  <div class="subs-overlay" @click.self="$emit('close')">
+  <div class="subs-overlay">
     <div class="subs-panel">
 
       <div class="subs-header">
+        <button class="subs-close" @click="$emit('close')" aria-label="Back">
+          <span class="subs-close-arrow">←</span> Back
+        </button>
         <div class="subs-title">Friends &amp; Followers</div>
-        <button class="subs-close" @click="$emit('close')">✕</button>
       </div>
 
       <!-- Follow by email -->
@@ -120,50 +122,68 @@ async function doRemove(id) {
   position: fixed;
   inset: 0;
   z-index: 400;
-  background: rgba(20, 12, 4, 0.7);
+  background: var(--bg-modal, #1e1408);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .subs-panel {
   background: var(--bg-modal, #1e1408);
-  border: 0.5px solid var(--border-hi, rgba(200,130,42,0.35));
-  border-radius: 16px;
+  border: none;
+  border-radius: 0;
   width: 100%;
-  max-width: 480px;
-  max-height: 85vh;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+
+/* Centre content on wide screens */
+.subs-panel > * {
+  max-width: 680px;
+  width: 100%;
+  align-self: center;
+  box-sizing: border-box;
 }
 
 .subs-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px;
+  padding: 16px 20px;
   border-bottom: 0.5px solid var(--border, rgba(200,130,42,0.15));
+  position: sticky;
+  top: 0;
+  background: var(--bg-modal, #1e1408);
+  z-index: 1;
 }
 
 .subs-title {
   font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em;
-  font-size: 1.15rem;
+  font-size: 1rem;
   color: var(--text-primary, #F8F4EE);
 }
 
 .subs-close {
   background: none;
   border: none;
-  color: var(--peat-light, #8A7060);
-  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: color 0.15s;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.subs-close:hover { color: var(--text-primary); }
+.subs-close-arrow { font-size: 1rem; line-height: 1; }
+.subs-close:hover { color: var(--text-primary); background: rgba(200,130,42,0.07); }
 
 .subs-section {
   padding: 18px 24px;

@@ -65,6 +65,8 @@
         <UsersIcon :size="15" aria-hidden="true" />
         <span class="sidebar-nav-label">{{ t.feed }}</span>
       </button>
+
+      <!-- Mobile-only "More" tab -->
       <button
         class="sidebar-nav-item sidebar-nav-item--more"
         :class="{ active: moreOpen }"
@@ -77,7 +79,27 @@
       </button>
     </nav>
 
-    <!-- Mobile "More" popover (compact, appears above the tab bar) -->
+    <div class="sidebar-divider sidebar-divider--desktop-only"></div>
+
+    <!-- ── Panel Links (desktop only) ─────────────────────────────────────── -->
+    <div class="sidebar-panel-links">
+      <button class="sidebar-panel-item" @click="statsOpen = true" :aria-label="t.statsAndBadges">
+        <BarChart2Icon :size="14" aria-hidden="true" />
+        <span>{{ t.statsAndBadges }}</span>
+      </button>
+
+      <button class="sidebar-panel-item" @click="subsOpen = true" :aria-label="t.friendsFollowers">
+        <UserPlusIcon :size="14" aria-hidden="true" />
+        <span>{{ t.friendsFollowers }}</span>
+        <span v-if="pendingRequests.length" class="sidebar-badge" aria-label="pending requests">{{ pendingRequests.length }}</span>
+      </button>
+      <!-- Feature Requests removed from sidebar — accessible via avatar menu -->
+    </div>
+
+  </aside>
+
+  <!-- ── Mobile "More" popover — Teleported to body so it escapes sidebar clipping ── -->
+  <Teleport to="body">
     <transition name="more-pop">
       <div v-if="moreOpen" class="mobile-more-popover">
         <button class="mobile-more-item" @click="inboxOpen = true; moreOpen = false">
@@ -94,38 +116,12 @@
           <span>{{ t.friendsFollowers }}</span>
           <span v-if="pendingRequests.length" class="mobile-more-count">{{ pendingRequests.length }}</span>
         </button>
-        <button class="mobile-more-item" @click="featureOpen = true; moreOpen = false">
-          <LightbulbIcon :size="14" aria-hidden="true" />
-          <span>{{ t.featureRequests }}</span>
-        </button>
       </div>
     </transition>
 
     <!-- Backdrop to close popover -->
     <div v-if="moreOpen" class="mobile-more-backdrop" @click="moreOpen = false" />
-
-    <div class="sidebar-divider sidebar-divider--desktop-only"></div>
-
-    <!-- ── Panel Links (desktop only) ─────────────────────────────────────── -->
-    <div class="sidebar-panel-links">
-      <button class="sidebar-panel-item" @click="statsOpen = true" :aria-label="t.statsAndBadges">
-        <BarChart2Icon :size="14" aria-hidden="true" />
-        <span>{{ t.statsAndBadges }}</span>
-      </button>
-
-      <button class="sidebar-panel-item" @click="subsOpen = true" :aria-label="t.friendsFollowers">
-        <UserPlusIcon :size="14" aria-hidden="true" />
-        <span>{{ t.friendsFollowers }}</span>
-        <span v-if="pendingRequests.length" class="sidebar-badge" aria-label="pending requests">{{ pendingRequests.length }}</span>
-      </button>
-
-      <button class="sidebar-panel-item" @click="featureOpen = true" :aria-label="t.featureRequests">
-        <LightbulbIcon :size="14" aria-hidden="true" />
-        <span>{{ t.featureRequests }}</span>
-      </button>
-    </div>
-
-  </aside>
+  </Teleport>
 
   <!-- ── Panels ────────────────────────────────────────────────────────────── -->
   <StatsPanel v-if="statsOpen" @close="statsOpen = false" />
@@ -142,7 +138,6 @@ import {
   Users as UsersIcon,
   BarChart2 as BarChart2Icon,
   UserPlus as UserPlusIcon,
-  Lightbulb as LightbulbIcon,
   MoreHorizontal as MoreHorizontalIcon,
   Inbox as InboxIcon,
 } from 'lucide-vue-next'
@@ -152,6 +147,7 @@ import { useBadges } from '../composables/useBadges.js'
 import { journal } from '../composables/useWhiskies.js'
 import { pendingRequests } from '../composables/useSubscriptions.js'
 import { unreadCount } from '../composables/useMessages.js'
+import { statsOpen, subsOpen, featureOpen } from '../composables/usePanels.js'
 import StatsPanel from './StatsPanel.vue'
 import SubscriptionsPanel from './SubscriptionsPanel.vue'
 import FeatureRequestPanel from './FeatureRequestPanel.vue'
@@ -163,9 +159,6 @@ defineEmits(['setList'])
 const { t } = useI18n()
 const { badges, earnedCount } = useBadges()
 
-const statsOpen    = ref(false)
-const subsOpen     = ref(false)
-const featureOpen  = ref(false)
 const inboxOpen    = ref(false)
 const moreOpen     = ref(false)
 
@@ -366,9 +359,8 @@ const nextBadgePct = computed(() => {
   flex-shrink: 0;
 }
 
-/* ── Mobile-only elements (hidden on desktop) ── */
-.sidebar-nav-item--more,
-.mobile-more-drawer { display: none; }
+/* ── Mobile-only "More" tab — hidden on desktop ── */
+.sidebar-nav-item--more { display: none; }
 
 /* ── Mobile: bottom tab bar ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -380,7 +372,7 @@ const nextBadgePct = computed(() => {
     width: 100%;
     min-width: unset;
     height: auto !important;
-    max-height: 70px;          /* hard cap — only the tab bar height */
+    max-height: 70px;
     flex-direction: row;
     padding: 0;
     border-right: none;
@@ -388,22 +380,23 @@ const nextBadgePct = computed(() => {
     z-index: 200;
     background: var(--bg-modal);
     backdrop-filter: blur(12px);
-    overflow: visible;
+    /* overflow must be visible for nothing — popover is now teleported to body */
+    overflow: hidden;
     padding-bottom: env(safe-area-inset-bottom);
   }
-  .sidebar-nav {
-    pointer-events: all;
-    height: 60px;              /* explicit nav height so items don't expand */
-  }
+
   .sidebar-quick-stats,
   .sidebar-divider,
   .sidebar-panel-links,
   .sidebar-divider--desktop-only { display: none; }
+
   .sidebar-nav {
     flex-direction: row;
     flex: 1;
     gap: 0;
     padding: 0;
+    height: 60px;
+    pointer-events: all;
   }
   .sidebar-nav-item {
     flex: 1;
@@ -415,7 +408,18 @@ const nextBadgePct = computed(() => {
     justify-content: center;
     align-items: center;
   }
+  .sidebar-nav-item svg { opacity: 0.6; }
+  .sidebar-nav-item.active {
+    background: transparent;
+    color: var(--amber-light);
+  }
+  .sidebar-nav-item.active svg { color: var(--amber); opacity: 1; }
+  .sidebar-nav-item:hover { background: transparent; }
+  .sidebar-nav-label { display: block; }
+
+  /* Show the More tab on mobile */
   .sidebar-nav-item--more { display: flex; position: relative; }
+
   .mobile-more-badge {
     position: absolute;
     top: 6px; right: calc(50% - 14px);
@@ -430,9 +434,27 @@ const nextBadgePct = computed(() => {
     min-width: 13px;
     text-align: center;
   }
+}
+</style>
 
-  /* More popover — compact card above the tab bar */
+<!--
+  The popover and backdrop are Teleported to <body>, so their styles
+  must be global (not scoped). We use a separate non-scoped style block.
+-->
+<style>
+/* ── Mobile More popover (teleported, global styles) ── */
+.mobile-more-popover {
+  display: none;
+}
+
+.mobile-more-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* More popover — compact card anchored above the bottom tab bar */
   .mobile-more-popover {
+    display: block;
     position: fixed;
     bottom: calc(64px + env(safe-area-inset-bottom));
     right: 8px;
@@ -441,16 +463,19 @@ const nextBadgePct = computed(() => {
     border: 0.5px solid var(--border-hi);
     border-radius: 12px;
     box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
-    z-index: 500;
+    z-index: 9999;
     overflow: hidden;
     pointer-events: all;
   }
+
   .mobile-more-backdrop {
+    display: block;
     position: fixed;
     inset: 0;
-    z-index: 499;
+    z-index: 9998;
     pointer-events: all;
   }
+
   .mobile-more-item {
     display: flex;
     align-items: center;
@@ -472,6 +497,7 @@ const nextBadgePct = computed(() => {
   .mobile-more-item:last-child { border-bottom: none; }
   .mobile-more-item:active { background: rgba(200,130,42,0.08); }
   .mobile-more-item svg { color: var(--amber); flex-shrink: 0; }
+
   .mobile-more-count {
     margin-left: auto;
     background: var(--amber);
@@ -487,15 +513,7 @@ const nextBadgePct = computed(() => {
   /* Popover transition */
   .more-pop-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
   .more-pop-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
-  .more-pop-enter-from, .more-pop-leave-to { opacity: 0; transform: translateY(6px) scale(0.97); }
-
-  .sidebar-nav-item svg { opacity: 0.6; }
-  .sidebar-nav-item.active {
-    background: transparent;
-    color: var(--amber-light);
-  }
-  .sidebar-nav-item.active svg { color: var(--amber); opacity: 1; }
-  .sidebar-nav-item:hover { background: transparent; }
-  .sidebar-nav-label { display: block; }
+  .more-pop-enter-from,
+  .more-pop-leave-to { opacity: 0; transform: translateY(6px) scale(0.97); }
 }
 </style>
