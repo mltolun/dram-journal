@@ -33,7 +33,7 @@ const SUPABASE_URL         = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 const BATCH_LIMIT          = parseInt(process.env.BATCH_LIMIT  || '6100')
-const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '4000')
+const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '5000')  // 12 RPM = 5s between calls — leaves headroom for slow scrapes
 const START_OFFSET         = parseInt(process.env.START_OFFSET || '0')
 const CURRENCY             = process.env.CURRENCY              || '€'
 const REPRICE              = process.env.REPRICE === 'true'
@@ -60,7 +60,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 async function fetchHtml(url) {
   const res = await fetch(url, {
     headers: HEADERS,
-    signal: AbortSignal.timeout(12_000),
+    signal: AbortSignal.timeout(20_000),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`)
   return res.text()
@@ -161,21 +161,10 @@ async function scrapeMoMPrices(whisky) {
   const searchHtml = await fetchHtml(searchUrl)
   const searchPrices = extractPricesFromHtml(searchHtml)
 
-  // Step 2: if search found a product link, fetch that page too for its JSON-LD
-  // This gives us the authoritative single price for the exact matched product
+  // Step 2: extract first product URL for reference (no second fetch — too slow on CI)
   const productUrl = extractFirstProductUrl(searchHtml)
-  let productPrices = []
-  if (productUrl) {
-    try {
-      const productHtml = await fetchHtml(productUrl)
-      productPrices = extractPricesFromHtml(productHtml)
-    } catch { /* non-fatal */ }
-  }
 
-  // Merge, deduplicate, sort — product page price takes priority but all inform the range
-  const allPrices = [...new Set([...productPrices, ...searchPrices])].sort((a, b) => a - b)
-
-  return { prices: allPrices, productUrl }
+  return { prices: searchPrices, productUrl }
 }
 
 // ── Gemma prompt ──────────────────────────────────────────────────────────────
@@ -239,7 +228,7 @@ async function callGemma(prompt) {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: { temperature: 0.1, maxOutputTokens: 80, responseMimeType: 'application/json' },
     }),
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(30_000),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -343,8 +332,19 @@ async function main() {
         ? `${prices.length} price${prices.length > 1 ? 's' : ''} from MoM`
         : 'Gemma fallback'
 
-      // Step 2: ask Gemma to synthesise a band
-      const band = parseResponse(await callGemma(buildPrompt(whisky, prices, productUrl)))
+      // Step 2: ask Gemma to synthesise a band (1 retry on timeout)
+      let band
+      try {
+        band = parseResponse(await callGemma(buildPrompt(whisky, prices, productUrl)))
+      } catch (gemmaErr) {
+        if (gemmaErr.name === 'TimeoutError' || gemmaErr.message?.includes('timeout') || gemmaErr.message?.includes('aborted')) {
+          console.warn('\n     ⚠  Gemma timeout, retrying once…')
+          await sleep(3000)
+          band = parseResponse(await callGemma(buildPrompt(whisky, prices, productUrl)))
+        } else {
+          throw gemmaErr
+        }
+      }
 
       // Step 3: save
       const { error: updateError } = await sb
