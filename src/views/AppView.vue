@@ -65,6 +65,13 @@
             :aria-pressed="viewMode === 'list'"
             :aria-label="t.listView"
           ><ListIcon :size="13" aria-hidden="true" /> {{ t.listView }}</button>
+          <button
+            class="view-toggle-btn"
+            :class="{ active: viewMode === 'timeline' }"
+            @click="viewMode = 'timeline'"
+            :aria-pressed="viewMode === 'timeline'"
+            aria-label="Timeline"
+          ><CalendarIcon :size="13" aria-hidden="true" /> Timeline</button>
         </div>
 
         <!-- ── Wishlist: two-column layout ── -->
@@ -96,7 +103,7 @@
 
         <!-- ── Journal grid ── -->
         <div
-          v-if="activeList === 'journal'"
+          v-if="activeList === 'journal' && viewMode !== 'timeline'"
           class="whisky-grid"
           :class="{ 'list-view': viewMode === 'list' }"
         >
@@ -120,8 +127,8 @@
           />
         </div>
 
-        <!-- ── Timeline ── -->
-        <TimelinePanel v-if="activeList === 'timeline'" @open-entry="openViewModal" />
+        <!-- ── Timeline (journal sub-view) ── -->
+        <TimelinePanel v-if="activeList === 'journal' && viewMode === 'timeline'" @open-entry="openViewModal" />
 
         <!-- ── Community Feed ── -->
         <FeedPanel v-if="activeList === 'feed'" />
@@ -222,6 +229,7 @@ import {
   Camera as CameraIcon,
   LayoutGrid as LayoutGridIcon,
   List as ListIcon,
+  Calendar as CalendarIcon,
 } from 'lucide-vue-next'
 
 import AuthBox             from '../components/AuthBox.vue'

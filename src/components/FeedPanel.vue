@@ -20,32 +20,40 @@
       <button class="feed-refresh-btn" @click="loadFeed">{{ t.feedRefresh }}</button>
     </div>
 
-    <!-- Feed list -->
+    <!-- Feed list grouped by user -->
     <template v-else>
       <div class="feed-list">
-        <div v-for="item in feedItems" :key="item.id" class="feed-item">
+        <div v-for="group in groupedFeed" :key="group.userId" class="feed-group">
 
-          <!-- Bottle thumbnail -->
-          <div class="feed-thumb">
-            <img v-if="item.photo_url" :src="item.photo_url" :alt="item.whisky_name" class="feed-thumb-img">
-            <div v-else class="feed-thumb-ph">🥃</div>
+          <!-- User header -->
+          <div class="feed-group-header">
+            <div class="feed-group-avatar">{{ group.displayName[0].toUpperCase() }}</div>
+            <span class="feed-group-name">{{ group.displayName }}</span>
+            <span class="feed-group-count">{{ group.items.length }} {{ group.items.length === 1 ? 'entry' : 'entries' }}</span>
           </div>
 
-          <div class="feed-body">
-            <div class="feed-action">
-              <span class="feed-user">{{ displayName(item.user_id) }}</span>
-              <span class="feed-verb">{{ verbFor(item.type) }}</span>
-              <span class="feed-whisky">{{ item.whisky_name }}</span>
-              <span v-if="item.whisky_distillery" class="feed-distillery"> · {{ item.whisky_distillery }}</span>
+          <!-- Items for this user -->
+          <div v-for="item in group.items" :key="item.id" class="feed-item">
+            <div class="feed-thumb">
+              <img v-if="item.photo_url" :src="item.photo_url" :alt="item.whisky_name" class="feed-thumb-img">
+              <div v-else class="feed-thumb-ph">🥃</div>
             </div>
-            <div v-if="item.rating" class="feed-rating">
-              <span v-for="n in 5" :key="n" class="feed-star" :class="{ filled: n <= item.rating }">★</span>
+            <div class="feed-body">
+              <div class="feed-action">
+                <span class="feed-verb">{{ verbFor(item.type) }}</span>
+                <span class="feed-whisky">{{ item.whisky_name }}</span>
+                <span v-if="item.whisky_distillery" class="feed-distillery"> · {{ item.whisky_distillery }}</span>
+              </div>
+              <div v-if="item.rating" class="feed-rating">
+                <span v-for="n in 5" :key="n" class="feed-star" :class="{ filled: n <= item.rating }">★</span>
+              </div>
+              <div v-if="item.nose" class="feed-tasting"><span class="feed-tasting-label">{{ t.nose }}</span> {{ item.nose }}</div>
+              <div v-if="item.palate" class="feed-tasting"><span class="feed-tasting-label">{{ t.palate }}</span> {{ item.palate }}</div>
+              <div v-if="item.notes" class="feed-tasting"><span class="feed-tasting-label">{{ t.notes }}</span> {{ item.notes }}</div>
+              <div class="feed-time">{{ relativeTime(item.created_at) }}</div>
             </div>
-            <div v-if="item.nose" class="feed-tasting"><span class="feed-tasting-label">{{ t.nose }}</span> {{ item.nose }}</div>
-            <div v-if="item.palate" class="feed-tasting"><span class="feed-tasting-label">{{ t.palate }}</span> {{ item.palate }}</div>
-            <div v-if="item.notes" class="feed-tasting"><span class="feed-tasting-label">{{ t.notes }}</span> {{ item.notes }}</div>
-            <div class="feed-time">{{ relativeTime(item.created_at) }}</div>
           </div>
+
         </div>
       </div>
       <div class="feed-footer">
@@ -57,7 +65,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useFeed } from '../composables/useFeed.js'
 import { myFollowing } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'
@@ -68,6 +76,18 @@ const { t } = useI18n()
 function displayName(userId) {
   return displayNames.value.get(userId) || userId.slice(0, 8)
 }
+
+// Group feed items by user, preserving most-recent-first order of first appearance
+const groupedFeed = computed(() => {
+  const map = new Map()
+  for (const item of feedItems.value) {
+    if (!map.has(item.user_id)) {
+      map.set(item.user_id, { userId: item.user_id, displayName: displayName(item.user_id), items: [] })
+    }
+    map.get(item.user_id).items.push(item)
+  }
+  return [...map.values()]
+})
 
 function verbFor(type) {
   if (type === 'rating') return t.value.feedRated
@@ -142,6 +162,51 @@ onMounted(loadFeed)
   font-size: 0.62rem;
   color: var(--peat-light, #8A7060);
   line-height: 1.5;
+}
+
+/* ── User groups ── */
+.feed-group {
+  margin-bottom: 8px;
+}
+
+.feed-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 6px;
+  border-bottom: 0.5px solid var(--border, rgba(200, 130, 42, 0.1));
+  margin-bottom: 0;
+}
+
+.feed-group-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(200, 130, 42, 0.15);
+  border: 0.5px solid var(--border-hi, rgba(200, 130, 42, 0.4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--amber-light, #E8A84C);
+  flex-shrink: 0;
+}
+
+.feed-group-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary, #F8F4EE);
+  flex: 1;
+}
+
+.feed-group-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  color: var(--peat-light, #8A7060);
 }
 
 /* ── Feed list ── */
