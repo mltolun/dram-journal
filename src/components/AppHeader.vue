@@ -461,13 +461,13 @@ async function doSignOut() {
   .avatar-wrap {
     position: fixed;
     top: 14px;
-    right: 16px;
+    right: 20px;
     z-index: 999;
   }
 
   /* Push header content left so it doesn't run under the fixed avatar */
   :deep(header), header {
-    padding-right: 64px;
+    padding-right: 72px;
   }
 
   /* Ensure avatar menu doesn't overflow off screen */

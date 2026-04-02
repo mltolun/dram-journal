@@ -421,6 +421,7 @@ const nextBadgePct = computed(() => {
     flex: 1;
     gap: 0;
     padding: 0;
+    padding-right: 74px; /* leave room for the fixed avatar (34px) + 20px right offset + gap */
     height: 60px;
     pointer-events: all;
   }
