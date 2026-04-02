@@ -2,7 +2,7 @@
  * generate-price-ranges.js
  *
  * Fetches real price data from Master of Malt for each whisky, then asks
- * Gemma 4 31B to synthesise a price_band from the actual results.
+ * Gemma 4 26B A4B to synthesise a price_band from the actual results.
  *
  * Scraping strategy (two-step, graceful fallback):
  *   1. Search page  — masterofmalt.com/search/?q=<name>
@@ -183,39 +183,21 @@ function buildPrompt(whisky, prices, productUrl) {
   if (prices.length > 0) {
     const formatted = prices.map(p => `${CURRENCY}${p.toFixed(2)}`).join(', ')
     const source = productUrl ? `Master of Malt (${productUrl})` : 'Master of Malt search'
-    return `You are a whisky pricing expert. I fetched the following current retail prices from ${source} for "${desc}":
-
-Prices found: ${formatted}
-
-Return a price band representing the typical retail range in ${CURRENCY}.
-- Use the main cluster of prices; ignore obvious outliers (e.g. tiny sample bottles under ${CURRENCY}15, or rare collector editions far above the cluster).
-- If prices are very close together, use a tight range (e.g. ${CURRENCY}85–${CURRENCY}95).
-- If there's only one price, use ~${CURRENCY}<price> format.
-
-Respond ONLY with a JSON object, no markdown, no explanation:
-{"price_band":"${CURRENCY}<low>–${CURRENCY}<high>"}
-
-Examples:
-{"price_band":"${CURRENCY}85–${CURRENCY}95"}
-{"price_band":"~${CURRENCY}49"}
-{"price_band":"${CURRENCY}300+"}`
+    const min = Math.min(...prices)
+    const max = Math.max(...prices)
+    const hint = min === max ? `~${CURRENCY}${min.toFixed(0)}` : `${CURRENCY}${min.toFixed(0)}–${CURRENCY}${max.toFixed(0)}`
+    return `You are a whisky pricing expert. Retail prices from ${source} for "${desc}": ${formatted}.
+Return a JSON object with key "price_band" containing the typical retail price range.
+Use the main cluster of prices, ignoring obvious outliers (e.g. tiny samples under ${CURRENCY}15).
+The price band should look like one of these formats: "${CURRENCY}85–${CURRENCY}95" or "~${CURRENCY}49" or "${CURRENCY}300+".
+A reasonable starting point based on the data is: ${hint}.`
   }
 
   // Fallback: no prices scraped — pure AI estimate
-  return `You are a whisky retail pricing expert. Estimate the typical retail price range in GBP for:
-${desc}.
-
-Base your estimate on UK retail prices (Master of Malt, The Whisky Exchange, etc).
-Reference bands:
-  Budget       ${CURRENCY}20–40   (entry blends, young NAS)
-  Mid-range    ${CURRENCY}40–80   (standard single malts)
-  Premium      ${CURRENCY}80–150  (aged single malts, premium expressions)
-  Luxury       ${CURRENCY}150–300 (rare/old/limited editions)
-  Ultra-luxury ${CURRENCY}300+    (collectors, very rare)
-
-Respond ONLY with a JSON object, no markdown, no explanation:
-{"price_band":"${CURRENCY}<low>–${CURRENCY}<high>"}
-For open-ended luxury: {"price_band":"${CURRENCY}300+"}`
+  return `You are a whisky retail pricing expert. Estimate the typical retail price range for: ${desc}.
+Base your estimate on UK retail prices (Master of Malt, The Whisky Exchange).
+Budget single malts are typically ${CURRENCY}20–40, standard ${CURRENCY}40–80, premium ${CURRENCY}80–150, luxury ${CURRENCY}150–300, ultra-rare ${CURRENCY}300+.
+Return a JSON object with key "price_band" containing the price range, e.g. {"price_band":"${CURRENCY}85–${CURRENCY}95"} or {"price_band":"${CURRENCY}300+"}.`
 }
 
 // ── Gemma API call ────────────────────────────────────────────────────────────
