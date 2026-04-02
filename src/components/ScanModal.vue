@@ -154,7 +154,7 @@ const DAILY_CAP = 20
 const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
 
 const MODEL_LABELS = {
-  gemma:  'Gemma 4 31B',
+  gemma:  'Gemma 4 26B',
   gemini: 'Gemini 3.1 Flash Lite',
 }
 
@@ -245,29 +245,22 @@ function loadFile(file) {
 
 // ── Prompt ────────────────────────────────────────────────────────────────────
 
-const PROMPT = `You are a whisky expert. Analyse this bottle label image and extract all the information you can see.
+const PROMPT = `You are a whisky data extraction API. Your only job is to return a JSON object.
 
-IMPORTANT: For "nose" and "palate", you MUST use your whisky knowledge to fill these in based on the distillery, age, type and region — even if they are not written on the label. For example, an Islay Scotch will have smoky/peaty notes, a Speyside will have fruity/floral notes, a Bourbon will have vanilla/caramel notes. Never leave nose or palate empty.
+DO NOT write any explanation, prose, markdown, bullet points, tables, or code fences.
+DO NOT start your response with any word, sentence, or character other than {
+Your entire response must be a single JSON object that begins with { and ends with }
 
-Respond ONLY with a valid JSON object — no explanation, no markdown, no backticks. Use exactly these keys:
-{
-  "name": "full whisky name including age statement if on label",
-  "distillery": "distillery name",
-  "origin": "region and country e.g. Speyside, Scotland",
-  "type": one of: "scotch" | "irish" | "bourbon" | "japanese" | "other",
-  "age": "age statement or maturation info e.g. 12 Years Old / Sherry Cask",
-  "abv": "ABV percentage e.g. 46%",
-  "nose": "2-4 tasting notes for the nose based on your whisky knowledge e.g. Vanilla, honey, light oak",
-  "palate": "2-4 tasting notes for the palate based on your whisky knowledge e.g. Sweet malt, dried fruit, warm spice",
-  "notes": "any other interesting details from the label",
-  "dulzor": sweetness score 0-5 integer,
-  "ahumado": smokiness score 0-5 integer,
-  "cuerpo": body score 0-5 integer,
-  "frutado": fruitiness score 0-5 integer,
-  "especiado": spiciness score 0-5 integer
-}
+Extract information from the bottle label image and return this exact JSON structure, with all string values filled in:
 
-If you cannot read the label clearly or identify the whisky, set name to "Unknown" and fill what you can.`
+{"name":"full whisky name","distillery":"distillery name","origin":"region and country e.g. Speyside, Scotland","type":"scotch","age":"age statement e.g. 12 Years Old","abv":"e.g. 46%","nose":"2-4 aroma descriptors based on your whisky knowledge","palate":"2-4 taste descriptors based on your whisky knowledge","notes":"any other label details","dulzor":2,"ahumado":1,"cuerpo":3,"frutado":2,"especiado":2}
+
+Rules:
+- type must be one of: scotch, irish, bourbon, japanese, other
+- nose and palate MUST be filled using your whisky knowledge even if not on the label (Islay=smoky/peaty, Speyside=fruity/floral, Bourbon=vanilla/caramel)
+- dulzor=sweetness, ahumado=smokiness, cuerpo=body, frutado=fruitiness, especiado=spiciness — all integers 0-5
+- If the label is unreadable set name to "Unknown" and estimate the rest
+- Return only the JSON object. Nothing else. First character: { Last character: }`
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
@@ -282,7 +275,7 @@ async function edgeCall(body) {
     body: JSON.stringify(body),
   })
   const data = await res.json()
-  if (!res.ok) handleApiError(res.status, { error: { message: data.error } })
+  if (!res.ok) handleApiError(res.status, data)
   return data
 }
 
@@ -299,14 +292,14 @@ async function callGemma() {
   const b64 = btoa(b64str)
 
   const { fileUri } = await edgeCall({
-    action: 'upload-file', model: 'gemma-4-31b-it',
+    action: 'upload-file', model: 'gemma-4-26b-a4b-it',
     imageB64: b64, imageMime: imageMime.value, prompt: PROMPT,
   })
   if (!fileUri) throw new Error('Upload did not return a file URI')
 
   // Step 2: generate from uploaded file
   const { text } = await edgeCall({
-    action: 'generate-file', model: 'gemma-4-31b-it',
+    action: 'generate-file', model: 'gemma-4-26b-a4b-it',
     fileUri, imageMime: imageMime.value, prompt: PROMPT,
   })
   return text || ''
@@ -320,11 +313,24 @@ async function callGeminiFlashLite() {
   return text || ''
 }
 function handleApiError(status, data) {
-  const msg = data.error?.message || 'API error'
-  if (status === 400 || status === 403) throw new Error('API configuration error. Please contact support.')
-  if (status === 429 || msg.includes('quota') || msg.includes('Quota'))
-    throw new Error('Quota exceeded. Enable billing at console.cloud.google.com or try again later.')
-  throw new Error(msg)
+  const msg = data.error?.message || data.error || 'API error'
+
+  // Detailed log for developers — includes full payload
+  console.error('[Scan] API error', {
+    model:   MODEL_LABELS[ACTIVE_MODEL],
+    status,
+    message: msg,
+    detail:  data,
+  })
+
+  // User-facing messages — simplified, no internal detail
+  if (status === 400 || status === 403)
+    throw new Error('API configuration error. Please contact support.')
+  if (status === 429 || String(msg).toLowerCase().includes('quota'))
+    throw new Error('Scan limit reached. Please try again later.')
+  if (status === 503 || status === 500)
+    throw new Error('The AI model is temporarily unavailable. Please try again in a moment.')
+  throw new Error('Something went wrong. Please try again.')
 }
 
 // Build a multipart/related body for the file upload
@@ -351,13 +357,77 @@ async function buildMultipartBody(file) {
 // ── Parse & build result ──────────────────────────────────────────────────────
 
 function parseModelText(text) {
-  const match = text.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('Could not read the label. Try a clearer photo.')
-  try { return JSON.parse(match[0]) } catch {
-    try { return JSON.parse(match[0] + '"}') } catch {
-      throw new Error('Could not parse label data. Try a clearer photo.')
+  // Strip markdown fences Gemma 4 sometimes wraps output in
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/,       '')
+    .trim()
+
+  if (!cleaned) {
+    console.warn('[Scan] parseModelText: empty response from model')
+    throw new Error('Could not read the label. Try a clearer photo.')
+  }
+
+  // Check for safety refusals (no JSON braces + refusal keywords)
+  const lc = cleaned.toLowerCase()
+  if (!cleaned.includes('{') &&
+      (lc.includes('cannot') || lc.includes('sorry') || lc.includes('unable') ||
+       lc.includes('i can') || lc.includes('alcohol') || lc.includes('policy'))) {
+    console.warn('[Scan] parseModelText: model refusal —', cleaned.slice(0, 200))
+    throw new Error('Could not read the label. Try a clearer photo.')
+  }
+
+  // Primary path: find a JSON object in the response
+  const match = cleaned.match(/\{[\s\S]*\}/)
+  if (match) {
+    try { return JSON.parse(match[0]) } catch {
+      try { return JSON.parse(match[0] + '"}') } catch {
+        console.warn('[Scan] parseModelText: JSON parse failed on —', match[0].slice(0, 300))
+        // fall through to markdown extraction below
+      }
     }
   }
+
+  // Fallback: model returned markdown/bullet format instead of JSON — extract key: value pairs
+  // Handles lines like "* Name: GlenAllachie 12 Year Old" or "- Age: 12 Years Old"
+  console.warn('[Scan] parseModelText: no valid JSON, attempting markdown extraction from —', cleaned.slice(0, 300))
+  const extract = (keys) => {
+    for (const key of keys) {
+      const re = new RegExp('(?:^|\\n)[\\*\\-\\|]?\\s*\\**' + key + '\\**\\s*[:\\|]\\s*(.+)', 'i')
+      const m = cleaned.match(re)
+      if (m) return m[1].replace(/\*+/g, '').trim()
+    }
+    return ''
+  }
+  const extractInt = (keys, fallback) => {
+    const v = parseInt(extract(keys), 10)
+    return isNaN(v) ? fallback : Math.min(5, Math.max(0, v))
+  }
+
+  const recovered = {
+    name:       extract(['name', 'whisky name', 'bottle']),
+    distillery: extract(['distillery']),
+    origin:     extract(['origin', 'region', 'country']),
+    type:       extract(['type', 'style', 'category']),
+    age:        extract(['age', 'age statement', 'maturation']),
+    abv:        extract(['abv', 'alcohol', 'strength']),
+    nose:       extract(['nose', 'aroma']),
+    palate:     extract(['palate', 'taste', 'flavour', 'flavor']),
+    notes:      extract(['notes', 'other', 'details', 'finish']),
+    dulzor:     extractInt(['dulzor', 'sweetness'],  2),
+    ahumado:    extractInt(['ahumado', 'smokiness'], 1),
+    cuerpo:     extractInt(['cuerpo', 'body'],       3),
+    frutado:    extractInt(['frutado', 'fruitiness'],2),
+    especiado:  extractInt(['especiado', 'spiciness'],2),
+  }
+
+  if (!recovered.name) {
+    console.warn('[Scan] parseModelText: markdown extraction also failed')
+    throw new Error('Could not read the label. Try a clearer photo.')
+  }
+
+  console.info('[Scan] parseModelText: recovered from markdown format —', recovered.name)
+  return recovered
 }
 
 // ── Main analyse ──────────────────────────────────────────────────────────────
@@ -377,6 +447,8 @@ async function analyse() {
   step.value = 'loading'
   try {
     const text = ACTIVE_MODEL === 'gemma' ? await callGemma() : await callGeminiFlashLite()
+    // Diagnostic: always log raw model output so response format issues are visible in console
+    console.debug('[Scan] raw model response', { model: MODEL_LABELS[ACTIVE_MODEL], length: text.length, preview: text.slice(0, 300) })
     const parsed = parseModelText(text)
 
     const abv = parsed.abv || ''
@@ -410,7 +482,23 @@ async function analyse() {
     }
 
   } catch (e) {
-    errorMsg.value = e.message || 'Could not identify the bottle. Try a clearer photo.'
+    // Log full error details to console for debugging
+    console.error('[Scan] analyse() failed', {
+      model:   MODEL_LABELS[ACTIVE_MODEL],
+      message: e.message,
+      stack:   e.stack,
+    })
+    // Show a clean message on screen — avoid exposing internal detail
+    const knownMsg = [
+      'API configuration error',
+      'Scan limit reached',
+      'temporarily unavailable',
+      'Could not read the label',
+      'Could not parse label data',
+    ].some(s => e.message?.includes(s))
+    errorMsg.value = knownMsg
+      ? e.message
+      : 'Could not identify the bottle. Try a clearer photo.'
     step.value = 'error'
   }
 }

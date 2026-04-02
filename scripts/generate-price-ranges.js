@@ -2,7 +2,7 @@
  * generate-price-ranges.js
  *
  * Fetches real price data from Master of Malt for each whisky, then asks
- * Gemma 3 27B to synthesise a price_band from the actual results.
+ * Gemma 4 31B to synthesise a price_band from the actual results.
  *
  * Scraping strategy (two-step, graceful fallback):
  *   1. Search page  — masterofmalt.com/search/?q=<name>
@@ -39,7 +39,7 @@ const CURRENCY             = process.env.CURRENCY              || '€'
 const REPRICE              = process.env.REPRICE === 'true'
 
 const MOM_BASE   = 'https://www.masterofmalt.com'
-const GEMMA_MODEL = 'gemma-4-31b-it'
+const GEMMA_MODEL = 'gemma-4-26b-a4b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const HEADERS = {
@@ -236,17 +236,29 @@ async function callGemma(prompt) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 80 },
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 80, responseMimeType: 'application/json' },
     }),
     signal: AbortSignal.timeout(15_000),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(`Gemma ${res.status}: ${err.error?.message || res.statusText}`)
+    const msg = err.error?.message || res.statusText
+    console.error(`[Gemma] HTTP ${res.status} — ${msg}`, {
+      model:  GEMMA_MODEL,
+      status: res.status,
+      detail: err.error ?? null,
+    })
+    if (res.status === 429) throw new Error(`Rate limit / quota exceeded (${res.status})`)
+    if (res.status === 503 || res.status === 500) throw new Error(`Model unavailable (${res.status}) — ${msg}`)
+    throw new Error(`Gemma ${res.status}: ${msg}`)
   }
   const data = await res.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  if (!text) {
+    console.warn('[Gemma] Empty response — full payload:', JSON.stringify(data, null, 2))
+  }
+  return text
 }
 
 // ── Parse Gemma response ──────────────────────────────────────────────────────

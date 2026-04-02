@@ -4,7 +4,7 @@
  * Weekly cron script — run via GitHub Actions every Monday.
  *
  * For each user with >= 3 journal entries:
- *   1. Calls Gemma 3 27B to generate 5 personalised whisky recommendations.
+ *   1. Calls Gemma 4 31B to generate 5 personalised whisky recommendations.
  *   2. Matches each recommendation against the catalogue (fuzzy name + distillery).
  *   3. Upserts them into the `recommendations` table.
  *   4. Fetches activity from people the user follows (last 7 days).
@@ -26,7 +26,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
-const GEMMA_MODEL = 'gemma-4-31b-it'
+const GEMMA_MODEL = 'gemma-4-26b-a4b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3
@@ -152,22 +152,36 @@ Respond ONLY with a valid JSON array — no explanation, no markdown, no backtic
 ]`
 }
 
-// ─── Gemma 3 27B API call (via Google AI) ────────────────────────────────────
+// ─── Gemma 4 31B API call (via Google AI) ────────────────────────────────────
 
 async function callGemma(prompt) {
   const res = await fetch(GEMMA_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.4, maxOutputTokens: 4096, responseMimeType: 'application/json' },
     }),
   })
 
   const data = await res.json()
-  if (!res.ok) throw new Error(`Gemma ${res.status}: ${data.error?.message || 'API error'}`)
+  if (!res.ok) {
+    const msg = data.error?.message || 'API error'
+    console.error(`[Gemma] HTTP ${res.status} — ${msg}`, {
+      model:  GEMMA_MODEL,
+      status: res.status,
+      detail: data.error ?? null,
+    })
+    if (res.status === 429) throw new Error(`Rate limit / quota exceeded (${res.status})`)
+    if (res.status === 503 || res.status === 500) throw new Error(`Model unavailable (${res.status}) — ${msg}`)
+    throw new Error(`Gemma ${res.status}: ${msg}`)
+  }
 
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  if (!text) {
+    console.warn('[Gemma] Empty response — full payload:', JSON.stringify(data, null, 2))
+  }
+  return text
 }
 
 function parseGemmaResponse(text) {
@@ -359,7 +373,7 @@ async function main() {
       const generatedAt = new Date().toISOString()
 
       if (hasEnoughEntries) {
-        // 5a. Generate recommendations via Gemma 3 27B
+        // 5a. Generate recommendations via Gemma 4 31B
         const prompt = buildPrompt(journal, wishlist, catalogueList)
         const raw    = await callGemma(prompt)
         const recs   = parseGemmaResponse(raw)
