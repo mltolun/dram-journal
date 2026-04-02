@@ -1,19 +1,17 @@
 /**
  * generate-price-ranges.js
  *
- * Fetches real price data from Master of Malt for each whisky, then asks
- * Gemma 4 26B A4B to synthesise a price_band from the actual results.
+ * Asks Gemma 4 26B A4B to estimate a typical retail price band for every
+ * whisky in the catalogue table, based on its own knowledge of UK retail prices.
  *
- * Scraping strategy (two-step, graceful fallback):
- *   1. Search page  — masterofmalt.com/search/?q=<name>
- *                     Extracts all prices from JSON-LD Product schema blocks
- *                     and any data-price / itemprop="price" attributes.
- *   2. Product page — if search returns a strong first hit, fetches that page
- *                     for a single authoritative price from its JSON-LD offer.
- *   3. Gemma-only   — if both scrape steps return nothing, falls back to AI estimate.
+ * Rate limit: 12 RPM max — 5s sleep between calls.
+ * Run manually via GitHub Actions workflow_dispatch — each run picks up
+ * where the last one left off (processes rows where status IS NULL).
  *
- * Rate limit: 15 RPM max — 4s sleep between whiskies covers both the scrape
- * and the Gemma call within the same window.
+ * status column (boolean):
+ *   NULL  = not yet processed — picked up by this cron
+ *   true  = completed successfully
+ *   false = last attempt failed (retry by resetting status to NULL)
  *
  * Usage (local):
  *   SUPABASE_URL=... SUPABASE_SERVICE_KEY=... GEMINI_KEY=... \
@@ -21,9 +19,9 @@
  *
  * Optional env vars:
  *   BATCH_LIMIT   — max rows per run (default: 6100)
- *   SLEEP_MS      — ms between whiskies (default: 4000 = 15 RPM)
+ *   SLEEP_MS      — ms between calls (default: 5000 = 12 RPM)
  *   START_OFFSET  — skip first N rows, for resuming
- *   CURRENCY      — symbol used in output (default: £, MoM is GBP-native)
+ *   CURRENCY      — symbol used in output (default: €)
  *   REPRICE       — if 'true', re-processes rows where status IS NOT NULL
  */
 
@@ -33,20 +31,13 @@ const SUPABASE_URL         = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 const BATCH_LIMIT          = parseInt(process.env.BATCH_LIMIT  || '6100')
-const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '5000')  // 12 RPM = 5s between calls — leaves headroom for slow scrapes
+const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '5000')
 const START_OFFSET         = parseInt(process.env.START_OFFSET || '0')
 const CURRENCY             = process.env.CURRENCY              || '€'
 const REPRICE              = process.env.REPRICE === 'true'
 
-const MOM_BASE   = 'https://www.masterofmalt.com'
 const GEMMA_MODEL = 'gemma-4-26b-a4b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
-
-const HEADERS = {
-  'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  'Accept-Language': 'en-GB,en;q=0.9',
-  'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-}
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {
   console.error('❌  Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or GEMINI_KEY')
@@ -55,148 +46,27 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-// ── HTML fetch ────────────────────────────────────────────────────────────────
+// ── Prompt ────────────────────────────────────────────────────────────────────
 
-async function fetchHtml(url) {
-  const res = await fetch(url, {
-    headers: HEADERS,
-    signal: AbortSignal.timeout(20_000),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`)
-  return res.text()
-}
-
-// ── Price extraction from HTML ────────────────────────────────────────────────
-
-/**
- * Extracts prices from a MoM HTML page using three methods in priority order:
- * 1. JSON-LD Product/Offer schema  → most reliable, structured
- * 2. data-price attributes          → MoM uses these on search result cards
- * 3. itemprop="price" microdata     → fallback microdata
- */
-function extractPricesFromHtml(html) {
-  const prices = new Set()
-
-  // ── Method 1: JSON-LD ──────────────────────────────────────────────────────
-  // MoM embeds <script type="application/ld+json"> blocks with Product schema
-  const ldJsonRe = /<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi
-  let ldMatch
-  while ((ldMatch = ldJsonRe.exec(html)) !== null) {
-    try {
-      const data = JSON.parse(ldMatch[1])
-      // Handle both single object and @graph arrays
-      const items = data['@graph'] ? data['@graph'] : [data]
-      for (const item of items) {
-        if (!item) continue
-        // Direct offers
-        const offers = item.offers
-          ? (Array.isArray(item.offers) ? item.offers : [item.offers])
-          : []
-        for (const offer of offers) {
-          const price = parseFloat(offer?.price)
-          if (!isNaN(price) && price >= 10 && price < 10000) prices.add(price)
-        }
-        // Nested offers.priceSpecification
-        for (const offer of offers) {
-          const ps = offer?.priceSpecification
-          if (ps) {
-            const psItems = Array.isArray(ps) ? ps : [ps]
-            for (const p of psItems) {
-              const price = parseFloat(p?.price)
-              if (!isNaN(price) && price >= 10 && price < 10000) prices.add(price)
-            }
-          }
-        }
-      }
-    } catch { /* malformed JSON-LD — skip */ }
-  }
-
-  // ── Method 2: data-price attributes ───────────────────────────────────────
-  // MoM search cards use data-price="49.95" on product elements
-  const dataPriceRe = /data-price="(\d+(?:\.\d+)?)"]/g
-  let dpMatch
-  while ((dpMatch = dataPriceRe.exec(html)) !== null) {
-    const price = parseFloat(dpMatch[1])
-    if (!isNaN(price) && price >= 10 && price < 10000) prices.add(price)
-  }
-
-  // ── Method 3: itemprop="price" microdata ──────────────────────────────────
-  const microprice = /itemprop="price"[^>]*content="(\d+(?:\.\d+)?)"/g
-  let mpMatch
-  while ((mpMatch = microprice.exec(html)) !== null) {
-    const price = parseFloat(mpMatch[1])
-    if (!isNaN(price) && price >= 10 && price < 10000) prices.add(price)
-  }
-
-  return [...prices].sort((a, b) => a - b)
-}
-
-/**
- * Extracts the first product page URL from a MoM search results page.
- * MoM search result links follow: /whiskies/<distillery>/<slug>/
- */
-function extractFirstProductUrl(html) {
-  // Match the first whisky product link in search results
-  const re = /href="(\/whisk(?:y|ies)\/[^"]+\/[^"]+\/)"/i
-  const m = re.exec(html)
-  return m ? MOM_BASE + m[1] : null
-}
-
-// ── Main scrape function ──────────────────────────────────────────────────────
-
-async function scrapeMoMPrices(whisky) {
-  // Build search query — name only is usually enough; distillery helps disambiguation
-  const name       = whisky.name || ''
-  const distillery = whisky.distillery || ''
-
-  // If distillery name is already in the whisky name, don't duplicate it
-  const queryParts = name.toLowerCase().includes(distillery.toLowerCase())
-    ? [name]
-    : [name, distillery]
-  const query = queryParts.filter(Boolean).join(' ').trim()
-
-  const searchUrl = `${MOM_BASE}/search/?q=${encodeURIComponent(query)}`
-
-  // Step 1: search page
-  const searchHtml = await fetchHtml(searchUrl)
-  const searchPrices = extractPricesFromHtml(searchHtml)
-
-  // Step 2: extract first product URL for reference (no second fetch — too slow on CI)
-  const productUrl = extractFirstProductUrl(searchHtml)
-
-  return { prices: searchPrices, productUrl }
-}
-
-// ── Gemma prompt ──────────────────────────────────────────────────────────────
-
-function buildPrompt(whisky, prices, productUrl) {
+function buildPrompt(whisky) {
   const parts = [whisky.name]
-  if (whisky.distillery) parts.push(`by ${whisky.distillery}`)
-  if (whisky.country)    parts.push(`from ${whisky.country}`)
-  if (whisky.region)     parts.push(`(${whisky.region})`)
-  if (whisky.age)        parts.push(`aged ${whisky.age}`)
-  if (whisky.abv)        parts.push(`at ${whisky.abv}`)
-  if (whisky.type)       parts.push(`style: ${whisky.type}`)
+  if (whisky.distillery) parts.push(whisky.distillery)
+  if (whisky.region)     parts.push(whisky.region)
+  if (whisky.country)    parts.push(whisky.country)
+  if (whisky.age)        parts.push(whisky.age)
+  const desc = parts.filter(Boolean).join(', ')
 
-  const desc = parts.join(', ')
+  // Seed a plausible range from known attributes so Gemma adjusts rather than invents
+  const age  = parseInt(whisky.age) || 0
+  const type = (whisky.type || '').toLowerCase()
+  let seed
+  if (type === 'bourbon')   seed = `${CURRENCY}30–${CURRENCY}60`
+  else if (age >= 18)       seed = `${CURRENCY}120–${CURRENCY}180`
+  else if (age >= 12)       seed = `${CURRENCY}50–${CURRENCY}80`
+  else                      seed = `${CURRENCY}35–${CURRENCY}55`
 
-  if (prices.length > 0) {
-    const formatted = prices.map(p => `${CURRENCY}${p.toFixed(2)}`).join(', ')
-    const source = productUrl ? `Master of Malt (${productUrl})` : 'Master of Malt search'
-    const min = Math.min(...prices)
-    const max = Math.max(...prices)
-    const lo = Math.round(min / 5) * 5
-    const hi = Math.round(max / 5) * 5
-    const hint = lo === hi ? `~${CURRENCY}${lo}` : `${CURRENCY}${lo}–${CURRENCY}${hi}`
-    return `Retail prices for ${desc} (from ${source}): ${formatted}.
-Reply with only this JSON, filling in real numbers: {"price_band":"${hint}"}
-Adjust the range slightly if needed to exclude obvious outliers.`
-  }
-
-  // Fallback: no prices scraped — pure AI estimate
-  return `Estimate the typical UK retail price for ${desc}.
-Reply with only this JSON, filling in real numbers based on your knowledge: {"price_band":"${CURRENCY}40–${CURRENCY}60"}
-Use ${CURRENCY}20–40 for budget, ${CURRENCY}40–80 for standard, ${CURRENCY}80–150 for premium, ${CURRENCY}150–300 for luxury, ${CURRENCY}300+ for ultra-rare.`
+  return `{"price_band":"${seed}"}
+// ${desc} — output only the JSON above with price_band corrected to the real UK retail range.`
 }
 
 // ── Gemma API call ────────────────────────────────────────────────────────────
@@ -233,7 +103,7 @@ async function callGemma(prompt) {
   return text
 }
 
-// ── Parse Gemma response ──────────────────────────────────────────────────────
+// ── Parse response ────────────────────────────────────────────────────────────
 
 function parseResponse(text) {
   const clean = text.replace(/```json|```/g, '').trim()
@@ -252,10 +122,10 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🥃  Dram Journal — Price Band Generator (Master of Malt + Gemma)')
+  console.log('🥃  Dram Journal — Price Band Generator (Gemma)')
   console.log(`    Model      : ${GEMMA_MODEL}`)
   console.log(`    Batch limit: ${BATCH_LIMIT}`)
-  console.log(`    Sleep      : ${SLEEP_MS / 1000}s between whiskies`)
+  console.log(`    Sleep      : ${SLEEP_MS / 1000}s between calls`)
   console.log(`    Offset     : ${START_OFFSET}`)
   console.log(`    Currency   : ${CURRENCY}`)
   console.log(`    Reprice    : ${REPRICE}`)
@@ -289,10 +159,8 @@ async function main() {
   const { count: total } = await sb.from('catalogue').select('*', { count: 'exact', head: true })
   console.log(`📋  Processing ${whiskies.length} whiskies (${total} total in catalogue)\n`)
 
-  let succeeded  = 0
-  let failed     = 0
-  let withPrices = 0
-  let fallbacked = 0
+  let succeeded = 0
+  let failed    = 0
 
   for (let i = 0; i < whiskies.length; i++) {
     const whisky = whiskies[i]
@@ -300,43 +168,27 @@ async function main() {
     process.stdout.write(`  [${pos}/${total}] ${whisky.name}… `)
 
     try {
-      // Step 1: scrape Master of Malt
-      let prices = [], productUrl = null
-      try {
-        ;({ prices, productUrl } = await scrapeMoMPrices(whisky))
-      } catch (scrapeErr) {
-        process.stdout.write(`(scrape failed: ${scrapeErr.message}) `)
-      }
-
-      if (prices.length > 0) withPrices++
-      else fallbacked++
-
-      const source = prices.length > 0
-        ? `${prices.length} price${prices.length > 1 ? 's' : ''} from MoM`
-        : 'Gemma fallback'
-
-      // Step 2: ask Gemma to synthesise a band (1 retry on timeout)
+      // Ask Gemma to estimate the price band (1 retry on timeout)
       let band
       try {
-        band = parseResponse(await callGemma(buildPrompt(whisky, prices, productUrl)))
+        band = parseResponse(await callGemma(buildPrompt(whisky)))
       } catch (gemmaErr) {
         if (gemmaErr.name === 'TimeoutError' || gemmaErr.message?.includes('timeout') || gemmaErr.message?.includes('aborted')) {
           console.warn('\n     ⚠  Gemma timeout, retrying once…')
           await sleep(3000)
-          band = parseResponse(await callGemma(buildPrompt(whisky, prices, productUrl)))
+          band = parseResponse(await callGemma(buildPrompt(whisky)))
         } else {
           throw gemmaErr
         }
       }
 
-      // Step 3: save
       const { error: updateError } = await sb
         .from('catalogue')
         .update({ price_band: band, status: true })
         .eq('id', whisky.id)
       if (updateError) throw new Error(updateError.message)
 
-      console.log(`✓  ${band}  (${source})`)
+      console.log(`✓  ${band}`)
       succeeded++
 
     } catch (err) {
@@ -353,10 +205,8 @@ async function main() {
 
   console.log()
   console.log('✅  Done!')
-  console.log(`    ✓ Succeeded      : ${succeeded}`)
-  console.log(`      ↳ Real MoM prices : ${withPrices}`)
-  console.log(`      ↳ Gemma fallback  : ${fallbacked}`)
-  console.log(`    ✗ Failed         : ${failed}`)
+  console.log(`    ✓ Succeeded : ${succeeded}`)
+  console.log(`    ✗ Failed    : ${failed}`)
   if (failed > 0) console.log(`\n⚠   ${failed} rows marked status=false — reset to NULL to retry.`)
 
   const nextOffset = START_OFFSET + whiskies.length
