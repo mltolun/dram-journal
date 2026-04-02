@@ -145,7 +145,7 @@ const cataloguePicked = ref(null)  // set when user picks from catalogue matches
 const DAILY_CAP = 20
 
 // ── Model selection ───────────────────────────────────────────────────────────
-// Toggle between: 'gemma'  → Gemma 3 27B (file-upload path)
+// Toggle between: 'gemma'  → Gemma 4 31B (file-upload path)
 //                 'gemini' → Gemini 3.1 Flash Lite (inline b64 path)
 const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
 
