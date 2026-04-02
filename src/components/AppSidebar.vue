@@ -76,7 +76,7 @@
       >
         <MoreHorizontalIcon :size="15" aria-hidden="true" />
         <span class="sidebar-nav-label">More</span>
-        <span v-if="totalInboxCount" class="mobile-more-badge" aria-label="notifications">{{ totalInboxCount }}</span>
+        <span v-if="pendingRequests.length" class="mobile-more-badge" aria-label="notifications">{{ pendingRequests.length }}</span>
       </button>
     </nav>
 
@@ -103,11 +103,6 @@
   <Teleport to="body">
     <transition name="more-pop">
       <div v-if="moreOpen" class="mobile-more-popover" :style="popoverStyle">
-        <button class="mobile-more-item" @click="inboxOpen = true; moreOpen = false">
-          <InboxIcon :size="14" aria-hidden="true" />
-          <span>{{ t.inbox }}</span>
-          <span v-if="totalInboxCount" class="mobile-more-count">{{ totalInboxCount }}</span>
-        </button>
         <button class="mobile-more-item" @click="statsOpen = true; moreOpen = false">
           <BarChart2Icon :size="14" aria-hidden="true" />
           <span>{{ t.statsAndBadges }}</span>
@@ -140,14 +135,12 @@ import {
   BarChart2 as BarChart2Icon,
   UserPlus as UserPlusIcon,
   MoreHorizontal as MoreHorizontalIcon,
-  Inbox as InboxIcon,
 } from 'lucide-vue-next'
 
 import { useI18n } from '../composables/useI18n.js'
 import { useBadges } from '../composables/useBadges.js'
 import { journal } from '../composables/useWhiskies.js'
 import { pendingRequests } from '../composables/useSubscriptions.js'
-import { unreadCount } from '../composables/useMessages.js'
 import { statsOpen, subsOpen, featureOpen } from '../composables/usePanels.js'
 import StatsPanel from './StatsPanel.vue'
 import SubscriptionsPanel from './SubscriptionsPanel.vue'
@@ -188,9 +181,6 @@ async function toggleMore() {
   }
 }
 
-const totalInboxCount = computed(() =>
-  unreadCount.value + pendingRequests.value.length
-)
 
 // First unearned badge with the most progress
 const nextBadge = computed(() =>
