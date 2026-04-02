@@ -4,7 +4,7 @@
  * Weekly cron script — run via GitHub Actions every Monday.
  *
  * For each user with >= 3 journal entries:
- *   1. Calls Gemma 4 31B to generate 5 personalised whisky recommendations.
+ *   1. Calls Gemma 3 27B to generate 5 personalised whisky recommendations.
  *   2. Matches each recommendation against the catalogue (fuzzy name + distillery).
  *   3. Upserts them into the `recommendations` table.
  *   4. Fetches activity from people the user follows (last 7 days).
@@ -26,7 +26,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
-const GEMMA_MODEL = 'gemma-4-26b-a4b-it'
+const GEMMA_MODEL = 'gemma-3-27b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3
@@ -152,7 +152,7 @@ Respond ONLY with a valid JSON array — no explanation, no markdown, no backtic
 ]`
 }
 
-// ─── Gemma 4 31B API call (via Google AI) ────────────────────────────────────
+// ─── Gemma 3 27B API call (via Google AI) ────────────────────────────────────
 
 async function callGemma(prompt) {
   const res = await fetch(GEMMA_URL, {
@@ -373,7 +373,7 @@ async function main() {
       const generatedAt = new Date().toISOString()
 
       if (hasEnoughEntries) {
-        // 5a. Generate recommendations via Gemma 4 31B
+        // 5a. Generate recommendations via Gemma 3 27B
         const prompt = buildPrompt(journal, wishlist, catalogueList)
         const raw    = await callGemma(prompt)
         const recs   = parseGemmaResponse(raw)

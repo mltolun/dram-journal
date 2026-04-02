@@ -1,7 +1,7 @@
 /**
  * generate-flavor-profiles.js
  *
- * Calls Gemma 4 31B via Google AI Studio to generate tasting notes and
+ * Calls Gemma 3 27B via Google AI Studio to generate tasting notes and
  * flavor scores for every whisky in the catalogue table.
  *
  * Rate limit: max 15 RPM — default sleep of 4s between calls.
@@ -32,7 +32,7 @@ const BATCH_LIMIT          = parseInt(process.env.BATCH_LIMIT  || '6100')
 const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '4000')  // 15 RPM = 4s between calls
 const START_OFFSET         = parseInt(process.env.START_OFFSET || '0')
 
-const GEMMA_MODEL = 'gemma-4-26b-a4b-it'
+const GEMMA_MODEL = 'gemma-3-27b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {

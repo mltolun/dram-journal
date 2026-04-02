@@ -1,7 +1,7 @@
 /**
  * generate-price-ranges.js
  *
- * Asks Gemma 4 26B A4B to estimate a typical retail price band for every
+ * Asks Gemma 3 27B to estimate a typical retail price band for every
  * whisky in the catalogue table, based on its own knowledge of UK retail prices.
  *
  * Rate limit: 12 RPM max — 5s sleep between calls.
@@ -36,7 +36,7 @@ const START_OFFSET         = parseInt(process.env.START_OFFSET || '0')
 const CURRENCY             = process.env.CURRENCY              || '€'
 const REPRICE              = process.env.REPRICE === 'true'
 
-const GEMMA_MODEL = 'gemma-4-26b-a4b-it'
+const GEMMA_MODEL = 'gemma-3-27b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {
