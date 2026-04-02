@@ -325,11 +325,11 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
     width: 100%;
     padding-bottom: calc(74px + env(safe-area-inset-bottom));
   }
-  /* Stop the search bar from squeezing the avatar out of view */
+  /* Make room for the fixed avatar (34px + 16px right + 8px gap = 58px) */
+  header { padding-right: 64px; }
   .header-top { gap: 8px; }
   .header-brand { flex-shrink: 1; min-width: 0; overflow: hidden; }
   .header-right { flex-shrink: 0; }
-  /* Hide inbox button — accessible via More menu in bottom nav */
   .btn-inbox { display: none !important; }
 }
 

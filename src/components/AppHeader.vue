@@ -234,6 +234,7 @@ async function doSignOut() {
 /* ── Search bar ── */
 .header-search {
   flex: 1;
+  min-width: 0;
   max-width: 400px;
   position: relative;
   display: flex;
@@ -448,17 +449,25 @@ async function doSignOut() {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  /* Hide inbox button — accessible via More menu in bottom nav */
+  /* Hide search and inbox — not needed in header on mobile */
+  .header-search { display: none; }
   .btn-inbox { display: none; }
 
   /* Show inbox in avatar dropdown on mobile */
   .avatar-menu-divider--mobile-only { display: block; }
   .avatar-menu-item--mobile-only { display: flex; }
 
-  /* Ensure avatar (header-right) is always visible and never squeezed out */
-  .header-right {
-    flex-shrink: 0;
-    margin-left: auto;
+  /* Pin avatar to top-right, floating above everything */
+  .avatar-wrap {
+    position: fixed;
+    top: 14px;
+    right: 16px;
+    z-index: 999;
+  }
+
+  /* Push header content left so it doesn't run under the fixed avatar */
+  :deep(header), header {
+    padding-right: 64px;
   }
 
   /* Ensure avatar menu doesn't overflow off screen */
@@ -467,17 +476,5 @@ async function doSignOut() {
     left: auto;
     max-width: calc(100vw - 16px);
   }
-}
-
-@media (max-width: 680px) {
-  .header-search { max-width: none; margin: 0 8px; }
-  /* Hide brand subtitle to save space */
-  .brand-sub { display: none; }
-}
-@media (max-width: 480px) {
-  /* Hide search — use the search in toolbar or dedicated screen */
-  .header-search { display: none; }
-  /* Shorten brand to just "Dram Journal" feel */
-  .header-brand .brand-title { font-size: 0.85rem; }
 }
 </style>
