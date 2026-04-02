@@ -185,19 +185,18 @@ function buildPrompt(whisky, prices, productUrl) {
     const source = productUrl ? `Master of Malt (${productUrl})` : 'Master of Malt search'
     const min = Math.min(...prices)
     const max = Math.max(...prices)
-    const hint = min === max ? `~${CURRENCY}${min.toFixed(0)}` : `${CURRENCY}${min.toFixed(0)}–${CURRENCY}${max.toFixed(0)}`
-    return `You are a whisky pricing expert. Retail prices from ${source} for "${desc}": ${formatted}.
-Return a JSON object with key "price_band" containing the typical retail price range.
-Use the main cluster of prices, ignoring obvious outliers (e.g. tiny samples under ${CURRENCY}15).
-The price band should look like one of these formats: "${CURRENCY}85–${CURRENCY}95" or "~${CURRENCY}49" or "${CURRENCY}300+".
-A reasonable starting point based on the data is: ${hint}.`
+    const lo = Math.round(min / 5) * 5
+    const hi = Math.round(max / 5) * 5
+    const hint = lo === hi ? `~${CURRENCY}${lo}` : `${CURRENCY}${lo}–${CURRENCY}${hi}`
+    return `Retail prices for ${desc} (from ${source}): ${formatted}.
+Reply with only this JSON, filling in real numbers: {"price_band":"${hint}"}
+Adjust the range slightly if needed to exclude obvious outliers.`
   }
 
   // Fallback: no prices scraped — pure AI estimate
-  return `You are a whisky retail pricing expert. Estimate the typical retail price range for: ${desc}.
-Base your estimate on UK retail prices (Master of Malt, The Whisky Exchange).
-Budget single malts are typically ${CURRENCY}20–40, standard ${CURRENCY}40–80, premium ${CURRENCY}80–150, luxury ${CURRENCY}150–300, ultra-rare ${CURRENCY}300+.
-Return a JSON object with key "price_band" containing the price range, e.g. {"price_band":"${CURRENCY}85–${CURRENCY}95"} or {"price_band":"${CURRENCY}300+"}.`
+  return `Estimate the typical UK retail price for ${desc}.
+Reply with only this JSON, filling in real numbers based on your knowledge: {"price_band":"${CURRENCY}40–${CURRENCY}60"}
+Use ${CURRENCY}20–40 for budget, ${CURRENCY}40–80 for standard, ${CURRENCY}80–150 for premium, ${CURRENCY}150–300 for luxury, ${CURRENCY}300+ for ultra-rare.`
 }
 
 // ── Gemma API call ────────────────────────────────────────────────────────────
@@ -208,7 +207,7 @@ async function callGemma(prompt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 80, responseMimeType: 'application/json' },
+      generationConfig: { temperature: 0.1, maxOutputTokens: 80 },
     }),
     signal: AbortSignal.timeout(30_000),
   })
@@ -228,6 +227,8 @@ async function callGemma(prompt) {
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
   if (!text) {
     console.warn('[Gemma] Empty response — full payload:', JSON.stringify(data, null, 2))
+  } else {
+    process.stdout.write(`[raw: ${text.trim().slice(0, 80)}] `)
   }
   return text
 }
