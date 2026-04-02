@@ -320,18 +320,17 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 ::-webkit-scrollbar-thumb { background:rgba(200,130,42,0.2); border-radius:2px; }
 
 @media(max-width:768px) {
-  /* The sidebar becomes position:fixed on mobile (exits the flow).
-     Switch app-layout to block so main-content fills the full width
-     naturally without flex calculations. */
-  .app-layout {
-    display: block;
-  }
-  /* main-content must fill the viewport width and leave room at the
-     bottom for the fixed tab bar (≈64px) + iOS safe area. */
+  .app-layout { display: block; }
   .main-content {
     width: 100%;
     padding-bottom: calc(74px + env(safe-area-inset-bottom));
   }
+  /* Stop the search bar from squeezing the avatar out of view */
+  .header-top { gap: 8px; }
+  .header-brand { flex-shrink: 1; min-width: 0; overflow: hidden; }
+  .header-right { flex-shrink: 0; }
+  /* Hide inbox button — accessible via More menu in bottom nav */
+  .btn-inbox { display: none !important; }
 }
 
 @media(max-width:680px) {

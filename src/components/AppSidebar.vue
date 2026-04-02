@@ -70,7 +70,8 @@
       <button
         class="sidebar-nav-item sidebar-nav-item--more"
         :class="{ active: moreOpen }"
-        @click="moreOpen = !moreOpen"
+        @click="toggleMore"
+        ref="moreBtn"
         aria-label="More options"
       >
         <MoreHorizontalIcon :size="15" aria-hidden="true" />
@@ -101,7 +102,7 @@
   <!-- ── Mobile "More" popover — Teleported to body so it escapes sidebar clipping ── -->
   <Teleport to="body">
     <transition name="more-pop">
-      <div v-if="moreOpen" class="mobile-more-popover">
+      <div v-if="moreOpen" class="mobile-more-popover" :style="popoverStyle">
         <button class="mobile-more-item" @click="inboxOpen = true; moreOpen = false">
           <InboxIcon :size="14" aria-hidden="true" />
           <span>{{ t.inbox }}</span>
@@ -131,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import {
   BookOpen as BookOpenIcon,
   Heart as HeartIcon,
@@ -161,6 +162,31 @@ const { badges, earnedCount } = useBadges()
 
 const inboxOpen    = ref(false)
 const moreOpen     = ref(false)
+const moreBtn      = ref(null)
+const popoverStyle = ref({})
+
+async function toggleMore() {
+  moreOpen.value = !moreOpen.value
+  if (moreOpen.value) {
+    await nextTick()
+    if (moreBtn.value) {
+      const rect = moreBtn.value.getBoundingClientRect()
+      // Anchor popover just above the More button
+      const popoverHeight = 132 // 3 items × 44px each
+      const spaceAbove = rect.top - 8
+      const top = Math.max(8, spaceAbove - popoverHeight)
+      // Align right edge of popover with right edge of button, clamped to screen
+      const rightEdge = window.innerWidth - rect.right
+      popoverStyle.value = {
+        position: 'fixed',
+        top: top + 'px',
+        right: Math.max(8, rightEdge) + 'px',
+        left: 'auto',
+        bottom: 'auto',
+      }
+    }
+  }
+}
 
 const totalInboxCount = computed(() =>
   unreadCount.value + pendingRequests.value.length
@@ -442,22 +468,13 @@ const nextBadgePct = computed(() => {
   must be global (not scoped). We use a separate non-scoped style block.
 -->
 <style>
-/* ── Mobile More popover (teleported, global styles) ── */
-.mobile-more-popover {
-  display: none;
-}
-
-.mobile-more-backdrop {
-  display: none;
-}
+/* ── Mobile More popover (teleported to body, global styles) ── */
+/* display is controlled by v-if — no display:none needed here */
 
 @media (max-width: 768px) {
-  /* More popover — compact card anchored above the bottom tab bar */
+  /* More popover — anchored above the More button via JS */
   .mobile-more-popover {
-    display: block;
     position: fixed;
-    bottom: calc(64px + env(safe-area-inset-bottom));
-    right: 8px;
     width: 220px;
     background: var(--bg-modal);
     border: 0.5px solid var(--border-hi);
@@ -469,7 +486,6 @@ const nextBadgePct = computed(() => {
   }
 
   .mobile-more-backdrop {
-    display: block;
     position: fixed;
     inset: 0;
     z-index: 9998;

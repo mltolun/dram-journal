@@ -51,6 +51,13 @@
             <div class="avatar-menu" v-if="menuOpen" role="menu">
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
 
+              <!-- Inbox (mobile only — button hidden on small screens) -->
+              <div class="avatar-menu-divider avatar-menu-divider--mobile-only"></div>
+              <button class="avatar-menu-item avatar-menu-item--mobile-only" @click="menuOpen = false; inboxOpen = true" role="menuitem">
+                <InboxIcon :size="14" aria-hidden="true" /> {{ t.inbox }}
+                <span v-if="totalInboxCount" class="menu-badge">{{ totalInboxCount }}</span>
+              </button>
+
               <!-- Theme picker -->
               <div class="avatar-menu-divider"></div>
               <div class="theme-row">
@@ -435,12 +442,42 @@ async function doSignOut() {
 .menu-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
 .menu-enter-from, .menu-leave-to { opacity: 0; transform: scale(0.95) translateY(-4px); }
 
+/* Mobile-only avatar menu items */
+.avatar-menu-divider--mobile-only,
+.avatar-menu-item--mobile-only { display: none; }
+
 /* ── Responsive ── */
+@media (max-width: 768px) {
+  /* Hide inbox button — accessible via More menu in bottom nav */
+  .btn-inbox { display: none; }
+
+  /* Show inbox in avatar dropdown on mobile */
+  .avatar-menu-divider--mobile-only { display: block; }
+  .avatar-menu-item--mobile-only { display: flex; }
+
+  /* Ensure avatar (header-right) is always visible and never squeezed out */
+  .header-right {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  /* Ensure avatar menu doesn't overflow off screen */
+  .avatar-menu {
+    right: 0;
+    left: auto;
+    max-width: calc(100vw - 16px);
+  }
+}
+
 @media (max-width: 680px) {
   .header-search { max-width: none; margin: 0 8px; }
-  .btn-inbox span { display: none; }
+  /* Hide brand subtitle to save space */
+  .brand-sub { display: none; }
 }
 @media (max-width: 480px) {
+  /* Hide search — use the search in toolbar or dedicated screen */
   .header-search { display: none; }
+  /* Shorten brand to just "Dram Journal" feel */
+  .header-brand .brand-title { font-size: 0.85rem; }
 }
 </style>
