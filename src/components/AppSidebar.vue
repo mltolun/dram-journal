@@ -75,7 +75,47 @@
         <UsersIcon :size="15" aria-hidden="true" />
         <span class="sidebar-nav-label">{{ t.feed }}</span>
       </button>
+      <button
+        class="sidebar-nav-item sidebar-nav-item--more"
+        :class="{ active: moreOpen }"
+        @click="moreOpen = !moreOpen"
+        aria-label="More options"
+      >
+        <MoreHorizontalIcon :size="15" aria-hidden="true" />
+        <span class="sidebar-nav-label">More</span>
+        <span v-if="totalInboxCount" class="mobile-more-badge" aria-label="notifications">{{ totalInboxCount }}</span>
+      </button>
     </nav>
+
+    <!-- Mobile "More" drawer -->
+    <transition name="more-drawer">
+      <div v-if="moreOpen" class="mobile-more-drawer" @click.self="moreOpen = false">
+        <div class="mobile-more-sheet">
+          <div class="mobile-more-header">
+            <span class="mobile-more-title">More</span>
+            <button class="mobile-more-close" @click="moreOpen = false" aria-label="Close"><XIcon :size="16" /></button>
+          </div>
+          <button class="mobile-more-item" @click="inboxOpen = true; moreOpen = false">
+            <InboxIcon :size="16" aria-hidden="true" />
+            <span>{{ t.inbox }}</span>
+            <span v-if="totalInboxCount" class="mobile-more-count">{{ totalInboxCount }}</span>
+          </button>
+          <button class="mobile-more-item" @click="statsOpen = true; moreOpen = false">
+            <BarChart2Icon :size="16" aria-hidden="true" />
+            <span>{{ t.statsAndBadges }}</span>
+          </button>
+          <button class="mobile-more-item" @click="subsOpen = true; moreOpen = false">
+            <UserPlusIcon :size="16" aria-hidden="true" />
+            <span>{{ t.friendsFollowers }}</span>
+            <span v-if="pendingRequests.length" class="mobile-more-count">{{ pendingRequests.length }}</span>
+          </button>
+          <button class="mobile-more-item" @click="featureOpen = true; moreOpen = false">
+            <LightbulbIcon :size="16" aria-hidden="true" />
+            <span>{{ t.featureRequests }}</span>
+          </button>
+        </div>
+      </div>
+    </transition>
 
     <div class="sidebar-divider sidebar-divider--desktop-only"></div>
 
@@ -104,6 +144,7 @@
   <StatsPanel v-if="statsOpen" @close="statsOpen = false" />
   <SubscriptionsPanel v-if="subsOpen" @close="subsOpen = false" />
   <FeatureRequestPanel v-if="featureOpen" @close="featureOpen = false" />
+  <InboxPanel v-if="inboxOpen" @close="inboxOpen = false" />
 </template>
 
 <script setup>
@@ -116,15 +157,20 @@ import {
   BarChart2 as BarChart2Icon,
   UserPlus as UserPlusIcon,
   Lightbulb as LightbulbIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  Inbox as InboxIcon,
+  X as XIcon,
 } from 'lucide-vue-next'
 
 import { useI18n } from '../composables/useI18n.js'
 import { useBadges } from '../composables/useBadges.js'
 import { journal } from '../composables/useWhiskies.js'
 import { pendingRequests } from '../composables/useSubscriptions.js'
+import { unreadCount } from '../composables/useMessages.js'
 import StatsPanel from './StatsPanel.vue'
 import SubscriptionsPanel from './SubscriptionsPanel.vue'
 import FeatureRequestPanel from './FeatureRequestPanel.vue'
+import InboxPanel from './InboxPanel.vue'
 
 defineProps({ activeList: String })
 defineEmits(['setList'])
@@ -132,9 +178,15 @@ defineEmits(['setList'])
 const { t } = useI18n()
 const { badges, earnedCount } = useBadges()
 
-const statsOpen   = ref(false)
-const subsOpen    = ref(false)
-const featureOpen = ref(false)
+const statsOpen    = ref(false)
+const subsOpen     = ref(false)
+const featureOpen  = ref(false)
+const inboxOpen    = ref(false)
+const moreOpen     = ref(false)
+
+const totalInboxCount = computed(() =>
+  unreadCount.value + pendingRequests.value.length
+)
 
 // First unearned badge with the most progress
 const nextBadge = computed(() =>
@@ -329,6 +381,10 @@ const nextBadgePct = computed(() => {
   flex-shrink: 0;
 }
 
+/* ── Mobile-only elements (hidden on desktop) ── */
+.sidebar-nav-item--more,
+.mobile-more-drawer { display: none; }
+
 /* ── Mobile: bottom tab bar ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .app-sidebar {
@@ -338,7 +394,8 @@ const nextBadgePct = computed(() => {
     right: 0;
     width: 100%;
     min-width: unset;
-    height: auto;
+    height: auto !important;
+    max-height: 70px;          /* hard cap — only the tab bar height */
     flex-direction: row;
     padding: 0;
     border-right: none;
@@ -347,8 +404,11 @@ const nextBadgePct = computed(() => {
     background: var(--bg-modal);
     backdrop-filter: blur(12px);
     overflow: visible;
-    /* Respect iOS safe area */
     padding-bottom: env(safe-area-inset-bottom);
+  }
+  .sidebar-nav {
+    pointer-events: all;
+    height: 60px;              /* explicit nav height so items don't expand */
   }
   .sidebar-quick-stats,
   .sidebar-divider,
@@ -370,6 +430,103 @@ const nextBadgePct = computed(() => {
     justify-content: center;
     align-items: center;
   }
+  .sidebar-nav-item--more { display: flex; position: relative; }
+  .mobile-more-badge {
+    position: absolute;
+    top: 6px; right: calc(50% - 14px);
+    background: var(--amber);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.45rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 1px 4px;
+    line-height: 1.4;
+    min-width: 13px;
+    text-align: center;
+  }
+
+  /* More drawer */
+  .mobile-more-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: flex-end;
+  }
+  .mobile-more-sheet {
+    width: 100%;
+    background: var(--bg-modal);
+    border-top: 0.5px solid var(--border-hi);
+    border-radius: 16px 16px 0 0;
+    padding: 0 0 calc(env(safe-area-inset-bottom) + 8px);
+    backdrop-filter: blur(16px);
+  }
+  .mobile-more-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .mobile-more-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .mobile-more-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+  }
+  .mobile-more-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    border-bottom: 0.5px solid var(--border);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+  }
+  .mobile-more-item:last-child { border-bottom: none; }
+  .mobile-more-item:active { background: rgba(200,130,42,0.08); }
+  .mobile-more-item svg { color: var(--amber); flex-shrink: 0; }
+  .mobile-more-count {
+    margin-left: auto;
+    background: var(--amber);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 2px 7px;
+  }
+
+  /* Drawer transition */
+  .more-drawer-enter-active { transition: opacity 0.2s ease; }
+  .more-drawer-leave-active { transition: opacity 0.18s ease; }
+  .more-drawer-enter-from, .more-drawer-leave-to { opacity: 0; }
+  .more-drawer-enter-active .mobile-more-sheet { transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
+  .more-drawer-leave-active .mobile-more-sheet { transition: transform 0.2s ease; }
+  .more-drawer-enter-from .mobile-more-sheet, .more-drawer-leave-to .mobile-more-sheet { transform: translateY(100%); }
+
   .sidebar-nav-item svg { opacity: 0.6; }
   .sidebar-nav-item.active {
     background: transparent;

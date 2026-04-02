@@ -85,6 +85,17 @@
                 </button>
               </template>
               <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item" @click="menuOpen = false; statsOpen = true" role="menuitem">
+                <BarChart2Icon :size="14" aria-hidden="true" /> {{ t.statsAndBadges }}
+              </button>
+              <button class="avatar-menu-item" @click="menuOpen = false; subsOpen = true" role="menuitem">
+                <UsersIcon :size="14" aria-hidden="true" /> {{ t.friendsFollowers }}
+                <span v-if="pendingRequests.length" class="menu-badge">{{ pendingRequests.length }}</span>
+              </button>
+              <button class="avatar-menu-item" @click="menuOpen = false; featureOpen = true" role="menuitem">
+                <LightbulbIcon :size="14" aria-hidden="true" /> {{ t.featureRequests }}
+              </button>
+              <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="doToggleLocale" role="menuitem">
                 <GlobeIcon :size="14" aria-hidden="true" /> {{ locale === 'en' ? 'Español' : 'English' }}
               </button>
@@ -120,6 +131,7 @@ import { pendingRequests } from '../composables/useSubscriptions.js'
 import InboxPanel from './InboxPanel.vue'
 import AdminFeaturePanel from './AdminFeaturePanel.vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
+import { statsOpen, subsOpen, featureOpen } from '../composables/usePanels.js'
 import { useBadges } from '../composables/useBadges.js'
 import { searchQuery } from '../composables/useSearch.js'
 import {
@@ -131,6 +143,9 @@ import {
   Sun as SunIcon,
   Moon as MoonIcon,
   Search as SearchIcon,
+  BarChart2 as BarChart2Icon,
+  Users as UsersIcon,
+  Lightbulb as LightbulbIcon,
 } from 'lucide-vue-next'
 
 const { signOut } = useAuth()

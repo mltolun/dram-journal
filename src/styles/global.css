@@ -69,6 +69,10 @@
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
+html, body, #app {
+  height: 100%;
+}
+
 body {
   background: var(--bg);
   color: var(--text-primary);
@@ -316,8 +320,18 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 ::-webkit-scrollbar-thumb { background:rgba(200,130,42,0.2); border-radius:2px; }
 
 @media(max-width:768px) {
-  /* Push content above the bottom tab bar */
-  .main-content { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+  /* The sidebar becomes position:fixed on mobile (exits the flow).
+     Switch app-layout to block so main-content fills the full width
+     naturally without flex calculations. */
+  .app-layout {
+    display: block;
+  }
+  /* main-content must fill the viewport width and leave room at the
+     bottom for the fixed tab bar (≈64px) + iOS safe area. */
+  .main-content {
+    width: 100%;
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
 }
 
 @media(max-width:680px) {
