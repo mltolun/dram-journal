@@ -5,7 +5,7 @@
 
         <div class="cp-header">
           <span class="cp-title">{{ t.comparison }}</span>
-          <button class="cp-close" @click="$emit('close')">✕</button>
+          <button class="cp-close" @click="$emit('close')"><XIcon :size="14" /></button>
         </div>
 
         <div class="cp-scroll">
@@ -93,6 +93,7 @@
 
 <script setup>
 import { ATTRS, TYPE_BADGE_STYLE, COLOR_HEX } from '../lib/constants.js'
+import { X as XIcon } from 'lucide-vue-next'
 import { useI18n } from '../composables/useI18n.js'
 
 defineProps({ whiskies: Array })

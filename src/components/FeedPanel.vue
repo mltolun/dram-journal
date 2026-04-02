@@ -15,7 +15,7 @@
 
     <!-- Has follows but no activity -->
     <div v-else-if="feedItems.length === 0" class="feed-empty">
-      <div class="feed-empty-icon">🥃</div>
+      <div class="feed-empty-icon"><GlassWaterIcon :size="40" /></div>
       <div class="feed-empty-text">{{ t.feedNoActivity }}</div>
       <button class="feed-refresh-btn" @click="loadFeed">{{ t.feedRefresh }}</button>
     </div>
@@ -36,7 +36,7 @@
           <div v-for="item in group.items" :key="item.id" class="feed-item">
             <div class="feed-thumb">
               <img v-if="item.photo_url" :src="item.photo_url" :alt="item.whisky_name" class="feed-thumb-img">
-              <div v-else class="feed-thumb-ph">🥃</div>
+              <div v-else class="feed-thumb-ph"><GlassWaterIcon :size="24" /></div>
             </div>
             <div class="feed-body">
               <div class="feed-action">
@@ -66,6 +66,7 @@
 
 <script setup>
 import { computed, onMounted } from 'vue'
+import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { useFeed } from '../composables/useFeed.js'
 import { myFollowing } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'

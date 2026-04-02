@@ -6,29 +6,30 @@
       <div class="sidebar-section-label">{{ t.quickStats }}</div>
 
       <div class="qs-row">
-        <span class="qs-icon" aria-hidden="true">🥃</span>
+        <GlassWaterIcon :size="14" class="qs-icon" aria-hidden="true" />
         <span class="qs-label">{{ t.totalDrams }}</span>
         <span class="qs-value">{{ journal.length }}</span>
       </div>
 
       <div class="qs-row">
-        <span class="qs-icon" aria-hidden="true">🏅</span>
+        <AwardIcon :size="14" class="qs-icon" aria-hidden="true" />
         <span class="qs-label">{{ t.statsBadges }}</span>
         <span class="qs-value">{{ earnedCount }}/{{ badges.length }}</span>
       </div>
 
       <!-- Next-badge progress -->
       <template v-if="nextBadge && earnedCount < badges.length">
-        <div class="qs-next-label">
-          <span>{{ nextBadge.icon }} {{ nextBadge.name }}</span>
-          <span class="qs-next-pct">{{ nextBadgePct }}%</span>
+        <div class="qs-row">
+          <component :is="BADGE_ICON_MAP[nextBadge.icon]" :size="14" class="qs-icon" aria-hidden="true" />
+          <span class="qs-label">{{ nextBadge.name }}</span>
+          <span class="qs-value">{{ nextBadgePct }}%</span>
         </div>
         <div class="qs-track" role="progressbar" :aria-valuenow="nextBadgePct" aria-valuemin="0" aria-valuemax="100">
           <div class="qs-fill" :style="{ width: nextBadgePct + '%' }"></div>
         </div>
       </template>
       <div v-else-if="earnedCount === badges.length" class="qs-complete">
-        ✦ All badges earned
+        <SparklesIcon :size="12" style="display:inline;vertical-align:middle;margin-right:4px;" /> All badges earned
       </div>
     </div>
 
@@ -135,7 +136,13 @@ import {
   BarChart2 as BarChart2Icon,
   UserPlus as UserPlusIcon,
   MoreHorizontal as MoreHorizontalIcon,
+  GlassWater as GlassWaterIcon,
+  Award as AwardIcon,
+  Sparkles as SparklesIcon,
+  Hash, Trophy, Globe, Flame, Star, FlaskConical,
 } from 'lucide-vue-next'
+
+const BADGE_ICON_MAP = { GlassWater: GlassWaterIcon, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users: UsersIcon }
 
 import { useI18n } from '../composables/useI18n.js'
 import { useBadges } from '../composables/useBadges.js'
@@ -236,7 +243,7 @@ const nextBadgePct = computed(() => {
   gap: 8px;
   padding: 5px 18px;
 }
-.qs-icon { font-size: 0.9rem; line-height: 1; flex-shrink: 0; }
+.qs-icon { flex-shrink: 0; display: flex; align-items: center; color: var(--text-secondary); opacity: 0.7; }
 .qs-label {
   font-size: 0.72rem;
   color: var(--text-secondary);
@@ -245,27 +252,12 @@ const nextBadgePct = computed(() => {
 }
 .qs-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--amber-light);
 }
 
-.qs-next-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 18px 4px;
-  font-size: 0.68rem;
-  color: var(--text-secondary);
-  font-family: 'Inter', sans-serif;
-}
-.qs-next-pct {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  color: var(--amber);
-  margin-left: 6px;
-  flex-shrink: 0;
-}
+
 .qs-track {
   height: 3px;
   background: var(--bg-bar-track);

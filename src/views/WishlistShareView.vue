@@ -1,11 +1,11 @@
 <template>
   <div v-if="loading" class="share-error">
-    <div class="share-error-icon">✦</div>
+    <div class="share-error-icon"><SparklesIcon :size="36" /></div>
     <div class="share-error-txt">{{ t.loading }}</div>
   </div>
 
   <div v-else-if="!items.length" class="share-error">
-    <div class="share-error-icon">✦</div>
+    <div class="share-error-icon"><SparklesIcon :size="36" /></div>
     <div class="share-error-txt">{{ t.wishlistNotFound }}</div>
     <RouterLink to="/" style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
   </div>
@@ -13,7 +13,7 @@
   <div v-else>
     <div class="share-hero">
       <div class="share-brand">The <span>Dram</span> Journal</div>
-      <div class="share-whisky-name" style="font-size:1.6rem;">✦ {{ t.wishlist }}</div>
+      <div class="share-whisky-name" style="font-size:1.6rem;"><SparklesIcon :size="18" style="display:inline;vertical-align:middle;margin-right:6px;" />{{ t.wishlist }}</div>
       <div class="share-meta" style="margin-top:0.5rem;">
         <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--peat-light);letter-spacing:0.1em;text-transform:uppercase;">
           {{ items.length }} {{ items.length === 1 ? t.bottle : t.bottles }}
@@ -59,6 +59,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Sparkles as SparklesIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
 import { currentUser, useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'

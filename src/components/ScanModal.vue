@@ -4,7 +4,7 @@
 
       <div class="modal-header">
         <div class="modal-title">{{ t.scanBottle }}</div>
-        <button class="modal-close" @click="$emit('close')">✕</button>
+        <button class="modal-close" @click="$emit('close')"><XIcon :size="14" /></button>
       </div>
 
       <!-- Step 1: pick image -->
@@ -44,7 +44,7 @@
 
         <!-- Identified header -->
         <div class="scan-result-header">
-          <span class="scan-tick">✓</span> {{ t.whiskyIdentified }}
+          <CheckIcon :size="14" class="scan-tick" /> {{ t.whiskyIdentified }}
           <span class="scan-model-badge">{{ MODEL_LABELS[ACTIVE_MODEL] }}</span>
         </div>
 
@@ -52,7 +52,7 @@
         <div v-if="cataloguePicked" class="scan-picked-card">
           <div class="scan-picked-thumb">
             <img v-if="cataloguePicked.photo_url" :src="cataloguePicked.photo_url" :alt="cataloguePicked.name" class="scan-picked-img">
-            <div v-else class="scan-picked-placeholder">🥃</div>
+            <div v-else class="scan-picked-placeholder"><GlassWaterIcon :size="32" /></div>
           </div>
           <div class="scan-picked-info">
             <div class="scan-picked-name">{{ cataloguePicked.name }}</div>
@@ -75,7 +75,7 @@
               >
                 <div class="cs-thumb">
                   <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
-                  <div v-else class="cs-img-placeholder">🥃</div>
+                  <div v-else class="cs-img-placeholder"><GlassWaterIcon :size="32" /></div>
                 </div>
                 <div class="cs-info">
                   <div class="cs-name">{{ item.name }}</div>
@@ -127,7 +127,11 @@ import { compressImage } from '../utils/compressImage.js'
 import { useI18n } from '../composables/useI18n.js'
 import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
-import { Camera as CameraIcon } from 'lucide-vue-next'
+import {
+  Camera as CameraIcon, GlassWater as GlassWaterIcon,
+  Check as CheckIcon,
+  X as XIcon
+} from 'lucide-vue-next'
 import { useToast } from '../composables/useToast.js'
 
 const emit = defineEmits(['close', 'identified'])
@@ -150,7 +154,7 @@ const DAILY_CAP = 20
 const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
 
 const MODEL_LABELS = {
-  gemma:  'Gemma 3 27B',
+  gemma:  'Gemma 4 31B',
   gemini: 'Gemini 3.1 Flash Lite',
 }
 
@@ -295,14 +299,14 @@ async function callGemma() {
   const b64 = btoa(b64str)
 
   const { fileUri } = await edgeCall({
-    action: 'upload-file', model: 'gemma-3-27b-it',
+    action: 'upload-file', model: 'gemma-4-31b-it',
     imageB64: b64, imageMime: imageMime.value, prompt: PROMPT,
   })
   if (!fileUri) throw new Error('Upload did not return a file URI')
 
   // Step 2: generate from uploaded file
   const { text } = await edgeCall({
-    action: 'generate-file', model: 'gemma-3-27b-it',
+    action: 'generate-file', model: 'gemma-4-31b-it',
     fileUri, imageMime: imageMime.value, prompt: PROMPT,
   })
   return text || ''

@@ -3,7 +3,7 @@
     <Transition name="install-prompt">
       <div v-if="show" class="install-prompt" :class="{ 'install-prompt--ios': isIos }">
         <div class="install-prompt-content">
-          <div class="install-prompt-icon">🥃</div>
+          <div class="install-prompt-icon"><GlassWaterIcon :size="32" /></div>
           <div class="install-prompt-text">
             <div class="install-prompt-title">Install The Dram Journal</div>
             <div class="install-prompt-desc">
@@ -29,7 +29,7 @@
             Install
           </button>
 
-          <button class="install-prompt-close" @click="dismiss">✕</button>
+          <button class="install-prompt-close" @click="dismiss"><XIcon :size="14" /></button>
         </div>
         <!-- iOS only: arrow pointing to Safari share button -->
         <div v-if="isIos" class="install-prompt-arrow">▼</div>
@@ -40,6 +40,10 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import {
+  GlassWater as GlassWaterIcon,
+  X as XIcon
+} from 'lucide-vue-next'
 
 const show = ref(false)
 const isIos = ref(false)

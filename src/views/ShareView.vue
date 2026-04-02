@@ -1,11 +1,11 @@
 <template>
   <div v-if="loading" class="share-error">
-    <div class="share-error-icon">🥃</div>
+    <div class="share-error-icon"><GlassWaterIcon :size="36" /></div>
     <div class="share-error-txt">{{ t.loading }}</div>
   </div>
 
   <div v-else-if="!whisky" class="share-error">
-    <div class="share-error-icon">🥃</div>
+    <div class="share-error-icon"><GlassWaterIcon :size="36" /></div>
     <div class="share-error-txt">{{ t.dramNotFound }}</div>
     <RouterLink to="/" style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
   </div>
@@ -77,6 +77,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
 import { currentUser, useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'

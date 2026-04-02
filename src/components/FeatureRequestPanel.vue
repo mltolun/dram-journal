@@ -5,7 +5,7 @@
       <!-- Header -->
       <div class="subs-header">
         <button class="subs-close" @click="$emit('close')" aria-label="Back">
-          <span class="subs-close-arrow">←</span> Back
+          <ArrowLeftIcon :size="14" /> Back
         </button>
         <div class="subs-title">{{ t.frTitle }}</div>
       </div>
@@ -110,7 +110,7 @@
 
             <!-- Admin note shown when done -->
             <div v-if="req.status === 'done' && req.admin_note" class="fr-admin-note">
-              <span class="fr-admin-note-label">{{ t.frFromTeam }}</span> {{ req.admin_note }}
+              <span class="fr-admin-note-label"><MessageSquareIcon :size="10" style="display:inline;vertical-align:middle;margin-right:3px;" />{{ t.frFromTeam }}</span> {{ req.admin_note }}
             </div>
 
             <!-- Expandable description -->
@@ -134,6 +134,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import {
+  MessageSquare as MessageSquareIcon,
+  ArrowLeft as ArrowLeftIcon
+} from 'lucide-vue-next'
 import { useFeatureRequests, myFeatureRequests } from '../composables/useFeatureRequests.js'
 import { useI18n } from '../composables/useI18n.js'
 

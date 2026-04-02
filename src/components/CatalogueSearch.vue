@@ -18,7 +18,7 @@
         autocomplete="off"
         @input="onInput"
       />
-      <button v-if="query" class="cs-clear" @click="onClear">✕</button>
+      <button v-if="query" class="cs-clear" @click="onClear"><XIcon :size="12" /></button>
     </div>
 
     <!-- Results -->
@@ -38,7 +38,7 @@
       >
         <div class="cs-thumb">
           <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
-          <div v-else class="cs-img-placeholder">🥃</div>
+          <div v-else class="cs-img-placeholder"><GlassWaterIcon :size="28" /></div>
         </div>
         <div class="cs-info">
           <div class="cs-name">{{ item.name }}</div>
@@ -77,6 +77,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import {
+  GlassWater as GlassWaterIcon,
+  X as XIcon
+} from 'lucide-vue-next'
 import { useCatalogue } from '../composables/useCatalogue.js'
 import { useI18n } from '../composables/useI18n.js'
 

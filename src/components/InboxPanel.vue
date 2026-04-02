@@ -12,7 +12,7 @@
           <button v-if="unreadCount" class="mark-all-btn" @click="markAllRead">
             {{ t.markAllRead }}
           </button>
-          <button class="subs-close" @click="$emit('close')">✕</button>
+          <button class="subs-close" @click="$emit('close')"><XIcon :size="14" /></button>
         </div>
       </div>
 
@@ -79,20 +79,21 @@
               </template>
               <!-- Shared dram -->
               <template v-else>
-                <span class="inbox-type-pill inbox-type-pill--whisky">{{ t.sharedDram }}</span>
+                <span class="inbox-type-pill inbox-type-pill--whisky"><GlassWaterIcon :size="10" style="display:inline;vertical-align:middle;margin-right:3px;" />{{ t.sharedDram }}</span>
                 <span class="inbox-dot">·</span>
                 <span class="inbox-from">{{ msg.sender_email }}</span>
                 <span class="inbox-dot">·</span>
                 <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
               </template>
             </div>
-            <button class="inbox-delete" @click.stop="deleteMessage(msg.id)" title="Delete">✕</button>
+            <button class="inbox-delete" @click.stop="deleteMessage(msg.id)" title="Delete"><XIcon :size="12" /></button>
           </div>
 
           <!-- Feature request message body -->
           <template v-if="msg.whisky_payload?.msg_type === 'feature_request'">
             <div class="inbox-whisky-name">{{ msg.whisky_payload.feature_title }}</div>
             <div class="inbox-fr-status" :class="`inbox-fr-status--${msg.whisky_payload.status}`">
+              <component :is="FR_STATUS_ICONS[msg.whisky_payload.status]" :size="11" style="display:inline;vertical-align:middle;margin-right:3px;" />
               {{ FR_STATUS_LABELS[msg.whisky_payload.status] || msg.whisky_payload.status }}
             </div>
             <div v-if="msg.whisky_payload.admin_note" class="inbox-fr-note">
@@ -140,6 +141,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { Sparkles as SparklesIcon, Settings as SettingsIcon, Check as CheckIcon, X as XIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { useMessages, inbox, unreadCount } from '../composables/useMessages.js'
 import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'
@@ -157,10 +159,17 @@ const ATTR_LABELS = {
 }
 
 const FR_STATUS_LABELS = {
-  accepted:    '✦ Accepted',
-  in_progress: '⚙ In progress',
-  done:        '✓ Shipped',
-  declined:    '✕ Declined',
+  accepted:    'Accepted',
+  in_progress: 'In progress',
+  done:        'Shipped',
+  declined:    'Declined',
+}
+
+const FR_STATUS_ICONS = {
+  accepted:    SparklesIcon,
+  in_progress: SettingsIcon,
+  done:        CheckIcon,
+  declined:    XIcon,
 }
 
 const expanded  = ref(null)

@@ -77,10 +77,10 @@
         <!-- ── Wishlist: two-column layout ── -->
         <div v-if="activeList === 'wishlist'" class="wishlist-layout">
           <div class="wishlist-col">
-            <div class="wishlist-section-lbl">✦ {{ t.wishlist }}</div>
+            <div class="wishlist-section-lbl"><SparklesIcon :size="12" style="display:inline;vertical-align:middle;margin-right:5px;" />{{ t.wishlist }}</div>
             <div class="whisky-grid wishlist-grid">
               <div class="empty-grid" v-if="activeItems.length === 0">
-                <div class="empty-icon">✦</div>
+                <div class="empty-icon"><SparklesIcon :size="36" /></div>
                 <div class="empty-text">{{ t.emptyWishlist }}</div>
               </div>
               <WhiskyCard
@@ -109,7 +109,7 @@
         >
           <template v-if="activeItems.length === 0">
             <div class="empty-grid">
-              <div class="empty-icon">🥃</div>
+              <div class="empty-icon"><GlassWaterIcon :size="36" /></div>
               <div class="empty-text">{{ t.emptyJournal }}</div>
             </div>
           </template>
@@ -230,6 +230,8 @@ import {
   LayoutGrid as LayoutGridIcon,
   List as ListIcon,
   Calendar as CalendarIcon,
+  GlassWater as GlassWaterIcon,
+  Sparkles as SparklesIcon,
 } from 'lucide-vue-next'
 
 import AuthBox             from '../components/AuthBox.vue'

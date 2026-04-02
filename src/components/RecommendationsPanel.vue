@@ -2,7 +2,7 @@
   <div v-if="recommendations.length > 0" class="recs-section">
 
     <div class="recs-header">
-      <div class="recs-title">✦ {{ t.recsTitle }}</div>
+      <div class="recs-title"><SparklesIcon :size="13" style="display:inline;vertical-align:middle;margin-right:5px;" />{{ t.recsTitle }}</div>
       <div class="recs-sub">{{ t.recsSub }}</div>
     </div>
 
@@ -55,7 +55,7 @@ import { useWhiskies } from '../composables/useWhiskies.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
 import { ATTRS, DEFAULTS } from '../lib/constants.js'
-import { Heart as HeartIcon, Check as CheckIcon } from 'lucide-vue-next'
+import { Heart as HeartIcon, Check as CheckIcon, Sparkles as SparklesIcon } from 'lucide-vue-next'
 
 const { insertWhisky } = useWhiskies()
 const { toast } = useToast()

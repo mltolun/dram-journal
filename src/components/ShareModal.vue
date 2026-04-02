@@ -3,7 +3,7 @@
     <div class="modal" style="max-width:480px">
       <div class="modal-header">
         <div class="modal-title">{{ t.shareThisDram }}</div>
-        <button class="modal-close" @click="$emit('close')">✕</button>
+        <button class="modal-close" @click="$emit('close')"><XIcon :size="14" /></button>
       </div>
 
       <!-- Tabs -->
@@ -59,7 +59,7 @@
           >
             <span class="follower-email">{{ sub.follower_email }}</span>
             <span class="follower-action">
-              {{ sentTo.has(sub.follower_id) ? '✓ Sent' : sendingTo === sub.follower_id ? '…' : 'Send →' }}
+              <CheckIcon v-if="sentTo.has(sub.follower_id)" :size="12" /> <template v-else-if="sendingTo === sub.follower_id">…</template> <template v-else>Send <ArrowRightIcon :size="12" /></template>
             </span>
           </button>
           </div>
@@ -77,6 +77,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { X as XIcon, Check as CheckIcon, ArrowRight as ArrowRightIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'

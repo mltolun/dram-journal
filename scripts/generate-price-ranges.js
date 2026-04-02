@@ -39,7 +39,7 @@ const CURRENCY             = process.env.CURRENCY              || '€'
 const REPRICE              = process.env.REPRICE === 'true'
 
 const MOM_BASE   = 'https://www.masterofmalt.com'
-const GEMMA_MODEL = 'gemma-3-27b-it'
+const GEMMA_MODEL = 'gemma-4-31b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const HEADERS = {

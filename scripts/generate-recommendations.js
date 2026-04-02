@@ -26,7 +26,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 const SEND_EMAILS          = process.env.SEND_EMAILS !== 'false'
 
-const GEMMA_MODEL = 'gemma-3-27b-it'
+const GEMMA_MODEL = 'gemma-4-31b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 const MIN_JOURNAL_ENTRIES = 3

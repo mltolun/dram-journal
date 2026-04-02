@@ -5,7 +5,7 @@
       <!-- Header -->
       <div class="subs-header">
         <div class="subs-title">{{ t.frAdminTitle }} <span class="admin-badge">{{ t.frAdminBadge }}</span></div>
-        <button class="subs-close" @click="$emit('close')">✕</button>
+        <button class="subs-close" @click="$emit('close')"><XIcon :size="14" /></button>
       </div>
 
       <!-- Filters -->
@@ -38,7 +38,7 @@
         </div>
 
         <div v-else-if="filtered.length === 0" class="fr-empty">
-          <div class="fr-empty-icon">✓</div>
+          <div class="fr-empty-icon"><CheckCircleIcon :size="36" /></div>
           <div>{{ t.frAdminEmpty }}</div>
         </div>
 
@@ -159,6 +159,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
+import { X as XIcon, CheckCircle as CheckCircleIcon } from 'lucide-vue-next'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
 import { currentUser } from '../composables/useAuth.js'
 import { useI18n } from '../composables/useI18n.js'

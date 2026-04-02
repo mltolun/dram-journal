@@ -137,7 +137,7 @@
         <!-- Lightbox -->
         <Teleport to="body">
           <div v-if="lightboxOpen" class="lightbox" @click="lightboxOpen = false">
-            <button class="lightbox-close" @click="lightboxOpen = false">✕</button>
+            <button class="lightbox-close" @click="lightboxOpen = false"><XIcon :size="16" /></button>
             <img :src="form.photo_url" :alt="form.name" class="lightbox-img" @click.stop>
           </div>
         </Teleport>
@@ -166,7 +166,7 @@
             >
               <div class="cs-thumb">
                 <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
-                <div v-else class="cs-img-placeholder">🥃</div>
+                <div v-else class="cs-img-placeholder"><GlassWaterIcon :size="32" /></div>
               </div>
               <div class="cs-info">
                 <div class="cs-name">{{ item.name }}</div>
@@ -298,7 +298,7 @@
         <div v-if="cataloguePicked" class="catalogue-locked-card">
           <div class="catalogue-locked-thumb">
             <img v-if="cataloguePicked.photo_url" :src="cataloguePicked.photo_url" :alt="cataloguePicked.name" class="catalogue-locked-img">
-            <div v-else class="catalogue-locked-placeholder">🥃</div>
+            <div v-else class="catalogue-locked-placeholder"><GlassWaterIcon :size="32" /></div>
           </div>
           <div class="catalogue-locked-info">
             <div class="catalogue-locked-name">{{ cataloguePicked.name }}</div>
@@ -356,7 +356,7 @@
               @click="form.rating = form.rating === n ? 0 : n"
               :title="`${n} star${n > 1 ? 's' : ''}`"
             >★</button>
-            <span v-if="form.rating" class="star-clear" @click="form.rating = 0">✕</span>
+            <span v-if="form.rating" class="star-clear" @click="form.rating = 0"><XIcon :size="10" /></span>
           </div>
         </div>
 
@@ -378,7 +378,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon } from 'lucide-vue-next'
+import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'

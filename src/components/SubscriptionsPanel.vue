@@ -4,14 +4,14 @@
 
       <div class="subs-header">
         <button class="subs-close" @click="$emit('close')" aria-label="Back">
-          <span class="subs-close-arrow">←</span> Back
+          <ArrowLeftIcon :size="14" /> Back
         </button>
         <div class="subs-title">Friends &amp; Followers</div>
       </div>
 
       <!-- Follow by email -->
       <div class="subs-section">
-        <div class="subs-section-label">✦ Follow someone</div>
+        <div class="subs-section-label"><SparklesIcon :size="11" style="display:inline;vertical-align:middle;margin-right:4px;" /> Follow someone</div>
         <div class="follow-form">
           <input
             v-model="emailInput"
@@ -43,7 +43,7 @@
 
       <!-- People I follow -->
       <div class="subs-section">
-        <div class="subs-section-label">👁 Following ({{ myFollowing.length }})</div>
+        <div class="subs-section-label"><EyeIcon :size="11" style="display:inline;vertical-align:middle;margin-right:4px;" /> Following ({{ myFollowing.length }})</div>
         <div v-if="myFollowing.length === 0" class="sub-empty">Not following anyone yet.</div>
         <div class="sub-row" v-for="sub in myFollowing" :key="sub.id">
           <span class="sub-email">{{ sub.following_email || sub.following_id.slice(0, 8) + '…' }}</span>
@@ -53,7 +53,7 @@
 
       <!-- My followers -->
       <div class="subs-section">
-        <div class="subs-section-label">🥃 Followers ({{ myFollowers.length }})</div>
+        <div class="subs-section-label"><UsersIcon :size="11" style="display:inline;vertical-align:middle;margin-right:4px;" /> Followers ({{ myFollowers.length }})</div>
         <div v-if="myFollowers.length === 0" class="sub-empty">No followers yet.</div>
         <div class="sub-row" v-for="sub in myFollowers" :key="sub.id">
           <span class="sub-email">{{ sub.follower_email || sub.follower_id.slice(0, 8) + '…' }}</span>
@@ -71,6 +71,8 @@
 <script setup>
 import { onMounted } from 'vue'
 import { ref } from 'vue'
+import { GlassWater as GlassWaterIcon, Users as UsersIcon, Sparkles as SparklesIcon,
+  ArrowLeft as ArrowLeftIcon, Eye as EyeIcon } from 'lucide-vue-next'
 import {
   useSubscriptions,
   pendingRequests,

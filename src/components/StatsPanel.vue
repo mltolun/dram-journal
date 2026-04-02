@@ -4,7 +4,7 @@
 
       <div class="stats-header">
         <button class="stats-close" @click="$emit('close')" aria-label="Back">
-          <span class="stats-close-arrow">←</span> Back
+          <ArrowLeftIcon :size="14" /> Back
         </button>
         <div class="stats-title">{{ t.statsTitle }}</div>
       </div>
@@ -37,7 +37,7 @@
             class="badge-card"
             :class="{ 'badge-card--earned': b.earned }"
           >
-            <div class="badge-icon">{{ b.icon }}</div>
+            <div class="badge-icon"><component :is="BADGE_ICON_MAP[b.icon]" :size="28" /></div>
             <div class="badge-body">
               <div class="badge-name">{{ t.badges[b.id]?.name ?? b.name }}</div>
               <div class="badge-desc">{{ t.badges[b.id]?.desc ?? b.desc }}</div>
@@ -70,7 +70,7 @@
 
       <!-- Regional Passport -->
       <div class="stats-section" v-if="passport.length">
-        <div class="stats-section-label">{{ t.statsPassport }}</div>
+        <div class="stats-section-label"><MapIcon :size="11" style="display:inline;vertical-align:middle;margin-right:5px;" />{{ t.statsPassport }}</div>
 
         <!-- Continent summary headline -->
         <div v-if="continentPassport.length > 1" class="passport-headline">
@@ -115,6 +115,13 @@
 
 <script setup>
 import { computed } from 'vue'
+import {
+  ArrowLeft as ArrowLeftIcon,
+  Map as MapIcon,
+  GlassWater, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users,
+} from 'lucide-vue-next'
+
+const BADGE_ICON_MAP = { GlassWater, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users }
 import { journal } from '../composables/useWhiskies.js'
 import { useBadges } from '../composables/useBadges.js'
 import { useI18n } from '../composables/useI18n.js'
@@ -207,7 +214,6 @@ function continentLabel(continent) {
   align-items: center;
   gap: 4px;
 }
-.stats-close-arrow { font-size: 1rem; line-height: 1; }
 .stats-close:hover { color: var(--text-primary); background: rgba(200,130,42,0.07); }
 
 /* ── Summary row ── */
@@ -296,15 +302,17 @@ function continentLabel(continent) {
 }
 
 .badge-icon {
-  font-size: 1.5rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   margin-top: 1px;
-  filter: grayscale(0);
+  color: var(--amber, #A8620A);
+  opacity: 1;
 }
 
 .badge-card:not(.badge-card--earned) .badge-icon {
-  filter: grayscale(1);
+  color: var(--peat-light, #8A7060);
 }
 
 .badge-body {

@@ -3,7 +3,7 @@
     <div class="modal" style="max-width:460px">
       <div class="modal-header">
         <div class="modal-title">{{ t.shareWishlist }}</div>
-        <button class="modal-close" @click="$emit('close')">✕</button>
+        <button class="modal-close" @click="$emit('close')"><XIcon :size="14" /></button>
       </div>
 
       <div v-if="loading" style="text-align:center;padding:1.5rem 0;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--peat-light);">
@@ -30,6 +30,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { X as XIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from '../composables/useAuth.js'
 import { useToast } from '../composables/useToast.js'

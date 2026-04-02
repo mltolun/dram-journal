@@ -7,7 +7,7 @@
     </div>
     <div v-else class="photo-preview-wrap" @click.stop>
       <img :src="previewSrc" class="photo-preview" alt="">
-      <button class="photo-remove" @click.stop="$emit('remove')" title="Remove photo">✕</button>
+      <button class="photo-remove" @click.stop="$emit('remove')" title="Remove photo"><XIcon :size="12" /></button>
       <div v-if="kb" class="photo-upload-hint">~{{ kb }} KB after compression</div>
       <div v-else class="photo-upload-hint">Current photo</div>
     </div>
@@ -16,6 +16,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { X as XIcon } from 'lucide-vue-next'
 
 const props = defineProps({ previewSrc: String, kb: Number })
 const emit  = defineEmits(['picked', 'remove'])

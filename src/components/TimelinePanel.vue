@@ -41,7 +41,7 @@
               >
                 <div class="tl-thumb">
                   <img v-if="w.photo_url" :src="w.photo_url" :alt="w.name" class="tl-img">
-                  <div v-else class="tl-img-ph">🥃</div>
+                  <div v-else class="tl-img-ph"><GlassWaterIcon :size="24" /></div>
                 </div>
                 <div class="tl-bottle-name">{{ w.name }}</div>
                 <div class="tl-bottle-meta">
@@ -74,6 +74,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { journal } from '../composables/useWhiskies.js'
 const emit = defineEmits(['open-entry'])
 

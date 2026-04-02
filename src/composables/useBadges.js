@@ -36,7 +36,7 @@ const CONTINENT_ORDER = ['British Isles', 'Americas', 'Asia', 'Europe', 'Rest of
 const BADGE_DEFS = [
   {
     id:     'first_dram',
-    icon:   '🥃',
+    icon: 'GlassWater',
     name:   'First Dram',
     desc:   'Log your first whisky',
     target: 1,
@@ -45,7 +45,7 @@ const BADGE_DEFS = [
   },
   {
     id:     'tenner',
-    icon:   '🔢',
+    icon: 'Hash',
     name:   'The Tenner',
     desc:   '10 whiskies in your journal',
     target: 10,
@@ -54,7 +54,7 @@ const BADGE_DEFS = [
   },
   {
     id:     'century',
-    icon:   '💯',
+    icon: 'Trophy',
     name:   'Century Club',
     desc:   '100 whiskies in your journal',
     target: 100,
@@ -63,7 +63,7 @@ const BADGE_DEFS = [
   },
   {
     id:     'globe_trotter',
-    icon:   '🌍',
+    icon: 'Globe',
     name:   'Globe Trotter',
     desc:   'Taste whiskies from 5+ countries',
     target: 5,
@@ -72,7 +72,7 @@ const BADGE_DEFS = [
   },
   {
     id:     'peat_freak',
-    icon:   '🔥',
+    icon: 'Flame',
     name:   'Peat Freak',
     desc:   '10 whiskies with smokiness rated 4+',
     target: 10,
@@ -81,7 +81,7 @@ const BADGE_DEFS = [
   },
   {
     id:     'the_critic',
-    icon:   '⭐',
+    icon: 'Star',
     name:   'The Critic',
     desc:   'Rate 50 whiskies',
     target: 50,
@@ -90,7 +90,7 @@ const BADGE_DEFS = [
   },
   {
     id:     'flavor_arch',
-    icon:   '🔬',
+    icon: 'FlaskConical',
     name:   'Flavor Archaeologist',
     desc:   'Complete all 5 flavor attributes on 20 entries',
     target: 20,
@@ -105,7 +105,7 @@ const BADGE_DEFS = [
   },
   {
     id:     'social_butterfly',
-    icon:   '👥',
+    icon: 'Users',
     name:   'Social Butterfly',
     desc:   '5 people follow your journal',
     target: 5,
@@ -166,7 +166,7 @@ export async function checkBadges() {
     await sb.from('pending_notifications').insert({
       type:      'badge_earned',
       to_email:  currentUser.value.email,
-      meta:      JSON.stringify({ badge_icon: def.icon, badge_name: def.name, badge_desc: def.desc }),
+      meta:      JSON.stringify({ badge_icon: def.id, badge_name: def.name, badge_desc: def.desc }),
     }).catch(err => console.warn('badge notification queue failed:', err?.message))
   }
 }

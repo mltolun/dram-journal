@@ -3,7 +3,7 @@
     <Transition name="badge-toast">
       <div v-if="badgeToastVisible && badgeToastData" class="badge-toast">
         <div class="badge-toast-label">Badge Unlocked</div>
-        <div class="badge-toast-icon">{{ badgeToastData.icon }}</div>
+        <div class="badge-toast-icon"><component :is="BADGE_ICON_MAP[badgeToastData.icon]" :size="38" /></div>
         <div class="badge-toast-name">{{ badgeToastData.name }}</div>
         <div class="badge-toast-desc">{{ badgeToastData.desc }}</div>
       </div>
@@ -13,6 +13,9 @@
 
 <script setup>
 import { useBadgeToast } from '../composables/useBadgeToast.js'
+import { GlassWater, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users } from 'lucide-vue-next'
+
+const BADGE_ICON_MAP = { GlassWater, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users }
 
 const { badgeToastData, badgeToastVisible } = useBadgeToast()
 </script>
@@ -48,8 +51,10 @@ const { badgeToastData, badgeToastVisible } = useBadgeToast()
 }
 
 .badge-toast-icon {
-  font-size: 2.4rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber, #A8620A);
   margin-bottom: 6px;
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <svg viewBox="0 0 200 200" class="flavor-wheel" aria-hidden="true">
+  <svg viewBox="-28 -16 256 232" class="flavor-wheel" aria-hidden="true">
     <!-- Concentric grid pentagons -->
     <polygon
       v-for="scale in [1, 2, 3, 4, 5]"
