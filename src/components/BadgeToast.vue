@@ -2,10 +2,10 @@
   <Teleport to="body">
     <Transition name="badge-toast">
       <div v-if="badgeToastVisible && badgeToastData" class="badge-toast">
-        <div class="badge-toast-label">Badge Unlocked</div>
+        <div class="badge-toast-label">{{ t.badgeUnlocked }}</div>
         <div class="badge-toast-icon"><component :is="BADGE_ICON_MAP[badgeToastData.icon]" :size="38" /></div>
-        <div class="badge-toast-name">{{ badgeToastData.name }}</div>
-        <div class="badge-toast-desc">{{ badgeToastData.desc }}</div>
+        <div class="badge-toast-name">{{ t.badges[badgeToastData.id]?.name ?? badgeToastData.name }}</div>
+        <div class="badge-toast-desc">{{ t.badges[badgeToastData.id]?.desc ?? badgeToastData.desc }}</div>
       </div>
     </Transition>
   </Teleport>
@@ -13,11 +13,13 @@
 
 <script setup>
 import { useBadgeToast } from '../composables/useBadgeToast.js'
+import { useI18n } from '../composables/useI18n.js'
 import { GlassWater, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users } from 'lucide-vue-next'
 
 const BADGE_ICON_MAP = { GlassWater, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users }
 
 const { badgeToastData, badgeToastVisible } = useBadgeToast()
+const { t } = useI18n()
 </script>
 
 <style scoped>

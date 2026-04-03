@@ -21,7 +21,7 @@
       <template v-if="nextBadge && earnedCount < badges.length">
         <div class="qs-row">
           <component :is="BADGE_ICON_MAP[nextBadge.icon]" :size="14" class="qs-icon" aria-hidden="true" />
-          <span class="qs-label">{{ nextBadge.name }}</span>
+          <span class="qs-label">{{ t.badges[nextBadge.id]?.name ?? nextBadge.name }}</span>
           <span class="qs-value">{{ nextBadgePct }}%</span>
         </div>
         <div class="qs-track" role="progressbar" :aria-valuenow="nextBadgePct" aria-valuemin="0" aria-valuemax="100">
@@ -29,7 +29,7 @@
         </div>
       </template>
       <div v-else-if="earnedCount === badges.length" class="qs-complete">
-        <SparklesIcon :size="12" style="display:inline;vertical-align:middle;margin-right:4px;" /> All badges earned
+        <SparklesIcon :size="12" style="display:inline;vertical-align:middle;margin-right:4px;" /> {{ t.allBadgesEarned }}
       </div>
     </div>
 
