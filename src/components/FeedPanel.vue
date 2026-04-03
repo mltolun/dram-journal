@@ -20,6 +20,12 @@
       <button class="feed-refresh-btn" @click="loadFeed">{{ t.feedRefresh }}</button>
     </div>
 
+    <!-- Has items but search filtered them all out -->
+    <div v-else-if="groupedFeed.length === 0" class="feed-empty">
+      <div class="feed-empty-icon"><GlassWaterIcon :size="40" /></div>
+      <div class="feed-empty-text">No results for "{{ searchQuery }}"</div>
+    </div>
+
     <!-- Feed list grouped by user -->
     <template v-else>
       <div class="feed-list">
@@ -70,6 +76,7 @@ import { GlassWater as GlassWaterIcon, Eye as EyeIcon, Star as StarIcon } from '
 import { useFeed } from '../composables/useFeed.js'
 import { myFollowing } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'
+import { searchQuery } from '../composables/useSearch.js'
 
 const { feedItems, feedLoading, displayNames, loadFeed } = useFeed()
 const { t } = useI18n()
@@ -78,10 +85,20 @@ function displayName(userId) {
   return displayNames.value.get(userId) || userId.slice(0, 8)
 }
 
-// Group feed items by user, preserving most-recent-first order of first appearance
+// Group feed items by user, filtered by searchQuery, preserving most-recent-first order
 const groupedFeed = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
   const map = new Map()
   for (const item of feedItems.value) {
+    // Filter by whisky name, distillery, or user display name
+    if (q) {
+      const name = displayName(item.user_id).toLowerCase()
+      const matches =
+        item.whisky_name?.toLowerCase().includes(q) ||
+        item.whisky_distillery?.toLowerCase().includes(q) ||
+        name.includes(q)
+      if (!matches) continue
+    }
     if (!map.has(item.user_id)) {
       map.set(item.user_id, { userId: item.user_id, displayName: displayName(item.user_id), items: [] })
     }

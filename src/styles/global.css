@@ -327,25 +327,9 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
     width: 100%;
     padding-bottom: calc(74px + env(safe-area-inset-bottom));
   }
-  /* Make room for the fixed avatar (34px + 16px right + 8px gap = 58px) */
-  header { padding-right: 64px; }
-  .header-top { gap: 8px; flex-wrap: wrap; }
   .header-brand { flex-shrink: 1; min-width: 0; overflow: hidden; }
   .header-right { flex-shrink: 0; }
   .btn-inbox { display: none !important; }
-
-  /* Search bar: ensure it's always visible on mobile — push it to its own row */
-  .header-search {
-    order: 10;         /* after brand + right side */
-    width: 100%;
-    min-width: 0;
-    flex: 1 1 100%;
-  }
-  .header-search input,
-  .search-input {
-    width: 100%;
-    min-width: 0;
-  }
 }
 
 @media(max-width:680px) {
@@ -365,15 +349,13 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 
   /* Search bar always gets full width in toolbar on small screens */
   .toolbar-search,
-  .search-wrap,
-  .header-search {
+  .search-wrap {
     width: 100%;
     flex: 1 1 100%;
     order: -1;       /* show search first inside the toolbar */
   }
   .toolbar-search input,
-  .search-wrap input,
-  .search-input {
+  .search-wrap input {
     width: 100%;
     min-width: 0;
   }

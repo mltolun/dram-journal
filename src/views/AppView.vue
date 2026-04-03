@@ -364,7 +364,18 @@ function clearFilters() {
   filterCountry.value = filterRegion.value = filterDistillery.value = filterAge.value = ''
 }
 
-const activeItems = computed(() => activeList.value === 'wishlist' ? wishlist.value : filteredJournal.value)
+const filteredWishlist = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return wishlist.value
+  return wishlist.value.filter(w =>
+    w.name?.toLowerCase().includes(q) ||
+    w.distillery?.toLowerCase().includes(q) ||
+    w.origin?.toLowerCase().includes(q) ||
+    w.region?.toLowerCase().includes(q)
+  )
+})
+
+const activeItems = computed(() => activeList.value === 'wishlist' ? filteredWishlist.value : filteredJournal.value)
 
 const selectedWhiskies = computed(() =>
   selected.value.map(id => journal.value.find(w => w.id === id)).filter(Boolean)
