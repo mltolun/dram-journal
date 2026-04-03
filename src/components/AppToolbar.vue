@@ -1,8 +1,8 @@
 <template>
   <div class="toolbar-wrap" v-if="showToolbar">
+    <div class="toolbar">
 
-    <!-- Row 1: Search — always full width -->
-    <div class="toolbar-search-row">
+      <!-- Search bar -->
       <div class="toolbar-search">
         <SearchIcon :size="14" class="toolbar-search-icon" aria-hidden="true" />
         <input
@@ -15,11 +15,9 @@
           spellcheck="false"
         />
       </div>
-    </div>
 
-    <!-- Row 2: Actions -->
-    <div class="toolbar toolbar-actions-row">
-      <div class="toolbar-left">
+      <!-- Right: selected badge + Compare + Filters -->
+      <div class="toolbar-right">
         <button
           v-if="selectedCount > 0"
           class="compare-badge compare-badge--clear"
@@ -27,9 +25,7 @@
           :title="t.clearSelected"
           type="button"
         >{{ selectedCount }} {{ t.selected }} <XIcon :size="11" /></button>
-      </div>
 
-      <div class="toolbar-right">
         <button
           v-if="activeList === 'journal'"
           class="btn-t btn-compare"
@@ -47,9 +43,9 @@
           aria-label="Filter journal"
         ><SlidersHorizontalIcon :size="14" aria-hidden="true" /> <span class="btn-label">Filters</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
       </div>
-    </div>
 
-  </div><!-- /toolbar-wrap -->
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -66,17 +62,16 @@ import {
 const { t } = useI18n()
 
 const props = defineProps({
-  selectedCount: Number,
-  compareOpen:   Boolean,
-  activeList:    String,
+  selectedCount:   Number,
+  compareOpen:     Boolean,
+  activeList:      String,
   onClearSelected: Function,
-  filtersOpen:   Boolean,
-  filterCount:   { type: Number, default: 0 },
+  filtersOpen:     Boolean,
+  filterCount:     { type: Number, default: 0 },
 })
 
 defineEmits(['compare', 'filter'])
 
-// Only render the toolbar when there's content to show
 const showToolbar = computed(() =>
   props.selectedCount > 0 ||
   props.activeList === 'journal'
@@ -100,16 +95,21 @@ const showToolbar = computed(() =>
   margin-left: 2px;
 }
 
-/* ── Row 1: Search ── */
-.toolbar-search-row {
-  padding: 10px 24px 6px;
-  border-bottom: none;
+/* ── Toolbar layout: search fills, buttons on the right ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-bottom: 0.5px solid var(--border);
 }
+
 .toolbar-search {
   position: relative;
   display: flex;
   align-items: center;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .toolbar-search-icon {
   position: absolute;
@@ -138,18 +138,17 @@ const showToolbar = computed(() =>
 .toolbar-search-input::placeholder { color: var(--peat-light); opacity: 0.8; }
 .toolbar-search-input::-webkit-search-cancel-button { display: none; }
 
-/* ── Row 2: Actions ── */
-.toolbar-actions-row {
-  padding: 6px 24px 10px;
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
+/* ── Mobile: icon-only buttons ── */
 @media (max-width: 768px) {
-  .toolbar-search-row { padding: 10px 16px 6px; }
-  .toolbar-actions-row { padding: 6px 16px 10px; }
-}
-
-@media (max-width: 680px) {
-  .toolbar-right { flex: 1; }
-  .btn-t { flex: 1; justify-content: center; }
+  .toolbar { padding: 8px 16px; }
+  .btn-label { display: none; }
+  .btn-t { padding: 7px 9px; }
 }
 </style>
