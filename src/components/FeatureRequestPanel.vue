@@ -202,7 +202,7 @@ onMounted(async () => {
 .subs-overlay {
   position: fixed;
   inset: 0;
-  z-index: 400;
+  z-index: 1000;
   background: var(--bg-modal, #1e1408);
   display: flex;
   flex-direction: column;

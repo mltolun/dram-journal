@@ -286,7 +286,7 @@ onMounted(async () => {
 .subs-overlay {
   position: fixed;
   inset: 0;
-  z-index: 400;
+  z-index: 1000;
   background: rgba(20, 12, 4, 0.7);
   display: flex;
   align-items: center;

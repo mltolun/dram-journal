@@ -106,7 +106,7 @@ const { t } = useI18n()
 .cp-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 400;
+  z-index: 1000;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: flex-end;
