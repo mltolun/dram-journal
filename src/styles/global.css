@@ -125,9 +125,6 @@ header { padding:12px 24px; border-bottom:0.5px solid var(--border); display:fle
 .sync-dot { width:6px; height:6px; border-radius:50%; display:inline-block; transition:background 0.3s; }
 .header-top { display:flex; justify-content:space-between; align-items:center; width:100%; gap:12px; }
 .header-brand { flex-shrink:0; }
-/* Search bar in header — flex-grow so it takes available space */
-.header-search { flex:1 1 120px; min-width:0; }
-
 /* ── TOOLBAR ── */
 .toolbar { padding:10px 24px; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-bottom:0.5px solid var(--border); }
 .toolbar-left { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -326,6 +323,12 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   .main-content {
     width: 100%;
     padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
   }
   .header-brand { flex-shrink: 1; min-width: 0; overflow: hidden; }
   .header-right { flex-shrink: 0; }

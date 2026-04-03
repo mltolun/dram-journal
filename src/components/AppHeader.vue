@@ -8,19 +8,7 @@
         <div class="brand-sub">{{ t.brandSub }}</div>
       </div>
 
-      <!-- Search bar (desktop only — mobile search is in AppToolbar) -->
-      <div class="header-search">
-        <SearchIcon :size="14" class="search-icon" aria-hidden="true" />
-        <input
-          class="search-input"
-          type="search"
-          :placeholder="t.searchPlaceholder"
-          v-model="searchQuery"
-          aria-label="Search journal entries"
-          autocomplete="off"
-          spellcheck="false"
-        />
-      </div>
+      <!-- Search bar moved to AppToolbar for all screen sizes -->
 
       <!-- Right: Inbox + Avatar -->
       <div class="header-right">
@@ -131,7 +119,6 @@ import InboxPanel from './InboxPanel.vue'
 import AdminFeaturePanel from './AdminFeaturePanel.vue'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
 import { featureOpen } from '../composables/usePanels.js'
-import { searchQuery } from '../composables/useSearch.js'
 import {
   Inbox as InboxIcon,
   Download as DownloadIcon,
@@ -140,7 +127,6 @@ import {
   LogOut as LogOutIcon,
   Sun as SunIcon,
   Moon as MoonIcon,
-  Search as SearchIcon,
   Lightbulb as LightbulbIcon,
 } from 'lucide-vue-next'
 
@@ -231,45 +217,6 @@ async function doSignOut() {
 </script>
 
 <style scoped>
-/* ── Search bar ── */
-.header-search {
-  flex: 1;
-  min-width: 0;
-  max-width: 400px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  margin: 0 16px;
-}
-.search-icon {
-  position: absolute;
-  left: 10px;
-  color: var(--peat-light);
-  pointer-events: none;
-  flex-shrink: 0;
-}
-.search-input {
-  width: 100%;
-  background: var(--bg-input);
-  border: 0.5px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  padding: 7px 11px 7px 32px;
-  outline: none;
-  transition: border-color 0.18s, box-shadow 0.18s;
-  /* allow up to 30% wider text for i18n */
-  min-width: 0;
-}
-.search-input:focus {
-  border-color: var(--amber);
-  box-shadow: 0 0 0 3px rgba(200, 130, 42, 0.1);
-}
-.search-input::placeholder { color: var(--peat-light); opacity: 0.8; }
-/* hide browser's native clear button */
-.search-input::-webkit-search-cancel-button { display: none; }
-
 /* ── Avatar ── */
 .avatar-wrap { position: relative; flex-shrink: 0; }
 .user-avatar {
@@ -445,8 +392,6 @@ async function doSignOut() {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  /* Hide desktop search bar — search is shown in AppToolbar on mobile */
-  .header-search { display: none; }
   /* Hide inbox button — accessible via avatar menu on mobile */
   .btn-inbox { display: none; }
   /* Show inbox in avatar dropdown on mobile */

@@ -1,20 +1,20 @@
 <template>
   <div class="toolbar-wrap">
-    <!-- Mobile search bar (hidden on desktop) -->
-    <div class="toolbar-search-mobile">
-      <SearchIcon :size="14" class="toolbar-search-icon" aria-hidden="true" />
-      <input
-        class="toolbar-search-input"
-        type="search"
-        :placeholder="t.searchPlaceholder"
-        v-model="searchQuery"
-        aria-label="Search"
-        autocomplete="off"
-        spellcheck="false"
-      />
-    </div>
-
     <div class="toolbar" v-if="showToolbar">
+      <!-- Search bar — inline on desktop, full-width row on mobile -->
+      <div class="toolbar-search">
+        <SearchIcon :size="14" class="toolbar-search-icon" aria-hidden="true" />
+        <input
+          class="toolbar-search-input"
+          type="search"
+          :placeholder="t.searchPlaceholder"
+          v-model="searchQuery"
+          aria-label="Search"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
       <div class="toolbar-left">
         <!-- Selected-items badge -->
       <button
@@ -96,43 +96,49 @@ const showToolbar = computed(() =>
   margin-left: 2px;
 }
 
-/* Mobile search bar — hidden on desktop */
-.toolbar-search-mobile {
-  display: none;
+/* ── Search bar inside toolbar ── */
+.toolbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 180px;
+  max-width: 600px;
 }
+.toolbar-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--peat-light);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.toolbar-search-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  padding: 7px 11px 7px 32px;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  min-width: 0;
+}
+.toolbar-search-input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(200, 130, 42, 0.1);
+}
+.toolbar-search-input::placeholder { color: var(--peat-light); opacity: 0.8; }
+.toolbar-search-input::-webkit-search-cancel-button { display: none; }
 
+/* ── Mobile: search takes full width row ── */
 @media (max-width: 768px) {
-  .toolbar-search-mobile {
-    display: flex;
-    align-items: center;
-    position: relative;
-    padding: 10px 16px;
-    border-bottom: 0.5px solid var(--border);
+  .toolbar-search {
+    flex: 1 1 100%;
+    max-width: none;
+    order: -1; /* show search first */
   }
-  .toolbar-search-icon {
-    position: absolute;
-    left: 26px;
-    color: var(--peat-light);
-    pointer-events: none;
-  }
-  .toolbar-search-input {
-    width: 100%;
-    background: var(--bg-input);
-    border: 0.5px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
-    font-size: 0.8rem;
-    padding: 8px 12px 8px 32px;
-    outline: none;
-    transition: border-color 0.18s, box-shadow 0.18s;
-  }
-  .toolbar-search-input:focus {
-    border-color: var(--amber);
-    box-shadow: 0 0 0 3px rgba(200, 130, 42, 0.1);
-  }
-  .toolbar-search-input::placeholder { color: var(--peat-light); opacity: 0.8; }
-  .toolbar-search-input::-webkit-search-cancel-button { display: none; }
 }
 
 @media (max-width: 680px) {
