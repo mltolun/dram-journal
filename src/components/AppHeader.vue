@@ -10,15 +10,8 @@
 
       <!-- Search bar moved to AppToolbar -->
 
-      <!-- Right: Inbox + Avatar -->
+      <!-- Right: Avatar -->
       <div class="header-right">
-
-        <!-- Inbox button -->
-        <button class="btn-inbox" @click="inboxOpen = true" :aria-label="t.inbox">
-          <InboxIcon :size="16" aria-hidden="true" />
-          <span>{{ t.inbox }}</span>
-          <span v-if="totalInboxCount" class="inbox-dot-badge" aria-label="unread messages">{{ totalInboxCount }}</span>
-        </button>
 
         <!-- Avatar + dropdown -->
         <div class="avatar-wrap" ref="avatarWrap">
@@ -39,9 +32,9 @@
             <div class="avatar-menu" v-if="menuOpen" role="menu">
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
 
-              <!-- Inbox (mobile only — button hidden on small screens) -->
-              <div class="avatar-menu-divider avatar-menu-divider--mobile-only"></div>
-              <button class="avatar-menu-item avatar-menu-item--mobile-only" @click="menuOpen = false; inboxOpen = true" role="menuitem">
+              <!-- Inbox — always in avatar menu -->
+              <div class="avatar-menu-divider"></div>
+              <button class="avatar-menu-item" @click="menuOpen = false; inboxOpen = true" role="menuitem">
                 <InboxIcon :size="14" aria-hidden="true" /> {{ t.inbox }}
                 <span v-if="totalInboxCount" class="menu-badge">{{ totalInboxCount }}</span>
               </button>
@@ -341,39 +334,6 @@ async function doSignOut() {
   line-height: 1.5;
 }
 
-/* Inbox button */
-.btn-inbox {
-  position: relative;
-  background: none;
-  border: 0.5px solid var(--border);
-  border-radius: 7px;
-  padding: 5px 10px;
-  cursor: pointer;
-  transition: all 0.18s;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  font-family: 'Inter', sans-serif;
-}
-.btn-inbox:hover { border-color: var(--border-hi); color: var(--text-primary); }
-.inbox-dot-badge {
-  position: absolute;
-  top: -4px; right: -4px;
-  background: var(--amber);
-  color: #fff;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.5rem;
-  font-weight: 700;
-  border-radius: 999px;
-  padding: 1px 4px;
-  line-height: 1.4;
-  min-width: 14px;
-  text-align: center;
-}
-
 /* Transition */
 .menu-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
 .menu-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
@@ -381,11 +341,6 @@ async function doSignOut() {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  /* Hide inbox button — accessible via avatar menu on mobile */
-  .btn-inbox { display: none; }
-  /* Show inbox in avatar dropdown on mobile */
-  .avatar-menu-divider--mobile-only { display: block; }
-  .avatar-menu-item--mobile-only { display: flex; }
   /* Keep avatar in normal header flow — no fixed positioning */
   .avatar-wrap {
     position: relative;

@@ -1,7 +1,8 @@
 <template>
-  <div class="toolbar-wrap">
-    <div class="toolbar" v-if="showToolbar">
-      <!-- Search bar — inline on desktop, full-width row on mobile -->
+  <div class="toolbar-wrap" v-if="showToolbar">
+
+    <!-- Row 1: Search — always full width -->
+    <div class="toolbar-search-row">
       <div class="toolbar-search">
         <SearchIcon :size="14" class="toolbar-search-icon" aria-hidden="true" />
         <input
@@ -14,37 +15,40 @@
           spellcheck="false"
         />
       </div>
+    </div>
 
+    <!-- Row 2: Actions -->
+    <div class="toolbar toolbar-actions-row">
       <div class="toolbar-left">
-        <!-- Selected-items badge -->
-      <button
-        v-if="selectedCount > 0"
-        class="compare-badge compare-badge--clear"
-        @click.prevent.stop="onClearSelected"
-        :title="t.clearSelected"
-        type="button"
-      >{{ selectedCount }} {{ t.selected }} <XIcon :size="11" /></button>
+        <button
+          v-if="selectedCount > 0"
+          class="compare-badge compare-badge--clear"
+          @click.prevent.stop="onClearSelected"
+          :title="t.clearSelected"
+          type="button"
+        >{{ selectedCount }} {{ t.selected }} <XIcon :size="11" /></button>
+      </div>
+
+      <div class="toolbar-right">
+        <button
+          v-if="activeList === 'journal'"
+          class="btn-t btn-compare"
+          :class="{ ready: selectedCount >= 2, active: compareOpen }"
+          :disabled="selectedCount < 2"
+          @click="$emit('compare')"
+          aria-label="Compare selected whiskies"
+        ><Columns2Icon :size="14" aria-hidden="true" /> <span class="btn-label">{{ t.compare }}</span></button>
+
+        <button
+          v-if="activeList === 'journal'"
+          class="btn-t btn-outline btn-filter"
+          :class="{ active: filtersOpen }"
+          @click="$emit('filter')"
+          aria-label="Filter journal"
+        ><SlidersHorizontalIcon :size="14" aria-hidden="true" /> <span class="btn-label">Filters</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
+      </div>
     </div>
 
-    <div class="toolbar-right">
-      <button
-        v-if="activeList === 'journal'"
-        class="btn-t btn-compare"
-        :class="{ ready: selectedCount >= 2, active: compareOpen }"
-        :disabled="selectedCount < 2"
-        @click="$emit('compare')"
-        aria-label="Compare selected whiskies"
-      ><Columns2Icon :size="14" aria-hidden="true" /> <span class="btn-label">{{ t.compare }}</span></button>
-
-      <button
-        v-if="activeList === 'journal'"
-        class="btn-t btn-outline btn-filter"
-        :class="{ active: filtersOpen }"
-        @click="$emit('filter')"
-        aria-label="Filter journal"
-      ><SlidersHorizontalIcon :size="14" aria-hidden="true" /> <span class="btn-label">Filters</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
-    </div>
-  </div>
   </div><!-- /toolbar-wrap -->
 </template>
 
@@ -96,14 +100,16 @@ const showToolbar = computed(() =>
   margin-left: 2px;
 }
 
-/* ── Search bar inside toolbar ── */
+/* ── Row 1: Search ── */
+.toolbar-search-row {
+  padding: 10px 24px 6px;
+  border-bottom: none;
+}
 .toolbar-search {
   position: relative;
   display: flex;
   align-items: center;
-  flex: 1 1 auto;
-  min-width: 180px;
-  max-width: 600px;
+  width: 100%;
 }
 .toolbar-search-icon {
   position: absolute;
@@ -132,13 +138,14 @@ const showToolbar = computed(() =>
 .toolbar-search-input::placeholder { color: var(--peat-light); opacity: 0.8; }
 .toolbar-search-input::-webkit-search-cancel-button { display: none; }
 
-/* ── Mobile: search takes full width row ── */
+/* ── Row 2: Actions ── */
+.toolbar-actions-row {
+  padding: 6px 24px 10px;
+}
+
 @media (max-width: 768px) {
-  .toolbar-search {
-    flex: 1 1 100%;
-    max-width: none;
-    order: -1; /* show search first */
-  }
+  .toolbar-search-row { padding: 10px 16px 6px; }
+  .toolbar-actions-row { padding: 6px 16px 10px; }
 }
 
 @media (max-width: 680px) {
