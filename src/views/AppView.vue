@@ -504,11 +504,9 @@ function onSaved(w) {
 /* ── Sticky header+toolbar on mobile ── */
 .sticky-top {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: 0;
   z-index: 100;
   background: var(--bg);
-  /* Pad content so nothing is hidden behind the status bar */
-  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ── View toggle ── */

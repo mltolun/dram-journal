@@ -403,7 +403,7 @@ const nextBadgePct = computed(() => {
     flex: 1;
     gap: 0;
     padding: 0;
-    padding-right: 0;
+    padding-right: 0; /* avatar is now in the header, not floating over the nav */
     height: 60px;
     pointer-events: all;
   }
