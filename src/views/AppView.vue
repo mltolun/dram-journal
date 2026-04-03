@@ -136,7 +136,7 @@
         <!-- ── Trash (journal tab) ── -->
         <template v-if="activeList === 'journal' && trash.length > 0">
           <div class="trash-divider">
-            <span>🗑 {{ t.trashSection }} · {{ t.trashAutoFlush }}</span>
+            <span><Trash2Icon :size="12" /> {{ t.trashSection }} · {{ t.trashAutoFlush }}</span>
           </div>
           <div class="whisky-grid trash-grid" :class="{ 'list-view': viewMode === 'list' }">
             <WhiskyCard
@@ -232,6 +232,7 @@ import {
   Calendar as CalendarIcon,
   GlassWater as GlassWaterIcon,
   Sparkles as SparklesIcon,
+  Trash2 as Trash2Icon,
 } from 'lucide-vue-next'
 
 import AuthBox             from '../components/AuthBox.vue'

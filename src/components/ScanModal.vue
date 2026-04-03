@@ -109,7 +109,7 @@
 
       <!-- Error -->
       <div v-else-if="step === 'error'" class="scan-error">
-        <div class="scan-error-icon">⚠</div>
+        <div class="scan-error-icon"><AlertTriangleIcon :size="32" /></div>
         <div class="scan-error-msg">{{ errorMsg }}</div>
         <button class="btn-cancel" style="margin-top:1rem" @click="reset">{{ t.tryAgain }}</button>
       </div>
@@ -130,7 +130,8 @@ import { useWhiskies } from '../composables/useWhiskies.js'
 import {
   Camera as CameraIcon, GlassWater as GlassWaterIcon,
   Check as CheckIcon,
-  X as XIcon
+  X as XIcon,
+  AlertTriangle as AlertTriangleIcon
 } from 'lucide-vue-next'
 import { useToast } from '../composables/useToast.js'
 

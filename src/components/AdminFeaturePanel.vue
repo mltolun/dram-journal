@@ -27,7 +27,7 @@
         <div v-if="loading" class="fr-loading">{{ t.frLoading }}</div>
 
         <div v-else-if="accessDenied" class="fr-empty access-denied">
-          <div class="fr-empty-icon">🔒</div>
+          <div class="fr-empty-icon"><LockIcon :size="32" /></div>
           <div class="access-denied-title">{{ t.frAdminAccessDenied }}</div>
           <div class="access-denied-body">
             Your account (<strong>{{ currentUser?.email }}</strong>) is not recognised as an admin.<br><br>
@@ -159,7 +159,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import { X as XIcon, CheckCircle as CheckCircleIcon } from 'lucide-vue-next'
+import { X as XIcon, CheckCircle as CheckCircleIcon, Lock as LockIcon } from 'lucide-vue-next'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
 import { currentUser } from '../composables/useAuth.js'
 import { useI18n } from '../composables/useI18n.js'

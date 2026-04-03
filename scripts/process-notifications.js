@@ -38,13 +38,13 @@ const STRINGS = {
   en: {
     footerManage: 'Manage followers in your journal settings',
     txtBrand: 'THE DRAM JOURNAL',
-    txtSignoff: 'Sláinte 🥃',
+    txtSignoff: 'Sláinte',
     // Follow request
     followReqTag:      '✦ New follow request',
     followReqHeadline: 'Someone wants to follow your journal',
     followReqBody:     (name) => `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>&nbsp;has sent you a follow request. If you accept, they'll receive a weekly digest of the whiskies you add and rate.`,
     followReqCta:      'Review request →',
-    followReqSubject:  '🥃 Someone wants to follow your Dram Journal',
+    followReqSubject:  'Someone wants to follow your Dram Journal',
     followReqTxtHdr:   'New follow request',
     followReqTxtBody:  (name) => `${name} wants to follow your whisky journal.\n\nIf you accept, they'll receive a weekly digest of the whiskies you add and rate.`,
     followReqTxtCta:   'Open the app to accept or decline',
@@ -53,7 +53,7 @@ const STRINGS = {
     followAccHeadline: "You're now following their journal",
     followAccBody:     (name) => `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>&nbsp;accepted your follow request. You'll now receive their whisky additions and ratings in your weekly Monday update.`,
     followAccCta:      'Open My Journal →',
-    followAccSubject:  '🥃 Your follow request was accepted — The Dram Journal',
+    followAccSubject:  'Your follow request was accepted — The Dram Journal',
     followAccTxtHdr:   'Follow request accepted',
     followAccTxtBody:  (name) => `${name} accepted your follow request.\n\nYou'll now receive their whisky additions and ratings in your weekly Monday update.`,
     followAccTxtCta:   'Open your journal',
@@ -62,7 +62,7 @@ const STRINGS = {
     dmIntro:    (name) => `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>&nbsp;thinks you'd enjoy this:`,
     dmFooter:   "Open the app to see the full tasting profile and add it to your wishlist.",
     dmCta:      'Open My Inbox →',
-    dmSubject:  (name) => `🥃 ${name} shared a whisky with you — The Dram Journal`,
+    dmSubject:  (name) => `${name} shared a whisky with you — The Dram Journal`,
     dmTxtHdr:   'A friend shared a dram',
     dmTxtIntro: (name) => `${name} thinks you'd enjoy`,
     dmTxtCta:   'Open the app to see the full tasting profile',
@@ -82,7 +82,7 @@ const STRINGS = {
     statusLabels:    { accepted: 'Accepted', in_progress: 'In Progress', done: 'Shipped', declined: 'Declined' },
     frFromTeam:      'From the team',
     frCta:           'Open My Journal →',
-    frSubject:       (label) => `🥃 Feature request ${label} — The Dram Journal`,
+    frSubject:       (label) => `Feature request ${label} — The Dram Journal`,
     frTxtHdr:        (label) => label,
     frTxtFeature:    'Feature',
     frTxtFromTeam:   'From the team',
@@ -91,13 +91,13 @@ const STRINGS = {
   es: {
     footerManage: 'Gestiona tus seguidores en la configuración',
     txtBrand: 'THE DRAM JOURNAL',
-    txtSignoff: 'Sláinte 🥃',
+    txtSignoff: 'Sláinte',
     // Follow request
     followReqTag:      '✦ Nueva solicitud de seguimiento',
     followReqHeadline: 'Alguien quiere seguir tu diario',
     followReqBody:     (name) => `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>&nbsp;te ha enviado una solicitud de seguimiento. Si la aceptas, recibirá un resumen semanal de los whiskies que añadas y valores.`,
     followReqCta:      'Revisar solicitud →',
-    followReqSubject:  '🥃 Alguien quiere seguir tu Dram Journal',
+    followReqSubject:  'Alguien quiere seguir tu Dram Journal',
     followReqTxtHdr:   'Nueva solicitud de seguimiento',
     followReqTxtBody:  (name) => `${name} quiere seguir tu diario de whiskies.\n\nSi aceptas, recibirá un resumen semanal de los whiskies que añadas y valores.`,
     followReqTxtCta:   'Abre la app para aceptar o rechazar',
@@ -106,7 +106,7 @@ const STRINGS = {
     followAccHeadline: 'Ahora sigues su diario',
     followAccBody:     (name) => `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>&nbsp;aceptó tu solicitud de seguimiento. Ahora recibirás sus adiciones y valoraciones de whisky en tu actualización semanal de los lunes.`,
     followAccCta:      'Abrir Mi Diario →',
-    followAccSubject:  '🥃 Tu solicitud de seguimiento fue aceptada — The Dram Journal',
+    followAccSubject:  'Tu solicitud de seguimiento fue aceptada — The Dram Journal',
     followAccTxtHdr:   'Solicitud de seguimiento aceptada',
     followAccTxtBody:  (name) => `${name} aceptó tu solicitud de seguimiento.\n\nAhora recibirás sus adiciones y valoraciones de whisky en tu actualización semanal de los lunes.`,
     followAccTxtCta:   'Abre tu diario',
@@ -115,7 +115,7 @@ const STRINGS = {
     dmIntro:    (name) => `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${AMBER_LIGHT};">${name}</span>&nbsp;cree que te va a gustar esto:`,
     dmFooter:   'Abre la app para ver el perfil de sabor completo y añadirlo a tu lista de deseos.',
     dmCta:      'Abrir Mi Bandeja →',
-    dmSubject:  (name) => `🥃 ${name} compartió un whisky contigo — The Dram Journal`,
+    dmSubject:  (name) => `${name} compartió un whisky contigo — The Dram Journal`,
     dmTxtHdr:   'Un amigo compartió un dram',
     dmTxtIntro: (name) => `${name} cree que te va a gustar`,
     dmTxtCta:   'Abre la app para ver el perfil de sabor completo',
@@ -135,7 +135,7 @@ const STRINGS = {
     statusLabels:    { accepted: 'Aceptada', in_progress: 'En progreso', done: 'Publicada', declined: 'Rechazada' },
     frFromTeam:      'Del equipo',
     frCta:           'Abrir Mi Diario →',
-    frSubject:       (label) => `🥃 Solicitud de función ${label} — The Dram Journal`,
+    frSubject:       (label) => `Solicitud de función ${label} — The Dram Journal`,
     frTxtHdr:        (label) => label,
     frTxtFeature:    'Función',
     frTxtFromTeam:   'Del equipo',
@@ -174,7 +174,7 @@ function shell(body) {
                     The <span style="color:${AMBER_LIGHT};">Dram</span> Journal
                   </div>
                 </td>
-                <td align="right"><div style="font-size:24px;">🥃</div></td>
+                <td align="right"><div class="email-brand-icon">◆</div></td>
               </tr></table>
             </td>
           </tr>
@@ -452,7 +452,7 @@ async function sendEmail(to, subject, html, text) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('📬 Processing pending notifications...')
+  console.log('[notifications] Processing pending...')
 
   // ── Build email → locale map from Supabase auth users ────────────────────
 
@@ -516,9 +516,9 @@ async function main() {
         const meta = n.meta ? JSON.parse(n.meta) : {}
         await sendEmail(
           n.to_email,
-          _s.badgeSubject(meta.badge_icon || '🏆', meta.badge_name || 'Achievement'),
-          badgeEarnedHtml(meta.badge_icon || '🏆', meta.badge_name || 'Achievement', meta.badge_desc || ''),
-          badgeEarnedText(meta.badge_icon || '🏆', meta.badge_name || 'Achievement', meta.badge_desc || ''),
+          _s.badgeSubject(meta.badge_icon || 'trophy', meta.badge_name || 'Achievement'),
+          badgeEarnedHtml(meta.badge_icon || 'trophy', meta.badge_name || 'Achievement', meta.badge_desc || ''),
+          badgeEarnedText(meta.badge_icon || 'trophy', meta.badge_name || 'Achievement', meta.badge_desc || ''),
         )
         console.log(`   ✉ badge_earned → ${n.to_email} (${meta.badge_name})`)
       } else if (n.type.startsWith('feature_request_')) {
@@ -552,7 +552,7 @@ async function main() {
     if (deleteError) {
       console.error(`   ⚠ Failed to delete processed rows: ${deleteError.message}`)
     } else {
-      console.log(`   🗑 Cleared ${processed.length} processed notification(s)`)
+      console.log(`   [cleanup] Cleared ${processed.length} processed notification(s)`)
     }
   }
 

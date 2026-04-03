@@ -72,7 +72,7 @@
             <div v-for="w in whiskies" :key="`rating-${w.id}`" class="cp-cell">
               <div class="cp-inline-lbl">{{ t.rating }}</div>
               <div v-if="w.rating" class="cp-stars">
-                <span v-for="n in 5" :key="n" class="cp-star" :class="{ filled: n <= w.rating }">★</span>
+                <span v-for="n in 5" :key="n" class="cp-star" :class="{ filled: n <= w.rating }"><StarIcon :size="10" /></span>
               </div>
               <div v-else class="cp-val">—</div>
             </div>
@@ -93,7 +93,7 @@
 
 <script setup>
 import { ATTRS, TYPE_BADGE_STYLE, COLOR_HEX } from '../lib/constants.js'
-import { X as XIcon } from 'lucide-vue-next'
+import { X as XIcon, Star as StarIcon } from 'lucide-vue-next'
 import { useI18n } from '../composables/useI18n.js'
 
 defineProps({ whiskies: Array })

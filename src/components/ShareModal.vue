@@ -9,10 +9,10 @@
       <!-- Tabs -->
       <div class="share-tabs">
         <button class="share-tab" :class="{ active: tab === 'link' }" @click="tab = 'link'">
-          🔗 Share link
+          <LinkIcon :size="12" /> Share link
         </button>
         <button class="share-tab" :class="{ active: tab === 'send' }" @click="tab = 'send'">
-          📬 Send to friend
+          <SendIcon :size="12" /> Send to friend
           <span v-if="myFollowers.length" class="tab-count">{{ myFollowers.length }}</span>
         </button>
       </div>
@@ -77,7 +77,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { X as XIcon, Check as CheckIcon, ArrowRight as ArrowRightIcon } from 'lucide-vue-next'
+import { X as XIcon, Check as CheckIcon, ArrowRight as ArrowRightIcon, Link as LinkIcon, Send as SendIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'

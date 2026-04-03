@@ -47,7 +47,7 @@ const STRINGS = {
     footerSub:        'Sent every Monday · Manage followers in app settings',
     rated:            'Rated',
     addedToJournal:   'Added to journal',
-    subject:          '🥃 Your weekly dram update — The Dram Journal',
+    subject:          'Your weekly dram update — The Dram Journal',
     txtHeader:        'THE DRAM JOURNAL — WEEKLY UPDATE',
     txtPicksHdr:      'YOUR PICKS THIS WEEK',
     txtPicksIntro:    "Based on your tasting journal, here are 3 personalised whisky recommendations:",
@@ -56,7 +56,7 @@ const STRINGS = {
     txtAdded:         'Added to journal',
     txtGeneratedOn:   (dateStr) => `Generated on ${dateStr}`,
     txtOpen:          'Open your journal at https://dramjournal.online',
-    txtSignoff:       'Sláinte 🥃',
+    txtSignoff:       'Sláinte',
   },
   es: {
     attrLabels: { dulzor: 'Dulzura', ahumado: 'Ahumado', cuerpo: 'Cuerpo', frutado: 'Frutado', especiado: 'Especiado' },
@@ -74,7 +74,7 @@ const STRINGS = {
     footerSub:        'Enviado cada lunes · Gestiona seguidores en la configuración',
     rated:            'Valoró',
     addedToJournal:   'Añadió al diario',
-    subject:          '🥃 Tu actualización semanal — The Dram Journal',
+    subject:          'Tu actualización semanal — The Dram Journal',
     txtHeader:        'THE DRAM JOURNAL — ACTUALIZACIÓN SEMANAL',
     txtPicksHdr:      'TUS SELECCIONES ESTA SEMANA',
     txtPicksIntro:    'Basado en tu diario de catas, aquí tienes 3 recomendaciones de whisky personalizadas:',
@@ -83,7 +83,7 @@ const STRINGS = {
     txtAdded:         'Añadió al diario',
     txtGeneratedOn:   (dateStr) => `Generado el ${dateStr}`,
     txtOpen:          'Abre tu diario en https://dramjournal.online',
-    txtSignoff:       'Sláinte 🥃',
+    txtSignoff:       'Sláinte',
   },
 }
 
@@ -203,7 +203,7 @@ function groupActivity(events, authorEmailMap) {
     const typeOrder = ['rating', 'entry'].filter(t => u.byType[t])
     const groups = typeOrder.map(type => ({
       type,
-      icon:   type === 'rating' ? '⭐' : '📖',
+      icon:   type === 'rating' ? 'star' : 'book-open',
       label:  type === 'rating' ? _s.rated : _s.addedToJournal,
       events: u.byType[type],
     }))
@@ -361,7 +361,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
                     </div>
                   </td>
                   <td align="right" valign="top">
-                    <div style="font-size:28px;line-height:1;">🥃</div>
+                    <div class="email-brand-icon">◆</div>
                   </td>
                 </tr>
               </table>

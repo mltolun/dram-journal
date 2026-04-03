@@ -85,14 +85,14 @@ function calcStreak(entryDates, today) {
 // ── Badge proximity ───────────────────────────────────────────────────────────
 
 const BADGE_CHECKS = [
-  { id: 'first_dram',       name: 'First Dram',           icon: '🥃', target: 1,   rem: s => Math.max(0, 1   - s.total)      },
-  { id: 'tenner',           name: 'The Tenner',           icon: '🔢', target: 10,  rem: s => Math.max(0, 10  - s.total)      },
-  { id: 'century',          name: 'Century Club',         icon: '💯', target: 100, rem: s => Math.max(0, 100 - s.total)      },
-  { id: 'globe_trotter',    name: 'Globe Trotter',        icon: '🌍', target: 5,   rem: s => Math.max(0, 5   - s.countries)  },
-  { id: 'peat_freak',       name: 'Peat Freak',           icon: '🔥', target: 10,  rem: s => Math.max(0, 10  - s.peaty)      },
-  { id: 'the_critic',       name: 'The Critic',           icon: '⭐', target: 50,  rem: s => Math.max(0, 50  - s.rated)      },
-  { id: 'flavor_arch',      name: 'Flavor Archaeologist', icon: '🔬', target: 20,  rem: s => Math.max(0, 20  - s.fullFlavor) },
-  { id: 'social_butterfly', name: 'Social Butterfly',     icon: '👥', target: 5,   rem: s => Math.max(0, 5   - s.followers)  },
+  { id: 'first_dram',       name: 'First Dram',           icon: 'glass-water', target: 1,   rem: s => Math.max(0, 1   - s.total)      },
+  { id: 'tenner',           name: 'The Tenner',           icon: 'hash', target: 10,  rem: s => Math.max(0, 10  - s.total)      },
+  { id: 'century',          name: 'Century Club',         icon: 'check-circle', target: 100, rem: s => Math.max(0, 100 - s.total)      },
+  { id: 'globe_trotter',    name: 'Globe Trotter',        icon: 'globe', target: 5,   rem: s => Math.max(0, 5   - s.countries)  },
+  { id: 'peat_freak',       name: 'Peat Freak',           icon: 'flame', target: 10,  rem: s => Math.max(0, 10  - s.peaty)      },
+  { id: 'the_critic',       name: 'The Critic',           icon: 'star', target: 50,  rem: s => Math.max(0, 50  - s.rated)      },
+  { id: 'flavor_arch',      name: 'Flavor Archaeologist', icon: 'flask-conical', target: 20,  rem: s => Math.max(0, 20  - s.fullFlavor) },
+  { id: 'social_butterfly', name: 'Social Butterfly',     icon: 'users', target: 5,   rem: s => Math.max(0, 5   - s.followers)  },
 ]
 
 /**
@@ -123,7 +123,7 @@ function calcPreferredDow(entryDates) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🥃 Processing re-engagement...')
+  console.log('[reengagement] Processing...')
 
   const today    = new Date()
   const todayDow = today.getUTCDay()                          // 0=Sun … 6=Sat

@@ -70,7 +70,7 @@
                     @click.stop="openPriceSearch"
                   >
                     <span class="price-range-value">{{ cataloguePriceRange || form.price }}</span>
-                    <span class="price-range-icon">🛒</span>
+                    <span class="price-range-icon"><ShoppingCartIcon :size="12" /></span>
                   </button>
                 </div>
               </div>
@@ -108,7 +108,7 @@
           <div class="view-field" v-if="form.rating">
             <div class="view-label">{{ t.rating }}</div>
             <div class="view-stars">
-              <span v-for="n in 5" :key="n" class="view-star" :class="{ filled: n <= form.rating }">★</span>
+              <span v-for="n in 5" :key="n" class="view-star" :class="{ filled: n <= form.rating }"><StarIcon :size="12" /></span>
             </div>
           </div>
         </template>
@@ -122,7 +122,7 @@
           <div class="view-label">{{ t.bottleCount }}</div>
           <div class="view-value view-bottle-val">
             <template v-if="form.bottle_count">
-              🍾 × {{ form.bottle_count }}
+              <PackageIcon :size="13" /> × {{ form.bottle_count }}
               <span v-if="form.last_finished" class="view-bottle-date">· {{ t.lastFinished }}: {{ form.last_finished }}</span>
             </template>
             <template v-else>—</template>
@@ -355,7 +355,7 @@
               :class="{ filled: n <= form.rating }"
               @click="form.rating = form.rating === n ? 0 : n"
               :title="`${n} star${n > 1 ? 's' : ''}`"
-            >★</button>
+            ><StarIcon :size="14" /></button>
             <span v-if="form.rating" class="star-clear" @click="form.rating = 0"><XIcon :size="10" /></span>
           </div>
         </div>
@@ -378,7 +378,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
+import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'

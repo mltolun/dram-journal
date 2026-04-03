@@ -45,7 +45,7 @@
                 </div>
                 <div class="tl-bottle-name">{{ w.name }}</div>
                 <div class="tl-bottle-meta">
-                  <span v-if="w.rating" class="tl-star">★ {{ w.rating }}</span>
+                  <span v-if="w.rating" class="tl-star"><StarIcon :size="10" /> {{ w.rating }}</span>
                   <span class="tl-day">{{ formatDay(w.date) }}</span>
                 </div>
               </button>
@@ -74,7 +74,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
+import { GlassWater as GlassWaterIcon, Star as StarIcon } from 'lucide-vue-next'
 import { journal } from '../composables/useWhiskies.js'
 const emit = defineEmits(['open-entry'])
 

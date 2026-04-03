@@ -8,7 +8,7 @@
 
     <!-- No follows -->
     <div v-else-if="myFollowing.length === 0" class="feed-empty">
-      <div class="feed-empty-icon">👁</div>
+      <div class="feed-empty-icon"><EyeIcon :size="40" /></div>
       <div class="feed-empty-text">{{ t.feedNoFollows }}</div>
       <div class="feed-empty-sub">{{ t.feedNoFollowsSub }}</div>
     </div>
@@ -45,7 +45,7 @@
                 <span v-if="item.whisky_distillery" class="feed-distillery"> · {{ item.whisky_distillery }}</span>
               </div>
               <div v-if="item.rating" class="feed-rating">
-                <span v-for="n in 5" :key="n" class="feed-star" :class="{ filled: n <= item.rating }">★</span>
+                <span v-for="n in 5" :key="n" class="feed-star" :class="{ filled: n <= item.rating }"><StarIcon :size="10" /></span>
               </div>
               <div v-if="item.nose" class="feed-tasting"><span class="feed-tasting-label">{{ t.nose }}</span> {{ item.nose }}</div>
               <div v-if="item.palate" class="feed-tasting"><span class="feed-tasting-label">{{ t.palate }}</span> {{ item.palate }}</div>
@@ -66,7 +66,7 @@
 
 <script setup>
 import { computed, onMounted } from 'vue'
-import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
+import { GlassWater as GlassWaterIcon, Eye as EyeIcon, Star as StarIcon } from 'lucide-vue-next'
 import { useFeed } from '../composables/useFeed.js'
 import { myFollowing } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'

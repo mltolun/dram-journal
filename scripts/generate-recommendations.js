@@ -211,7 +211,7 @@ async function fetchFollowerActivity(userId) {
   if (!subs?.length) return []
 
   const followingIds = subs.map(s => s.following_id)
-  console.log(`     👁 Following ${followingIds.length} user(s), checking their activity...`)
+  console.log(`     Following ${followingIds.length} user(s), checking their activity...`)
 
   // Fetch activity from those users in the last 7 days
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -229,7 +229,7 @@ async function fetchFollowerActivity(userId) {
     return []
   }
 
-  console.log(`     👁 Found ${activity?.length ?? 0} activity item(s) in the last 7 days`)
+  console.log(`     Found ${activity?.length ?? 0} activity item(s) in the last 7 days`)
   return activity || []
 }
 
@@ -300,7 +300,7 @@ function selectRandomCatalogueRecs(catalogue, journal, wishlist, count = 5) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🥃 Starting weekly update generation...')
+  console.log('[recommendations] Starting weekly update generation...')
   console.log(`   Model: ${GEMMA_MODEL}`)
   console.log(`   Min journal entries for AI recs: ${MIN_JOURNAL_ENTRIES} (else catalogue fallback ~€50)`)
   console.log(`   Emails enabled: ${SEND_EMAILS}`)
@@ -482,7 +482,7 @@ async function main() {
       const authorEmailMap = await buildEmailMap(authorIds)
 
       if (followerActivity.length > 0) {
-        console.log(`     👁 ${followerActivity.length} follower activity items`)
+        console.log(`     [activity] ${followerActivity.length} follower activity items`)
       }
 
       // 8. Send combined weekly email
@@ -522,7 +522,7 @@ async function main() {
   if (cleanupError) {
     console.warn(`⚠ activity_feed cleanup failed: ${cleanupError.message}`)
   } else {
-    console.log('🗑 activity_feed: old rows cleared')
+    console.log('[cleanup] activity_feed: old rows cleared')
   }
 }
 

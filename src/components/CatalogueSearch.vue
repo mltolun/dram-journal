@@ -3,13 +3,13 @@
 
     <!-- Scan match banner — shown when opened from a scan result -->
     <div v-if="initialQuery && !userHasTyped" class="cs-scan-banner">
-      <span class="cs-scan-icon">📷</span>
+      <span class="cs-scan-icon"><CameraIcon :size="14" /></span>
       <span>{{ t.scanMatchHint || 'Showing matches for your scanned bottle' }}</span>
     </div>
 
     <!-- Search input -->
     <div class="cs-input-wrap">
-      <span class="cs-icon">🔍</span>
+      <span class="cs-icon"><SearchIcon :size="14" /></span>
       <input
         ref="inputEl"
         v-model="query"
@@ -79,7 +79,9 @@
 import { ref, onMounted } from 'vue'
 import {
   GlassWater as GlassWaterIcon,
-  X as XIcon
+  X as XIcon,
+  Camera as CameraIcon,
+  Search as SearchIcon
 } from 'lucide-vue-next'
 import { useCatalogue } from '../composables/useCatalogue.js'
 import { useI18n } from '../composables/useI18n.js'

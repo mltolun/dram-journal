@@ -31,7 +31,7 @@
 
       <!-- Pending requests (people wanting to follow me) -->
       <div class="subs-section" v-if="pendingRequests.length">
-        <div class="subs-section-label">⏳ Pending requests</div>
+        <div class="subs-section-label"><ClockIcon :size="12" /> Pending requests</div>
         <div class="sub-row" v-for="req in pendingRequests" :key="req.id">
           <span class="sub-email">{{ req.follower_email || req.follower_id.slice(0, 8) + '…' }}</span>
           <div class="sub-actions">
@@ -72,7 +72,7 @@
 import { onMounted } from 'vue'
 import { ref } from 'vue'
 import { GlassWater as GlassWaterIcon, Users as UsersIcon, Sparkles as SparklesIcon,
-  ArrowLeft as ArrowLeftIcon, Eye as EyeIcon } from 'lucide-vue-next'
+  ArrowLeft as ArrowLeftIcon, Eye as EyeIcon, Clock as ClockIcon } from 'lucide-vue-next'
 import {
   useSubscriptions,
   pendingRequests,

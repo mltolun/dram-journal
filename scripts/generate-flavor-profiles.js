@@ -36,7 +36,7 @@ const GEMMA_MODEL = 'gemma-3-27b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {
-  console.error('❌  Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or GEMINI_KEY')
+  console.error('[error] Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or GEMINI_KEY')
   process.exit(1)
 }
 
@@ -134,7 +134,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🥃  Dram Journal — Flavor Profile Generator')
+  console.log('[flavor-profiles] Dram Journal — Flavor Profile Generator')
   console.log(`    Model      : ${GEMMA_MODEL}`)
   console.log(`    Batch limit: ${BATCH_LIMIT}`)
   console.log(`    Sleep      : ${SLEEP_MS / 1000}s between calls`)
@@ -160,14 +160,14 @@ async function main() {
     from += PAGE_SIZE
   }
 
-  if (!whiskies.length) { console.log('✅  No whiskies to process.'); return }
+  if (!whiskies.length) { console.log('[flavor-profiles] No whiskies to process.'); return }
 
   // Get total count for progress display
   const { count: total } = await sb
     .from('catalogue')
     .select('*', { count: 'exact', head: true })
 
-  console.log(`📋  Processing ${whiskies.length} whiskies (offset ${START_OFFSET} of ${total} total)\n`)
+  console.log(`[flavor-profiles] Processing ${whiskies.length} whiskies (offset ${START_OFFSET} of ${total} total)\n`)
 
   let succeeded = 0
   let failed    = 0
@@ -208,13 +208,13 @@ async function main() {
 
     // Sleep between calls to stay within 15 RPM — skip after last item
     if (i < whiskies.length - 1) {
-      process.stdout.write(`     ⏱  waiting ${SLEEP_MS / 1000}s…\r`)
+      process.stdout.write(`     waiting ${SLEEP_MS / 1000}s…\r`)
       await sleep(SLEEP_MS)
     }
   }
 
   console.log()
-  console.log('✅  Done!')
+  console.log('[flavor-profiles] Done!')
   console.log(`    ✓ Succeeded : ${succeeded}`)
   console.log(`    ✗ Failed    : ${failed}`)
   console.log()
@@ -224,8 +224,9 @@ async function main() {
     console.log(`▶   Next run: set START_OFFSET=${nextOffset} to continue`)
     console.log(`    Remaining: ${total - nextOffset} whiskies`)
   } else {
-    console.log('🎉  All whiskies processed!')
+    console.log('[flavor-profiles] All whiskies processed!')
   }
 }
 
-main().catch(err => { console.error('\n❌ ', err.message); process.exit(1) })
+main().catch(err => { console.error('
+[error]', err.message); process.exit(1) })

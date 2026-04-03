@@ -18,10 +18,10 @@
       <div class="wcard-meta-row">
         <span class="wcard-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
         <span v-if="!isTrash && whisky.rating" class="wcard-rating-pill" @click.stop>
-          ★ {{ whisky.rating }}
+          <StarIcon :size="10" /> {{ whisky.rating }}
         </span>
         <span v-if="isTrash" class="wcard-trash-pill">
-          🗑 {{ daysLeft }} {{ daysLeft === 1 ? t.trashDaySingular : t.trashDayPlural }}
+          <Trash2Icon :size="10" /> {{ daysLeft }} {{ daysLeft === 1 ? t.trashDaySingular : t.trashDayPlural }}
         </span>
       </div>
       <div class="wcard-distillery">{{ whisky.distillery || '—' }}</div>
@@ -72,8 +72,8 @@
       <span class="wcard-row-meta">{{ whisky.distillery || '—' }} · {{ whisky.age ? whisky.age + ' yo' : 'NAS' }}{{ whisky.abv ? ' · ' + whisky.abv : '' }}</span>
     </div>
 
-    <span v-if="whisky.rating" class="wcard-row-rating">★ {{ whisky.rating }}</span>
-    <span v-if="isTrash" class="wcard-trash-pill wcard-row-trash">🗑 {{ daysLeft }}d</span>
+    <span v-if="whisky.rating" class="wcard-row-rating"><StarIcon :size="10" /> {{ whisky.rating }}</span>
+    <span v-if="isTrash" class="wcard-trash-pill wcard-row-trash"><Trash2Icon :size="10" /> {{ daysLeft }}d</span>
 
     <div class="wcard-row-actions" @click.stop>
       <template v-if="isTrash">
@@ -96,7 +96,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { ArrowUp as ArrowUpIcon, Eye as EyeIcon, Trash2 as Trash2Icon, Share2 as Share2Icon, RotateCcw as RotateCcwIcon } from 'lucide-vue-next'
+import { ArrowUp as ArrowUpIcon, Eye as EyeIcon, Trash2 as Trash2Icon, Share2 as Share2Icon, RotateCcw as RotateCcwIcon, Star as StarIcon } from 'lucide-vue-next'
 import { ATTRS } from '../lib/constants.js'
 import { useI18n } from '../composables/useI18n.js'
 import { daysUntilFlush } from '../composables/useWhiskies.js'

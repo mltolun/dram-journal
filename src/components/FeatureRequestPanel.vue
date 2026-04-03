@@ -82,7 +82,7 @@
         <div v-if="loading" class="fr-loading">{{ t.frLoading }}</div>
 
         <div v-else-if="myFeatureRequests.length === 0" class="fr-empty">
-          <div class="fr-empty-icon">💡</div>
+          <div class="fr-empty-icon"><LightbulbIcon :size="32" /></div>
           <div>{{ t.frEmpty }}</div>
         </div>
 
@@ -136,7 +136,8 @@
 import { ref, computed, onMounted } from 'vue'
 import {
   MessageSquare as MessageSquareIcon,
-  ArrowLeft as ArrowLeftIcon
+  ArrowLeft as ArrowLeftIcon,
+  Lightbulb as LightbulbIcon
 } from 'lucide-vue-next'
 import { useFeatureRequests, myFeatureRequests } from '../composables/useFeatureRequests.js'
 import { useI18n } from '../composables/useI18n.js'

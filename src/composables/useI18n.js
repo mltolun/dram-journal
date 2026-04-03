@@ -38,9 +38,9 @@ const TRANSLATIONS = {
     inbox: 'Inbox',
     inboxEmpty: 'All clear. Whisky recommendations and follow requests will appear here.',
     markAllRead: 'Mark all read',
-    followRequest: '👁 Follow request',
+    followRequest: 'Follow request',
     sharedDram: 'Shared dram',
-    featureUpdate: '💡 Feature update',
+    featureUpdate: 'Feature update',
     wantsToFollow: 'wants to follow you',
     accept: 'Accept',
     decline: 'Decline',
@@ -208,7 +208,7 @@ const TRANSLATIONS = {
     tapToPhoto: 'Tap to take / choose photo',
     orDragDrop: 'or drag & drop',
     scansRemaining: (remaining, cap) => `${remaining} of ${cap} scans remaining today`,
-    identifyWhisky: '🔍 Identify whisky',
+    identifyWhisky: 'Identify whisky',
     retake: 'Retake',
     analysingBottle: 'Analysing bottle…',
     isReading: (model) => `${model} is reading the label`,
@@ -259,7 +259,7 @@ const TRANSLATIONS = {
     // AppView / misc toasts
     deleted: 'Deleted',
     movedToJournal: (name) => `✓ ${name} moved to Journal`,
-    bottleFinished: (name) => `🍾 ${name} — bottle finished!`,
+    bottleFinished: (name) => `${name} — bottle finished!`,
     whiskyUpdated: (name) => `✓ ${name} updated`,
     whiskyAdded: (name) => `✓ ${name} added`,
 
@@ -270,7 +270,7 @@ const TRANSLATIONS = {
     trashDeleteNow: 'Delete permanently',
     trashDaySingular: 'day left',
     trashDayPlural: 'days left',
-    trashMoved: (name) => `🗑 "${name}" moved to trash`,
+    trashMoved: (name) => `"${name}" moved to trash`,
     trashRestored: (name) => `✓ "${name}" restored to Journal`,
 
     // Empty states
@@ -284,7 +284,7 @@ const TRANSLATIONS = {
     added: 'Added',
 
     // Feature Requests panel
-    frTitle: '💡 Feature Requests',
+    frTitle: 'Feature Requests',
     frSubmitSection: '✦ Submit a new request',
     frTitleLabel: 'Feature title',
     frTitlePlaceholder: 'Short, descriptive name…',
@@ -315,7 +315,7 @@ const TRANSLATIONS = {
     frStatusDeclined: 'Declined',
 
     // Admin Feature Requests panel
-    frAdminTitle: '🛠 Feature Requests',
+    frAdminTitle: 'Feature Requests (Admin)',
     frAdminBadge: 'Admin',
     frAdminEmpty: 'No requests in this category.',
     frAdminNoteLabel: 'Note to user',
@@ -348,15 +348,15 @@ const TRANSLATIONS = {
     statsEarned: 'Earned',
     statsPassport: 'Regional Passport',
     statsFooter: 'Keep exploring — more badges unlock as you taste!',
-    statsFlavorWheel: '🎨 Flavour Profile',
+    statsFlavorWheel: 'Flavour Profile',
     statsFlavorWheelSub: 'Average across all fully-profiled entries',
     statsNotEnoughData: 'Log 3+ whiskies with all 5 flavour attributes to unlock this view',
     statsContinentHeadline: (countries, continents) => `${countries} ${countries === 1 ? 'country' : 'countries'} across ${continents} ${continents === 1 ? 'continent' : 'continents'}`,
-    statsContinentBritishIsles: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 British Isles',
+    statsContinentBritishIsles: 'British Isles',
     statsContinentEurope: 'Europe',
-    statsContinentAmericas: '🌎 Americas',
-    statsContinentAsia: '🌏 Asia',
-    statsContinentRestOfWorld: '🌐 Rest of World',
+    statsContinentAmericas: 'Americas',
+    statsContinentAsia: 'Asia',
+    statsContinentRestOfWorld: 'Rest of World',
 
     // Dashboard / sidebar
     quickStats: 'Quick Stats',
@@ -408,9 +408,9 @@ const TRANSLATIONS = {
     inbox: 'Bandeja de entrada',
     inboxEmpty: 'Todo al día. Las recomendaciones y solicitudes de seguimiento aparecerán aquí.',
     markAllRead: 'Marcar todo como leído',
-    followRequest: '👁 Solicitud de seguimiento',
+    followRequest: 'Solicitud de seguimiento',
     sharedDram: 'Dram compartido',
-    featureUpdate: '💡 Actualización de función',
+    featureUpdate: 'Actualización de función',
     wantsToFollow: 'quiere seguirte',
     accept: 'Aceptar',
     decline: 'Rechazar',
@@ -578,7 +578,7 @@ const TRANSLATIONS = {
     tapToPhoto: 'Toca para tomar / elegir foto',
     orDragDrop: 'o arrastra y suelta',
     scansRemaining: (remaining, cap) => `${remaining} de ${cap} escaneos restantes hoy`,
-    identifyWhisky: '🔍 Identificar whisky',
+    identifyWhisky: 'Identificar whisky',
     retake: 'Repetir',
     analysingBottle: 'Analizando botella…',
     isReading: (model) => `${model} está leyendo la etiqueta`,
@@ -629,7 +629,7 @@ const TRANSLATIONS = {
     // AppView / misc toasts
     deleted: 'Eliminado',
     movedToJournal: (name) => `✓ ${name} movido al Diario`,
-    bottleFinished: (name) => `🍾 ${name} — ¡botella terminada!`,
+    bottleFinished: (name) => `${name} — ¡botella terminada!`,
     whiskyUpdated: (name) => `✓ ${name} actualizado`,
     whiskyAdded: (name) => `✓ ${name} añadido`,
 
@@ -640,7 +640,7 @@ const TRANSLATIONS = {
     trashDeleteNow: 'Eliminar permanentemente',
     trashDaySingular: 'día restante',
     trashDayPlural: 'días restantes',
-    trashMoved: (name) => `🗑 "${name}" movido a la papelera`,
+    trashMoved: (name) => `"${name}" movido a la papelera`,
     trashRestored: (name) => `✓ "${name}" restaurado al Diario`,
 
     // Empty states
@@ -654,7 +654,7 @@ const TRANSLATIONS = {
     added: 'Añadido',
 
     // Feature Requests panel
-    frTitle: '💡 Solicitudes de función',
+    frTitle: 'Solicitudes de función',
     frSubmitSection: '✦ Enviar nueva solicitud',
     frTitleLabel: 'Título de la función',
     frTitlePlaceholder: 'Nombre corto y descriptivo…',
@@ -685,7 +685,7 @@ const TRANSLATIONS = {
     frStatusDeclined: 'Rechazada',
 
     // Admin Feature Requests panel
-    frAdminTitle: '🛠 Solicitudes de función',
+    frAdminTitle: 'Solicitudes de función (Admin)',
     frAdminBadge: 'Admin',
     frAdminEmpty: 'No hay solicitudes en esta categoría.',
     frAdminNoteLabel: 'Nota para el usuario',
@@ -718,15 +718,15 @@ const TRANSLATIONS = {
     statsEarned: 'Obtenida',
     statsPassport: 'Pasaporte Regional',
     statsFooter: '¡Sigue explorando — desbloqueas más insignias al degustar!',
-    statsFlavorWheel: '🎨 Perfil de Sabor',
+    statsFlavorWheel: 'Perfil de Sabor',
     statsFlavorWheelSub: 'Promedio de todas las entradas con perfil completo',
     statsNotEnoughData: 'Registra 3+ whiskies con los 5 atributos de sabor para desbloquear esta vista',
     statsContinentHeadline: (countries, continents) => `${countries} ${countries === 1 ? 'país' : 'países'} en ${continents} ${continents === 1 ? 'continente' : 'continentes'}`,
-    statsContinentBritishIsles: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Islas Británicas',
+    statsContinentBritishIsles: 'Islas Británicas',
     statsContinentEurope: 'Europa',
-    statsContinentAmericas: '🌎 Américas',
-    statsContinentAsia: '🌏 Asia',
-    statsContinentRestOfWorld: '🌐 Resto del mundo',
+    statsContinentAmericas: 'Américas',
+    statsContinentAsia: 'Asia',
+    statsContinentRestOfWorld: 'Resto del mundo',
 
     // Dashboard / sidebar
     quickStats: 'Estadísticas',

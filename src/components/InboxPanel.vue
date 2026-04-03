@@ -18,7 +18,7 @@
 
       <!-- Empty state -->
       <div v-if="allItems.length === 0" class="inbox-empty">
-        <div class="empty-icon">📬</div>
+        <div class="empty-icon"><MailboxIcon :size="36" /></div>
         <div>{{ t.inboxEmpty }}</div>
       </div>
 
@@ -125,7 +125,7 @@
                 </div>
               </div>
               <div v-if="msg.whisky_payload.rating" class="inbox-rating">
-                ★ {{ msg.whisky_payload.rating }} / 5
+                <StarIcon :size="11" /> {{ msg.whisky_payload.rating }} / 5
               </div>
             </div>
             <div class="inbox-expand-hint">
@@ -141,7 +141,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Sparkles as SparklesIcon, Settings as SettingsIcon, Check as CheckIcon, X as XIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
+import { Sparkles as SparklesIcon, Settings as SettingsIcon, Check as CheckIcon, X as XIcon, GlassWater as GlassWaterIcon, Mailbox as MailboxIcon, Star as StarIcon } from 'lucide-vue-next'
 import { useMessages, inbox, unreadCount } from '../composables/useMessages.js'
 import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'

@@ -77,21 +77,21 @@ const STRINGS = {
     onboardingHeadline: 'Log your first dram',
     onboardingBody:     'Your journal is ready — just add your first whisky to get started. No tasting notes required; a name and a rating is all it takes.',
     onboardingBadgeTag: '✦ First badge waiting',
-    onboardingBadgeBody:'🥃 Log one whisky to earn',
+    onboardingBadgeBody:'Log one whisky to earn',
     onboardingBadgeName:'First Dram',
     onboardingCta:      'Log My First Dram →',
-    onboardingTxtHdr:   'Log your first dram 🥃',
+    onboardingTxtHdr:   'Log your first dram',
     onboardingTxtBody:  "Your journal is ready — just add the first whisky you've been drinking. No tasting notes required; a name and a rating is all it takes.",
-    onboardingTxtBadge: 'Log one whisky to earn the First Dram badge 🥃',
+    onboardingTxtBadge: 'Log one whisky to earn the First Dram badge',
     // Subjects
-    subjectStreak:    (streak, label) => `🔥 Your ${streak}-week streak ends ${label} — The Dram Journal`,
+    subjectStreak:    (streak, label) => `Your ${streak}-week streak ends ${label} — The Dram Journal`,
     subjectBadge:     (icon, rem, plural, name) => `${icon} You're ${rem} dram${plural} from ${name} — The Dram Journal`,
-    subjectLapsed:    '🥃 While you were away — The Dram Journal',
-    subjectFinal:     '🥃 Your journal is still here — The Dram Journal',
-    subjectOnboarding:'🥃 Log your first dram — The Dram Journal',
+    subjectLapsed:    'While you were away — The Dram Journal',
+    subjectFinal:     'Your journal is still here — The Dram Journal',
+    subjectOnboarding:'Log your first dram — The Dram Journal',
     // Plain-text header prefix
     txtBrand: 'THE DRAM JOURNAL',
-    txtSignoff: 'Sláinte 🥃',
+    txtSignoff: 'Sláinte',
     txtOpenJournal: 'Open your journal',
     txtLogJournal: 'Log a dram',
   },
@@ -143,21 +143,21 @@ const STRINGS = {
     onboardingHeadline: 'Registra tu primer dram',
     onboardingBody:     'Tu diario está listo — solo añade tu primer whisky para empezar. No hacen falta notas de cata; basta con el nombre y una valoración.',
     onboardingBadgeTag: '✦ Primera insignia esperando',
-    onboardingBadgeBody:'🥃 Registra un whisky para ganar',
+    onboardingBadgeBody:'Registra un whisky para ganar',
     onboardingBadgeName:'Primer Dram',
     onboardingCta:      'Registrar Mi Primer Dram →',
-    onboardingTxtHdr:   'Registra tu primer dram 🥃',
+    onboardingTxtHdr:   'Registra tu primer dram',
     onboardingTxtBody:  'Tu diario está listo — añade el primer whisky que hayas probado. No hacen falta notas de cata; basta con el nombre y una valoración.',
-    onboardingTxtBadge: 'Registra un whisky para ganar la insignia Primer Dram 🥃',
+    onboardingTxtBadge: 'Registra un whisky para ganar la insignia Primer Dram',
     // Subjects
-    subjectStreak:    (streak, label) => `🔥 Tu racha de ${streak} semanas termina ${label} — The Dram Journal`,
+    subjectStreak:    (streak, label) => `Tu racha de ${streak} semanas termina ${label} — The Dram Journal`,
     subjectBadge:     (icon, rem, plural, name) => `${icon} Te faltan ${rem} dram${plural} para ${name} — The Dram Journal`,
-    subjectLapsed:    '🥃 Mientras estabas fuera — The Dram Journal',
-    subjectFinal:     '🥃 Tu diario te espera — The Dram Journal',
-    subjectOnboarding:'🥃 Registra tu primer dram — The Dram Journal',
+    subjectLapsed:    'Mientras estabas fuera — The Dram Journal',
+    subjectFinal:     'Tu diario te espera — The Dram Journal',
+    subjectOnboarding:'Registra tu primer dram — The Dram Journal',
     // Plain-text header prefix
     txtBrand: 'THE DRAM JOURNAL',
-    txtSignoff: 'Sláinte 🥃',
+    txtSignoff: 'Sláinte',
     txtOpenJournal: 'Abrir tu diario',
     txtLogJournal: 'Registrar un dram',
   },
@@ -193,7 +193,7 @@ function shell(body) {
                     The <span style="color:${AMBER_LIGHT};">Dram</span> Journal
                   </div>
                 </td>
-                <td align="right"><div style="font-size:24px;">🥃</div></td>
+                <td align="right"><div class="email-brand-icon">◆</div></td>
               </tr></table>
             </td>
           </tr>
@@ -253,7 +253,7 @@ function streakWarningHtml({ streak, daysLeft, badge }) {
                     text-transform:uppercase;color:#CC4400;margin-bottom:10px;">
           ${_s.streakTag}
         </div>
-        <div style="font-size:36px;line-height:1;margin-bottom:12px;">🔥</div>
+        <div style="font-size:20px;line-height:1;margin-bottom:12px;color:#E8A84C;">▲▲▲</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:10px;">
           ${_s.streakHeadline(streak, dayLabel)}
@@ -295,7 +295,7 @@ function streakWarningText({ streak, daysLeft, badge }) {
   const badgeLine = badge
     ? `\n\n${_s.streakAlsoBodyTxt(badge.rem, badge.rem !== 1 ? 's' : '', badge.name)}`
     : ''
-  return `${_s.txtBrand} — ${_s.streakTag} 🔥
+  return `${_s.txtBrand} — ${_s.streakTag}
 
 ${_s.streakHeadline(streak, dayLabel)}. ${_s.streakBody}
 ${urgency}${badgeLine}
@@ -379,8 +379,8 @@ function lapsedHtml({ friendActivity, stats, daysSince }) {
     : _s.lapsedDaysCouple
 
   const statCells = [
-    { icon: '🥃', value: stats.total,     label: _s.lapsedWhiskyLabel(stats.total) },
-    { icon: '🌍', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
+    { icon: 'glass-water', value: stats.total,     label: _s.lapsedWhiskyLabel(stats.total) },
+    { icon: 'globe', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
   ].map(s => `
     <td style="text-align:center;padding:10px 16px;">
       <div style="font-size:20px;">${s.icon}</div>
@@ -470,8 +470,8 @@ function lapsedText({ friendActivity, stats, daysSince }) {
 ${_s.lapsedHeadline(daysText)}.
 
 ${_s.lapsedYourJournal}
-  🥃 ${stats.total} ${_s.lapsedWhiskyLabel(stats.total)}
-  🌍 ${stats.countries} ${_s.lapsedCountryLabel(stats.countries)}
+  ${stats.total} ${_s.lapsedWhiskyLabel(stats.total)}
+  ${stats.countries} ${_s.lapsedCountryLabel(stats.countries)}
 ${friendLines}
 
 ${_s.txtOpenJournal}: ${APP_URL}
@@ -484,8 +484,8 @@ ${_s.txtSignoff}`
 
 function finalNudgeHtml({ stats }) {
   const statCells = [
-    { icon: '🥃', value: stats.total,     label: _s.lapsedWhiskyLabel(stats.total) },
-    { icon: '🌍', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
+    { icon: 'glass-water', value: stats.total,     label: _s.lapsedWhiskyLabel(stats.total) },
+    { icon: 'globe', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
   ].map(s => `
     <td style="text-align:center;padding:10px 16px;">
       <div style="font-size:20px;">${s.icon}</div>
@@ -532,8 +532,8 @@ function finalNudgeText({ stats }) {
 
 ${_s.finalTxtBody}
 
-  🥃 ${stats.total} ${_s.lapsedWhiskyLabel(stats.total)}
-  🌍 ${stats.countries} ${_s.lapsedCountryLabel(stats.countries)}
+  ${stats.total} ${_s.lapsedWhiskyLabel(stats.total)}
+  ${stats.countries} ${_s.lapsedCountryLabel(stats.countries)}
 
 ${_s.txtOpenJournal}: ${APP_URL}
 
@@ -551,7 +551,7 @@ function onboardingHtml() {
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
           ${_s.onboardingTag}
         </div>
-        <div style="font-size:36px;line-height:1;margin-bottom:12px;">🥃</div>
+        <div class="email-brand-icon" style="font-size:20px;margin-bottom:12px;color:#C8822A;">◆</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:10px;">
           ${_s.onboardingHeadline}

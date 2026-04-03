@@ -40,7 +40,7 @@ const GEMMA_MODEL = 'gemma-3-27b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY) {
-  console.error('❌  Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or GEMINI_KEY')
+  console.error('[error] Missing SUPABASE_URL, SUPABASE_SERVICE_KEY or GEMINI_KEY')
   process.exit(1)
 }
 
@@ -122,7 +122,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🥃  Dram Journal — Price Band Generator (Gemma)')
+  console.log('[price-ranges] Dram Journal — Price Band Generator')
   console.log(`    Model      : ${GEMMA_MODEL}`)
   console.log(`    Batch limit: ${BATCH_LIMIT}`)
   console.log(`    Sleep      : ${SLEEP_MS / 1000}s between calls`)
@@ -152,12 +152,12 @@ async function main() {
   }
 
   if (!whiskies.length) {
-    console.log('✅  No unprocessed whiskies. Use REPRICE=true to re-process all.')
+    console.log('[price-ranges] No unprocessed whiskies. Use REPRICE=true to re-process all.')
     return
   }
 
   const { count: total } = await sb.from('catalogue').select('*', { count: 'exact', head: true })
-  console.log(`📋  Processing ${whiskies.length} whiskies (${total} total in catalogue)\n`)
+  console.log(`[price-ranges] Processing ${whiskies.length} whiskies (${total} total in catalogue)\n`)
 
   let succeeded = 0
   let failed    = 0
@@ -198,20 +198,21 @@ async function main() {
     }
 
     if (i < whiskies.length - 1) {
-      process.stdout.write(`     ⏱  waiting ${SLEEP_MS / 1000}s…\r`)
+      process.stdout.write(`     waiting ${SLEEP_MS / 1000}s…\r`)
       await sleep(SLEEP_MS)
     }
   }
 
   console.log()
-  console.log('✅  Done!')
+  console.log('[price-ranges] Done!')
   console.log(`    ✓ Succeeded : ${succeeded}`)
   console.log(`    ✗ Failed    : ${failed}`)
-  if (failed > 0) console.log(`\n⚠   ${failed} rows marked status=false — reset to NULL to retry.`)
+  if (failed > 0) console.log(`\n[warn] ${failed} rows marked status=false — reset to NULL to retry.`)
 
   const nextOffset = START_OFFSET + whiskies.length
   if (nextOffset < total) console.log(`\n▶   Next run: START_OFFSET=${nextOffset}`)
-  else console.log('\n🎉  All whiskies priced!')
+  else console.log('[price-ranges] All whiskies priced!')
 }
 
-main().catch(err => { console.error('\n❌ ', err.message); process.exit(1) })
+main().catch(err => { console.error('
+[error]', err.message); process.exit(1) })
