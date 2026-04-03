@@ -8,7 +8,7 @@
         <div class="brand-sub">{{ t.brandSub }}</div>
       </div>
 
-      <!-- Search bar moved to AppToolbar for all screen sizes -->
+      <!-- Search bar moved to AppToolbar -->
 
       <!-- Right: Inbox + Avatar -->
       <div class="header-right">
@@ -154,26 +154,15 @@ const totalInboxCount = computed(() =>
   unreadCount.value + pendingRequests.value.length
 )
 
-const safeAreaTop  = ref(0)
-const isStandalone = ref(false)
-
 onMounted(() => {
   document.addEventListener('click', onClickOutside, true)
   loadSubscriptions()
   loadInbox()
-
-  isStandalone.value = window.navigator.standalone === true ||
-    window.matchMedia('(display-mode: standalone)').matches
-
-  if (isStandalone.value) {
-    safeAreaTop.value = 44
-  }
 })
 onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
 
-const headerStyle = computed(() => ({
-  paddingTop: safeAreaTop.value > 0 ? `calc(${safeAreaTop.value}px + 1.4rem)` : undefined
-}))
+// Safe-area top padding is handled by CSS env(safe-area-inset-top) on .sticky-top
+const headerStyle = computed(() => ({}))
 
 const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()
@@ -397,6 +386,19 @@ async function doSignOut() {
   /* Show inbox in avatar dropdown on mobile */
   .avatar-menu-divider--mobile-only { display: block; }
   .avatar-menu-item--mobile-only { display: flex; }
+  /* Pin avatar to top-right, floating above everything.
+     Use safe-area-inset-top so it clears the status bar on
+     viewport-fit:cover / black-translucent PWA setups. */
+  .avatar-wrap {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    right: 20px;
+    z-index: 999;
+  }
+  /* Push header content left so it doesn't run under the fixed avatar */
+  header, :deep(header) {
+    padding-right: 72px;
+  }
   /* Ensure avatar menu doesn't overflow off screen */
   .avatar-menu {
     right: 0;

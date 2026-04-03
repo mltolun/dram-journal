@@ -12,18 +12,20 @@
 
     <!-- Main scrollable column -->
     <div class="main-content">
-      <AppHeader />
+      <div class="sticky-top">
+        <AppHeader />
 
-      <AppToolbar
-        :selected-count="selected.length"
-        :compare-open="compareOpen"
-        :active-list="activeList"
-        :on-clear-selected="clearSelected"
-        :filters-open="filtersOpen"
-        :filter-count="activeFilterCount"
-        @compare="toggleCompare"
-        @filter="filtersOpen = !filtersOpen"
-      />
+        <AppToolbar
+          :selected-count="selected.length"
+          :compare-open="compareOpen"
+          :active-list="activeList"
+          :on-clear-selected="clearSelected"
+          :filters-open="filtersOpen"
+          :filter-count="activeFilterCount"
+          @compare="toggleCompare"
+          @filter="filtersOpen = !filtersOpen"
+        />
+      </div>
 
       <!-- Cascading filter bar (journal only) -->
       <div v-if="activeList === 'journal' && filtersOpen" class="filter-bar">
@@ -499,6 +501,16 @@ function onSaved(w) {
 </script>
 
 <style scoped>
+/* ── Sticky header+toolbar on mobile ── */
+.sticky-top {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+  background: var(--bg);
+  /* Pad content so nothing is hidden behind the status bar */
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* ── View toggle ── */
 .view-toggle-row {
   display: flex;
