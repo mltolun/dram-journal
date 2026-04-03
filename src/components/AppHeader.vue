@@ -8,7 +8,7 @@
         <div class="brand-sub">{{ t.brandSub }}</div>
       </div>
 
-      <!-- Search bar -->
+      <!-- Search bar (desktop only — mobile search is in AppToolbar) -->
       <div class="header-search">
         <SearchIcon :size="14" class="search-icon" aria-hidden="true" />
         <input
@@ -108,7 +108,6 @@
 
       </div>
     </div><!-- /header-top -->
-
   </header>
 
   <InboxPanel v-if="inboxOpen" @close="inboxOpen = false" />
@@ -446,40 +445,13 @@ async function doSignOut() {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  /* Hide desktop search bar — search is shown in AppToolbar on mobile */
+  .header-search { display: none; }
+  /* Hide inbox button — accessible via avatar menu on mobile */
+  .btn-inbox { display: none; }
   /* Show inbox in avatar dropdown on mobile */
   .avatar-menu-divider--mobile-only { display: block; }
   .avatar-menu-item--mobile-only { display: flex; }
-
-  /* Pin avatar to top-right, floating above everything */
-  .avatar-wrap {
-    position: fixed;
-    top: 14px;
-    right: 20px;
-    z-index: 999;
-  }
-
-  /* Allow header-top to wrap so search bar drops to its own row */
-  .header-top {
-    flex-wrap: wrap;
-    padding-right: 52px; /* clear the fixed avatar */
-  }
-
-  /* Brand and right stay on first row */
-  .header-brand { order: 1; }
-  .header-right { order: 2; }
-
-  /* Search bar drops to second full-width row */
-  .header-search {
-    order: 3;
-    flex: 1 1 100%;
-    max-width: none;
-    margin: 8px 0 0;
-    padding-right: 52px; /* clear the fixed avatar (34px wide + 20px right offset) */
-  }
-
-  /* Hide inbox button — accessible via avatar menu on mobile */
-  .btn-inbox { display: none; }
-
   /* Ensure avatar menu doesn't overflow off screen */
   .avatar-menu {
     right: 0;
@@ -487,4 +459,5 @@ async function doSignOut() {
     max-width: calc(100vw - 16px);
   }
 }
+
 </style>
