@@ -8,7 +8,7 @@
         <div class="brand-sub">{{ t.brandSub }}</div>
       </div>
 
-      <!-- Search bar -->
+      <!-- Search bar (desktop) -->
       <div class="header-search">
         <SearchIcon :size="14" class="search-icon" aria-hidden="true" />
         <input
@@ -107,6 +107,20 @@
         </div>
 
       </div>
+    </div>
+
+    <!-- Search bar (mobile only) -->
+    <div class="header-search-mobile">
+      <SearchIcon :size="14" class="search-icon" aria-hidden="true" />
+      <input
+        class="search-input"
+        type="search"
+        :placeholder="t.searchPlaceholder"
+        v-model="searchQuery"
+        aria-label="Search journal entries"
+        autocomplete="off"
+        spellcheck="false"
+      />
     </div>
   </header>
 
@@ -443,15 +457,50 @@ async function doSignOut() {
 .menu-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
 .menu-enter-from, .menu-leave-to { opacity: 0; transform: scale(0.95) translateY(-4px); }
 
-/* Mobile-only avatar menu items */
-.avatar-menu-divider--mobile-only,
-.avatar-menu-item--mobile-only { display: none; }
+/* ── Mobile search bar (hidden on desktop) ── */
+.header-search-mobile {
+  display: none;
+}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  /* Hide search and inbox — not needed in header on mobile */
+  /* Hide desktop search and inbox */
   .header-search { display: none; }
   .btn-inbox { display: none; }
+
+  /* Show mobile search bar below the brand/avatar row */
+  .header-search-mobile {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-top: 8px;
+  }
+  .header-search-mobile .search-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--peat-light);
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+  .header-search-mobile .search-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    padding: 7px 11px 7px 32px;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    min-width: 0;
+  }
+  .header-search-mobile .search-input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(200, 130, 42, 0.1);
+  }
+  .header-search-mobile .search-input::placeholder { color: var(--peat-light); opacity: 0.8; }
+  .header-search-mobile .search-input::-webkit-search-cancel-button { display: none; }
 
   /* Show inbox in avatar dropdown on mobile */
   .avatar-menu-divider--mobile-only { display: block; }

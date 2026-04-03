@@ -125,6 +125,8 @@ header { padding:12px 24px; border-bottom:0.5px solid var(--border); display:fle
 .sync-dot { width:6px; height:6px; border-radius:50%; display:inline-block; transition:background 0.3s; }
 .header-top { display:flex; justify-content:space-between; align-items:center; width:100%; gap:12px; }
 .header-brand { flex-shrink:0; }
+/* Search bar in header — flex-grow so it takes available space */
+.header-search { flex:1 1 120px; min-width:0; }
 
 /* ── TOOLBAR ── */
 .toolbar { padding:10px 24px; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; border-bottom:0.5px solid var(--border); }
@@ -327,17 +329,30 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   }
   /* Make room for the fixed avatar (34px + 16px right + 8px gap = 58px) */
   header { padding-right: 64px; }
-  .header-top { gap: 8px; }
+  .header-top { gap: 8px; flex-wrap: wrap; }
   .header-brand { flex-shrink: 1; min-width: 0; overflow: hidden; }
   .header-right { flex-shrink: 0; }
   .btn-inbox { display: none !important; }
+
+  /* Search bar: ensure it's always visible on mobile — push it to its own row */
+  .header-search {
+    order: 10;         /* after brand + right side */
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+  .header-search input,
+  .search-input {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media(max-width:680px) {
   header { padding:10px 16px; }
   .brand-title { font-size:0.95rem; }
   .toolbar { padding:8px 16px; flex-wrap:wrap; gap:8px; }
-  .toolbar-left { width:100%; }
+  .toolbar-left { width:100%; flex-wrap:wrap; }
   .toolbar-right { display:flex; gap:5px; flex-wrap:nowrap; width:100%; }
   .btn-t { flex:1; padding:6px 8px; font-size:0.7rem; }
   .grid-area { padding:14px 12px 5rem; }
@@ -347,6 +362,21 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
   .share-body { grid-template-columns:1fr; }
   .share-hero, .share-body { padding-left:1.2rem; padding-right:1.2rem; }
   .toast { bottom:1rem; right:1rem; left:1rem; text-align:center; }
+
+  /* Search bar always gets full width in toolbar on small screens */
+  .toolbar-search,
+  .search-wrap,
+  .header-search {
+    width: 100%;
+    flex: 1 1 100%;
+    order: -1;       /* show search first inside the toolbar */
+  }
+  .toolbar-search input,
+  .search-wrap input,
+  .search-input {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media(max-width:400px) {
