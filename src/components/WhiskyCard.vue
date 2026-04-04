@@ -8,7 +8,7 @@
       trash: isTrash,
     }"
     :style="selectColor ? `border-color:${selectColor}` : ''"
-    @click="isTrash ? null : $emit('toggle')"
+    @click="isTrash ? null : $emit('view')"
   >
     <div v-if="!isWishlist && !isTrash" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
@@ -51,7 +51,7 @@
       </template>
       <template v-else>
         <button class="wcard-btn" @click.stop="$emit('share')"><Share2Icon :size="11" /> {{ t.share }}</button>
-        <button class="wcard-btn" @click.stop="$emit('view')"><EyeIcon :size="11" /> {{ t.view }}</button>
+        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click.stop="$emit('toggle')"><Columns2Icon :size="11" /> Compare</button>
         <button class="wcard-btn del" @click.stop="$emit('delete')"><Trash2Icon :size="11" /></button>
       </template>
     </div>
@@ -63,7 +63,7 @@
     class="wcard-row"
     :class="{ selected, trash: isTrash }"
     :style="selectColor ? `border-left-color:${selectColor}` : ''"
-    @click="isTrash ? null : $emit('toggle')"
+    @click="isTrash ? null : $emit('view')"
   >
     <span class="wcard-type wcard-row-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
 
@@ -87,7 +87,7 @@
       </template>
       <template v-else>
         <button class="wcard-btn" @click="$emit('share')" :aria-label="t.share"><Share2Icon :size="11" /></button>
-        <button class="wcard-btn" @click="$emit('view')" :aria-label="t.view"><EyeIcon :size="11" /></button>
+        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click="$emit('toggle')" aria-label="Compare"><Columns2Icon :size="11" /></button>
         <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.delete"><Trash2Icon :size="11" /></button>
       </template>
     </div>
@@ -96,7 +96,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { ArrowUp as ArrowUpIcon, Eye as EyeIcon, Trash2 as Trash2Icon, Share2 as Share2Icon, RotateCcw as RotateCcwIcon, Star as StarIcon } from 'lucide-vue-next'
+import { ArrowUp as ArrowUpIcon, Columns2 as Columns2Icon, Trash2 as Trash2Icon, Share2 as Share2Icon, RotateCcw as RotateCcwIcon, Star as StarIcon } from 'lucide-vue-next'
 import { ATTRS } from '../lib/constants.js'
 import { useI18n } from '../composables/useI18n.js'
 import { daysUntilFlush } from '../composables/useWhiskies.js'
@@ -171,6 +171,11 @@ const daysLeft   = computed(() => daysUntilFlush(props.whisky))
 }
 .wcard.trash:hover .wcard-body {
   opacity: 0.6;
+}
+.wcard-btn.compare-active {
+  border-color: rgba(200,130,42,0.5);
+  color: var(--amber);
+  background: rgba(200,130,42,0.08);
 }
 .wcard-btn.restore {
   flex: 2;

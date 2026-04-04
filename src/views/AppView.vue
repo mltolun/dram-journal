@@ -133,8 +133,8 @@
             :selected="selected.includes(w.id)"
             :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
             :compact="viewMode === 'list'"
-            @toggle="toggleSelect(w.id)"
             @view="openViewModal(w)"
+            @toggle="toggleSelect(w.id)"
             @delete="doDelete(w)"
             @share="openShareModal(w)"
           />

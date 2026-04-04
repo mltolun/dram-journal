@@ -137,8 +137,10 @@
         <!-- Lightbox -->
         <Teleport to="body">
           <div v-if="lightboxOpen" class="lightbox" @click="lightboxOpen = false">
-            <button class="lightbox-close" @click="lightboxOpen = false"><XIcon :size="16" /></button>
-            <img :src="form.photo_url" :alt="form.name" class="lightbox-img" @click.stop>
+            <div class="lightbox-inner" @click.stop>
+              <button class="lightbox-close" @click="lightboxOpen = false"><XIcon :size="16" /></button>
+              <img :src="form.photo_url" :alt="form.name" class="lightbox-img">
+            </div>
           </div>
         </Teleport>
         </div>
@@ -664,31 +666,40 @@ async function save() {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+.lightbox-inner {
+  position: relative;
+  max-width: 75vw;
+  max-height: 75vh;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
 .lightbox-img {
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 75vw;
+  max-height: 75vh;
   object-fit: contain;
   border-radius: 10px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
-  cursor: default;
+  display: block;
 }
 .lightbox-close {
-  position: fixed;
-  top: 20px;
-  right: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 0.5px solid rgba(255, 255, 255, 0.2);
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(30, 20, 10, 0.85);
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
   width: 36px;
   height: 36px;
   color: #fff;
-  font-size: 0.85rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
-  z-index: 2001;
+  z-index: 2002;
+  flex-shrink: 0;
 }
 .lightbox-close:hover {
   background: rgba(255, 255, 255, 0.22);
