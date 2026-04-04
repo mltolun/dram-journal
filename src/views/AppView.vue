@@ -45,6 +45,17 @@
           <option value="">All ages</option>
           <option v-for="a in availableAges" :key="a" :value="a">{{ a === 'NAS' ? 'NAS' : a + ' yo' }}</option>
         </select>
+        <div class="filter-sort-group">
+          <select v-model="sortBy" class="filter-select">
+            <option value="date">Date</option>
+            <option value="rating">Rating</option>
+            <option value="name">Name</option>
+          </select>
+          <button class="btn-sort-dir" @click="sortDir = sortDir === 'desc' ? 'asc' : 'desc'" :title="sortDir === 'desc' ? 'Newest / highest first' : 'Oldest / lowest first'">
+            <ArrowDownIcon v-if="sortDir === 'desc'" :size="13" aria-hidden="true" />
+            <ArrowUpIcon v-else :size="13" aria-hidden="true" />
+          </button>
+        </div>
         <button v-if="activeFilterCount > 0" class="btn-clear-filters" @click="clearFilters">Clear filters</button>
       </div>
 
@@ -229,6 +240,8 @@ import {
   Plus as PlusIcon,
   Search as SearchIcon,
   Camera as CameraIcon,
+  ArrowDown as ArrowDownIcon,
+  ArrowUp as ArrowUpIcon,
   LayoutGrid as LayoutGridIcon,
   List as ListIcon,
   Calendar as CalendarIcon,
@@ -291,6 +304,8 @@ const filterCountry    = ref('')
 const filterRegion     = ref('')
 const filterDistillery = ref('')
 const filterAge        = ref('')
+const sortBy           = ref('date')   // 'date' | 'rating' | 'name'
+const sortDir          = ref('desc')   // 'desc' | 'asc'
 
 function parseAge(v) {
   const m = String(v || '').match(/\d+/)
@@ -354,16 +369,37 @@ const filteredJournal = computed(() => {
       w.region?.toLowerCase().includes(q)
     )
   }
+  // Sort
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  items = [...items].sort((a, b) => {
+    if (sortBy.value === 'date') {
+      const da = new Date(a.date || a.created_at || 0).getTime()
+      const db = new Date(b.date || b.created_at || 0).getTime()
+      return dir * (da - db)
+    }
+    if (sortBy.value === 'rating') {
+      const ra = a.rating ?? -1
+      const rb = b.rating ?? -1
+      return dir * (ra - rb)
+    }
+    if (sortBy.value === 'name') {
+      return dir * (a.name || '').localeCompare(b.name || '')
+    }
+    return 0
+  })
   return items
 })
 
 const activeFilterCount = computed(() =>
   [filterCountry, filterRegion, filterDistillery, filterAge]
-    .filter(f => f.value !== '').length
+    .filter(f => f.value !== '').length +
+  (sortBy.value !== 'date' || sortDir.value !== 'desc' ? 1 : 0)
 )
 
 function clearFilters() {
   filterCountry.value = filterRegion.value = filterDistillery.value = filterAge.value = ''
+  sortBy.value = 'date'
+  sortDir.value = 'desc'
 }
 
 const filteredWishlist = computed(() => {
@@ -561,6 +597,26 @@ function onSaved(w) {
   max-width: 160px;
 }
 .filter-select:focus { border-color: var(--amber); }
+.filter-sort-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-sort-dir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 0.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.btn-sort-dir:hover { border-color: var(--amber); color: var(--amber); }
 .btn-clear-filters {
   margin-left: auto;
   padding: 5px 12px;
