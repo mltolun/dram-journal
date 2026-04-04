@@ -616,7 +616,7 @@ function onSaved(w) {
   right: 2rem;
   z-index: 300;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: flex-end;
   gap: 8px;
 }
@@ -672,7 +672,7 @@ function onSaved(w) {
 .fab-menu-enter-active { transition: opacity 0.15s, transform 0.15s; }
 .fab-menu-leave-active { transition: opacity 0.1s, transform 0.1s; }
 .fab-menu-enter-from,
-.fab-menu-leave-to { opacity: 0; transform: scale(0.92) translateY(6px); }
+.fab-menu-leave-to { opacity: 0; transform: scale(0.92) translateY(8px); }
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {
