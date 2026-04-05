@@ -24,6 +24,17 @@ const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: { persistSession: false }
 })
 
+// ── HTML escape ───────────────────────────────────────────────────────────────
+
+function he(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // ── Colour palette ────────────────────────────────────────────────────────────
 
 const AMBER       = '#B06A0A'
@@ -285,8 +296,8 @@ ${_s.txtSignoff}`
 
 function directMessageHtml(fromEmail, whiskyName, distillery, message) {
   const name = fromEmail.split('@')[0]
-  const sub  = distillery ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${PEAT_LIGHT};margin-bottom:14px;">${distillery}</div>` : ''
-  const msg  = message ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;margin-top:12px;padding:10px 14px;background:rgba(200,130,42,0.08);border-radius:6px;">${message}</div>` : ''
+  const sub  = distillery ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${PEAT_LIGHT};margin-bottom:14px;">${he(distillery)}</div>` : ''
+  const msg  = message ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;margin-top:12px;padding:10px 14px;background:rgba(200,130,42,0.08);border-radius:6px;">${he(message)}</div>` : ''
   return shell(`
     <tr>
       <td style="padding:28px 32px 8px;">
@@ -300,7 +311,7 @@ function directMessageHtml(fromEmail, whiskyName, distillery, message) {
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:20px;
                     font-weight:400;color:${CREAM};line-height:1.2;margin-bottom:4px;">
-          ${whiskyName}
+          ${he(whiskyName)}
         </div>
         ${sub}
         ${msg}
@@ -385,7 +396,7 @@ function featureRequestHtml(status, featureTitle, adminNote) {
   const noteHtml = adminNote
     ? `<div style="margin-top:16px;padding:12px 16px;background:rgba(200,130,42,0.08);border-left:2px solid ${AMBER_LIGHT};border-radius:4px;">
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:${AMBER_LIGHT};margin-bottom:6px;">${_s.frFromTeam}</div>
-        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">${adminNote}</div>
+        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${PEAT_LIGHT};line-height:1.6;">${he(adminNote)}</div>
        </div>`
     : ''
   return shell(`
@@ -397,7 +408,7 @@ function featureRequestHtml(status, featureTitle, adminNote) {
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:19px;
                     font-weight:400;color:${CREAM};line-height:1.3;margin-bottom:12px;">
-          ${featureTitle}
+          ${he(featureTitle)}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
           ${s.body}
