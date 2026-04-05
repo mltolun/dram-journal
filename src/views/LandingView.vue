@@ -440,12 +440,15 @@ const badges = [
   border-bottom: 0.5px solid rgba(0,0,0,0.07);
 }
 .l-nav-brand {
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
   color: #111111;
 }
-.l-nav-brand span { color: #C87E20; }
+.l-nav-brand span {
+  color: #C87E20;
+  font-style: italic;
+}
 .l-nav-actions { display: flex; align-items: center; gap: 4px; }
 
 /* ── HERO ── */
