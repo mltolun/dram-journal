@@ -16,7 +16,7 @@
       </div>
 
       <!-- ── VIEW MODE ── -->
-      <template v-if="isViewMode"><div style="padding: 0 20px 20px;">
+      <template v-if="isViewMode"><div style="padding: 20px 20px 20px;">
 
         <div :class="isJournal && form.photo_url ? 'view-layout-split' : ''">
 

@@ -2,8 +2,9 @@ import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
 import { currentUser } from './useAuth.js'
 
-export const inbox     = ref([])   // messages received
-export const unreadCount = ref(0)
+export const inbox        = ref([])   // messages received
+export const sent         = ref([])   // messages sent
+export const unreadCount  = ref(0)
 
 export function useMessages() {
 
@@ -16,8 +17,20 @@ export function useMessages() {
       .order('created_at', { ascending: false })
 
     if (error) { console.error('loadInbox failed:', error.message); return }
-    inbox.value     = data || []
+    inbox.value       = data || []
     unreadCount.value = inbox.value.filter(m => !m.read).length
+  }
+
+  async function loadSent() {
+    if (!currentUser.value) return
+    const { data, error } = await sb
+      .from('direct_messages')
+      .select('*')
+      .eq('sender_id', currentUser.value.id)
+      .order('created_at', { ascending: false })
+
+    if (error) { console.error('loadSent failed:', error.message); return }
+    sent.value = data || []
   }
 
   async function sendMessage(recipientId, recipientEmail, whisky, message = '') {
@@ -28,11 +41,11 @@ export function useMessages() {
     const { error } = await sb
       .from('direct_messages')
       .insert({
-        sender_id:      currentUser.value.id,
-        recipient_id:   recipientId,
-        sender_email:   currentUser.value.email,
+        sender_id:       currentUser.value.id,
+        recipient_id:    recipientId,
+        sender_email:    currentUser.value.email,
         recipient_email: recipientEmail,
-        whisky_payload: payload,
+        whisky_payload:  payload,
       })
     if (error) throw error
 
@@ -42,9 +55,9 @@ export function useMessages() {
       to_email:   recipientEmail,
       from_email: currentUser.value.email,
       meta:       JSON.stringify({
-        whisky_name:  whisky.name,
-        distillery:   whisky.distillery || '',
-        message:      message.trim() || '',
+        whisky_name: whisky.name,
+        distillery:  whisky.distillery || '',
+        message:     message.trim() || '',
       }),
     })
   }
@@ -78,9 +91,18 @@ export function useMessages() {
       .delete()
       .eq('id', messageId)
     if (error) { console.error('deleteMessage failed:', error.message); return }
-    inbox.value = inbox.value.filter(m => m.id !== messageId)
+    inbox.value       = inbox.value.filter(m => m.id !== messageId)
     unreadCount.value = inbox.value.filter(m => !m.read).length
   }
 
-  return { inbox, unreadCount, loadInbox, sendMessage, markRead, markAllRead, deleteMessage }
+  async function deleteSentMessage(messageId) {
+    const { error } = await sb
+      .from('direct_messages')
+      .delete()
+      .eq('id', messageId)
+    if (error) { console.error('deleteSentMessage failed:', error.message); return }
+    sent.value = sent.value.filter(m => m.id !== messageId)
+  }
+
+  return { inbox, sent, unreadCount, loadInbox, loadSent, sendMessage, markRead, markAllRead, deleteMessage, deleteSentMessage }
 }

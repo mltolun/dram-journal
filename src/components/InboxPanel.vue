@@ -4,151 +4,243 @@
 
       <!-- Header -->
       <div class="subs-header">
-        <div class="subs-title">
-          {{ t.inbox }}
-          <span v-if="totalCount" class="inbox-unread-badge">{{ totalCount }}</span>
+        <div class="subs-header-top">
+          <div class="subs-title">
+            {{ t.inbox }}
+            <span v-if="totalCount" class="inbox-unread-badge">{{ totalCount }}</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button v-if="activeTab === 'inbox' && unreadCount" class="mark-all-btn" @click="markAllRead">
+              {{ t.markAllRead }}
+            </button>
+            <button class="subs-close" @click="$emit('close')"><XIcon :size="14" /></button>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button v-if="unreadCount" class="mark-all-btn" @click="markAllRead">
-            {{ t.markAllRead }}
+
+        <!-- Tabs -->
+        <div class="inbox-tabs">
+          <button
+            class="inbox-tab"
+            :class="{ active: activeTab === 'inbox' }"
+            @click="switchTab('inbox')"
+          >
+            <InboxIcon :size="12" />
+            {{ t.inboxTab || 'Received' }}
+            <span v-if="unreadCount" class="tab-badge">{{ unreadCount }}</span>
           </button>
-          <button class="subs-close" @click="$emit('close')"><XIcon :size="14" /></button>
+          <button
+            class="inbox-tab"
+            :class="{ active: activeTab === 'sent' }"
+            @click="switchTab('sent')"
+          >
+            <SendIcon :size="12" />
+            {{ t.sentTab || 'Sent' }}
+          </button>
         </div>
       </div>
 
-      <!-- Empty state -->
-      <div v-if="allItems.length === 0" class="inbox-empty">
-        <div class="empty-icon"><MailboxIcon :size="36" /></div>
-        <div>{{ t.inboxEmpty }}</div>
-      </div>
-
-      <div v-else class="inbox-list">
-
-        <!-- ── Follow request items ── -->
-        <div
-          v-for="req in pendingRequests"
-          :key="`follow-${req.id}`"
-          class="inbox-item inbox-item--follow"
-        >
-          <div class="inbox-item-header">
-            <div class="inbox-meta">
-              <span class="inbox-type-pill inbox-type-pill--follow">{{ t.followRequest }}</span>
-              <span class="inbox-dot">·</span>
-              <span class="inbox-date">{{ formatDate(req.created_at) }}</span>
-            </div>
-          </div>
-
-          <div class="inbox-follow-from">
-            <span class="inbox-follow-email">{{ req.follower_email || req.follower_id }}</span>
-            {{ t.wantsToFollow }}
-          </div>
-
-          <div class="inbox-follow-actions">
-            <button
-              class="follow-accept-btn"
-              @click="doAccept(req.id, req.follower_email)"
-              :disabled="actioning === req.id"
-            >
-              {{ actioning === req.id ? '…' : t.accept }}
-            </button>
-            <button
-              class="follow-decline-btn"
-              @click="doDecline(req.id)"
-              :disabled="actioning === req.id"
-            >
-              {{ t.decline }}
-            </button>
-          </div>
+      <!-- ── INBOX TAB ── -->
+      <template v-if="activeTab === 'inbox'">
+        <!-- Empty state -->
+        <div v-if="allItems.length === 0" class="inbox-empty">
+          <div class="empty-icon"><MailboxIcon :size="36" /></div>
+          <div>{{ t.inboxEmpty }}</div>
         </div>
 
-        <!-- ── Inbox message items ── -->
-        <div
-          v-for="msg in inbox"
-          :key="`msg-${msg.id}`"
-          class="inbox-item"
-          :class="{ unread: !msg.read }"
-          @click="expand(msg)"
-        >
-          <div class="inbox-item-header">
-            <div class="inbox-meta">
-              <!-- Feature request update -->
-              <template v-if="msg.whisky_payload?.msg_type === 'feature_request'">
-                <span class="inbox-type-pill inbox-type-pill--feature">{{ t.featureUpdate }}</span>
+        <div v-else class="inbox-list">
+
+          <!-- ── Follow request items ── -->
+          <div
+            v-for="req in pendingRequests"
+            :key="`follow-${req.id}`"
+            class="inbox-item inbox-item--follow"
+          >
+            <div class="inbox-item-header">
+              <div class="inbox-meta">
+                <span class="inbox-type-pill inbox-type-pill--follow">{{ t.followRequest }}</span>
                 <span class="inbox-dot">·</span>
-                <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
-              </template>
-              <!-- Shared dram -->
-              <template v-else>
-                <span class="inbox-type-pill inbox-type-pill--whisky"><GlassWaterIcon :size="10" style="display:inline;vertical-align:middle;margin-right:3px;" />{{ t.sharedDram }}</span>
-                <span class="inbox-dot">·</span>
-                <span class="inbox-from">{{ msg.sender_email }}</span>
-                <span class="inbox-dot">·</span>
-                <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
-              </template>
+                <span class="inbox-date">{{ formatDate(req.created_at) }}</span>
+              </div>
             </div>
-            <button class="inbox-delete" @click.stop="deleteMessage(msg.id)" title="Delete"><XIcon :size="12" /></button>
+
+            <div class="inbox-follow-from">
+              <span class="inbox-follow-email">{{ req.follower_email || req.follower_id }}</span>
+              {{ t.wantsToFollow }}
+            </div>
+
+            <div class="inbox-follow-actions">
+              <button
+                class="follow-accept-btn"
+                @click="doAccept(req.id, req.follower_email)"
+                :disabled="actioning === req.id"
+              >
+                {{ actioning === req.id ? '…' : t.accept }}
+              </button>
+              <button
+                class="follow-decline-btn"
+                @click="doDecline(req.id)"
+                :disabled="actioning === req.id"
+              >
+                {{ t.decline }}
+              </button>
+            </div>
           </div>
 
-          <!-- Feature request message body -->
-          <template v-if="msg.whisky_payload?.msg_type === 'feature_request'">
-            <div class="inbox-whisky-name">{{ msg.whisky_payload.feature_title }}</div>
-            <div class="inbox-fr-status" :class="`inbox-fr-status--${msg.whisky_payload.status}`">
-              <component :is="FR_STATUS_ICONS[msg.whisky_payload.status]" :size="11" style="display:inline;vertical-align:middle;margin-right:3px;" />
-              {{ FR_STATUS_LABELS[msg.whisky_payload.status] || msg.whisky_payload.status }}
+          <!-- ── Inbox message items ── -->
+          <div
+            v-for="msg in inbox"
+            :key="`msg-${msg.id}`"
+            class="inbox-item"
+            :class="{ unread: !msg.read }"
+            @click="expand(msg)"
+          >
+            <div class="inbox-item-header">
+              <div class="inbox-meta">
+                <!-- Feature request update -->
+                <template v-if="msg.whisky_payload?.msg_type === 'feature_request'">
+                  <span class="inbox-type-pill inbox-type-pill--feature">{{ t.featureUpdate }}</span>
+                  <span class="inbox-dot">·</span>
+                  <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
+                </template>
+                <!-- Shared dram -->
+                <template v-else>
+                  <span class="inbox-type-pill inbox-type-pill--whisky"><GlassWaterIcon :size="10" style="display:inline;vertical-align:middle;margin-right:3px;" />{{ t.sharedDram }}</span>
+                  <span class="inbox-dot">·</span>
+                  <span class="inbox-from">{{ msg.sender_email }}</span>
+                  <span class="inbox-dot">·</span>
+                  <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
+                </template>
+              </div>
+              <button class="inbox-delete" @click.stop="deleteMessage(msg.id)" title="Delete"><XIcon :size="12" /></button>
             </div>
-            <div v-if="msg.whisky_payload.admin_note" class="inbox-fr-note">
-              "{{ msg.whisky_payload.admin_note }}"
-            </div>
-          </template>
 
-          <!-- Shared whisky message body -->
-          <template v-else>
-            <div class="inbox-whisky-name">{{ msg.whisky_payload.name }}</div>
-            <div v-if="msg.whisky_payload.distillery" class="inbox-whisky-sub">
+            <!-- Feature request message body -->
+            <template v-if="msg.whisky_payload?.msg_type === 'feature_request'">
+              <div class="inbox-whisky-name">{{ msg.whisky_payload.feature_title }}</div>
+              <div class="inbox-fr-status" :class="`inbox-fr-status--${msg.whisky_payload.status}`">
+                <component :is="FR_STATUS_ICONS[msg.whisky_payload.status]" :size="11" style="display:inline;vertical-align:middle;margin-right:3px;" />
+                {{ FR_STATUS_LABELS[msg.whisky_payload.status] || msg.whisky_payload.status }}
+              </div>
+              <div v-if="msg.whisky_payload.admin_note" class="inbox-fr-note">
+                "{{ msg.whisky_payload.admin_note }}"
+              </div>
+            </template>
+
+            <!-- Shared whisky message body -->
+            <template v-else>
+              <div class="inbox-whisky-name">{{ msg.whisky_payload.name }}</div>
+              <div v-if="msg.whisky_payload.distillery" class="inbox-whisky-sub">
+                {{ msg.whisky_payload.distillery }}
+                <template v-if="msg.whisky_payload.age"> · {{ msg.whisky_payload.age }}</template>
+              </div>
+              <div v-if="expanded === msg.id" class="inbox-detail">
+                <div v-if="msg.whisky_payload._message" class="inbox-sender-message">
+                  {{ msg.whisky_payload._message }}
+                </div>
+                <div v-if="msg.whisky_payload.notes" class="inbox-notes">
+                  "{{ msg.whisky_payload.notes }}"
+                </div>
+                <div class="inbox-bars">
+                  <div v-for="a in ATTRS" :key="a" class="inbox-bar-row">
+                    <span class="inbox-bar-lbl">{{ ATTR_LABELS[a] }}</span>
+                    <div class="inbox-bar-track">
+                      <div class="inbox-bar-fill" :style="{ width: (msg.whisky_payload[a] || 0) * 20 + '%' }"></div>
+                    </div>
+                    <span class="inbox-bar-val">{{ msg.whisky_payload[a] || 0 }}</span>
+                  </div>
+                </div>
+                <div v-if="msg.whisky_payload.rating" class="inbox-rating">
+                  <StarIcon :size="11" /> {{ msg.whisky_payload.rating }} / 5
+                </div>
+              </div>
+              <div class="inbox-expand-hint">
+                {{ expanded === msg.id ? t.frLess : t.frDetails }}
+              </div>
+            </template>
+          </div>
+
+        </div>
+      </template>
+
+      <!-- ── SENT TAB ── -->
+      <template v-else-if="activeTab === 'sent'">
+        <div v-if="sentLoading" class="inbox-empty">
+          <div style="opacity:0.5;font-size:0.78rem;">Loading…</div>
+        </div>
+
+        <div v-else-if="sent.length === 0" class="inbox-empty">
+          <div class="empty-icon"><SendIcon :size="36" /></div>
+          <div>{{ t.sentEmpty || 'No sent messages yet.' }}</div>
+        </div>
+
+        <div v-else class="inbox-list">
+          <div
+            v-for="msg in sent"
+            :key="`sent-${msg.id}`"
+            class="inbox-item"
+            @click="expandSent(msg)"
+          >
+            <div class="inbox-item-header">
+              <div class="inbox-meta">
+                <span class="inbox-type-pill inbox-type-pill--whisky">
+                  <GlassWaterIcon :size="10" style="display:inline;vertical-align:middle;margin-right:3px;" />
+                  {{ t.sharedDram }}
+                </span>
+                <span class="inbox-dot">·</span>
+                <span class="inbox-to">{{ msg.recipient_email }}</span>
+                <span class="inbox-dot">·</span>
+                <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
+              </div>
+              <button class="inbox-delete" @click.stop="deleteSentMessage(msg.id)" title="Delete"><XIcon :size="12" /></button>
+            </div>
+
+            <div class="inbox-whisky-name">{{ msg.whisky_payload?.name }}</div>
+            <div v-if="msg.whisky_payload?.distillery" class="inbox-whisky-sub">
               {{ msg.whisky_payload.distillery }}
               <template v-if="msg.whisky_payload.age"> · {{ msg.whisky_payload.age }}</template>
             </div>
-            <div v-if="expanded === msg.id" class="inbox-detail">
-              <div v-if="msg.whisky_payload._message" class="inbox-sender-message">
+
+            <div v-if="expandedSentId === msg.id" class="inbox-detail">
+              <div v-if="msg.whisky_payload?._message" class="inbox-sender-message">
                 {{ msg.whisky_payload._message }}
               </div>
-              <div v-if="msg.whisky_payload.notes" class="inbox-notes">
+              <div v-if="msg.whisky_payload?.notes" class="inbox-notes">
                 "{{ msg.whisky_payload.notes }}"
               </div>
               <div class="inbox-bars">
                 <div v-for="a in ATTRS" :key="a" class="inbox-bar-row">
                   <span class="inbox-bar-lbl">{{ ATTR_LABELS[a] }}</span>
                   <div class="inbox-bar-track">
-                    <div class="inbox-bar-fill" :style="{ width: (msg.whisky_payload[a] || 0) * 20 + '%' }"></div>
+                    <div class="inbox-bar-fill" :style="{ width: (msg.whisky_payload?.[a] || 0) * 20 + '%' }"></div>
                   </div>
-                  <span class="inbox-bar-val">{{ msg.whisky_payload[a] || 0 }}</span>
+                  <span class="inbox-bar-val">{{ msg.whisky_payload?.[a] || 0 }}</span>
                 </div>
               </div>
-              <div v-if="msg.whisky_payload.rating" class="inbox-rating">
+              <div v-if="msg.whisky_payload?.rating" class="inbox-rating">
                 <StarIcon :size="11" /> {{ msg.whisky_payload.rating }} / 5
               </div>
             </div>
             <div class="inbox-expand-hint">
-              {{ expanded === msg.id ? t.frLess : t.frDetails }}
+              {{ expandedSentId === msg.id ? t.frLess : t.frDetails }}
             </div>
-          </template>
+          </div>
         </div>
+      </template>
 
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Sparkles as SparklesIcon, Settings as SettingsIcon, Check as CheckIcon, X as XIcon, GlassWater as GlassWaterIcon, Mailbox as MailboxIcon, Star as StarIcon } from 'lucide-vue-next'
-import { useMessages, inbox, unreadCount } from '../composables/useMessages.js'
+import { Sparkles as SparklesIcon, Settings as SettingsIcon, Check as CheckIcon, X as XIcon, GlassWater as GlassWaterIcon, Mailbox as MailboxIcon, Star as StarIcon, Inbox as InboxIcon, Send as SendIcon } from 'lucide-vue-next'
+import { useMessages, inbox, sent, unreadCount } from '../composables/useMessages.js'
 import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'
 
 defineEmits(['close'])
 
-const { loadInbox, markRead, markAllRead, deleteMessage } = useMessages()
+const { loadInbox, loadSent, markRead, markAllRead, deleteMessage, deleteSentMessage } = useMessages()
 const { loadSubscriptions, acceptRequest, removeSubscription } = useSubscriptions()
 const { t } = useI18n()
 
@@ -172,8 +264,11 @@ const FR_STATUS_ICONS = {
   declined:    XIcon,
 }
 
-const expanded  = ref(null)
-const actioning = ref(null)   // id of the follow request currently being actioned
+const activeTab      = ref('inbox')
+const expanded       = ref(null)
+const expandedSentId = ref(null)
+const actioning      = ref(null)
+const sentLoading    = ref(false)
 
 // Total badge count: unread messages + pending follow requests
 const totalCount = computed(() =>
@@ -189,6 +284,18 @@ onMounted(async () => {
   await Promise.all([loadInbox(), loadSubscriptions()])
 })
 
+async function switchTab(tab) {
+  activeTab.value = tab
+  if (tab === 'sent' && sent.value.length === 0) {
+    sentLoading.value = true
+    try {
+      await loadSent()
+    } finally {
+      sentLoading.value = false
+    }
+  }
+}
+
 function expand(msg) {
   if (expanded.value === msg.id) {
     expanded.value = null
@@ -196,6 +303,10 @@ function expand(msg) {
     expanded.value = msg.id
     if (!msg.read) markRead(msg.id)
   }
+}
+
+function expandSent(msg) {
+  expandedSentId.value = expandedSentId.value === msg.id ? null : msg.id
 }
 
 async function doAccept(id, email) {
@@ -247,14 +358,20 @@ function formatDate(iso) {
 
 .subs-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px 16px;
+  flex-direction: column;
+  padding: 20px 24px 0;
   border-bottom: 0.5px solid var(--border, rgba(200,130,42,0.15));
   position: sticky;
   top: 0;
   background: var(--bg-modal, #1e1408);
   z-index: 2;
+}
+
+.subs-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
 .subs-title {
@@ -276,15 +393,62 @@ function formatDate(iso) {
   line-height: 1.5;
 }
 
+/* Tabs */
+.inbox-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0 -24px;
+}
+
+.inbox-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--peat-light);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.inbox-tab:hover {
+  color: var(--text-secondary);
+}
+
+.inbox-tab.active {
+  color: var(--amber-light);
+  border-bottom-color: var(--amber-light);
+}
+
+.tab-badge {
+  background: var(--amber);
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.52rem;
+  border-radius: 999px;
+  padding: 1px 5px;
+  line-height: 1.5;
+}
+
 .subs-close {
   background: none;
   border: none;
   color: var(--peat-light);
   font-size: 0.9rem;
   cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 6px;
   transition: color 0.15s;
+  display: flex;
+  align-items: center;
 }
 .subs-close:hover { color: var(--text-primary); }
 
@@ -402,6 +566,12 @@ function formatDate(iso) {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   color: var(--amber-light);
+}
+.inbox-to {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
 }
 .inbox-dot { color: var(--peat-light); font-size: 0.7rem; }
 .inbox-date {
