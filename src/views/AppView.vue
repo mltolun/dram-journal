@@ -1,7 +1,7 @@
 <template>
   <!-- Auth screen -->
   <div v-if="!currentUser" style="position:fixed;inset:0;z-index:500;background:var(--peat);display:flex;align-items:center;justify-content:center;">
-    <AuthBox />
+    <AuthBox :initial-tab="route.query.auth === 'register' ? 'register' : 'login'" />
   </div>
 
   <!-- Main app: sidebar + content -->

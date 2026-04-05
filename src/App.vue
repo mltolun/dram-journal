@@ -27,6 +27,7 @@ onMounted(() => {
       currentUser.value = session?.user ?? null
     } else if (event === 'SIGNED_OUT') {
       currentUser.value = null
+      router.push('/')
     }
   })
 })

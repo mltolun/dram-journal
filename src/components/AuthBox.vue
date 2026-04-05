@@ -33,11 +33,13 @@ import { useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { useI18n } from '../composables/useI18n.js'
 
+const props = defineProps({ initialTab: { type: String, default: 'login' } })
+
 const { signIn, signUp, forgotPassword } = useAuth()
 const { loadWhiskies } = useWhiskies()
 const { t } = useI18n()
 
-const tab       = ref('login')
+const tab       = ref(props.initialTab)
 const email     = ref('')
 const password  = ref('')
 const password2 = ref('')
