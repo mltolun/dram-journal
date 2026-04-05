@@ -1,19 +1,21 @@
 import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
-import { useI18n } from './useI18n.js'
+import { useI18n, detectLocale } from './useI18n.js'
 
 export const currentUser = ref(null)
 
-function syncLocaleFromUser(user) {
+async function syncLocaleFromUser(user) {
   const storedLocale = user?.user_metadata?.locale
   if (storedLocale && ['en', 'es'].includes(storedLocale)) {
+    // User already has a saved locale in their profile — use it
     const { setLocale } = useI18n()
     setLocale(storedLocale)
   } else {
-    // One-time migration: if user has no locale in user_metadata but has one in localStorage, persist it silently
-    const localLocale = localStorage.getItem('dj_locale')
-    if (localLocale && ['en', 'es'].includes(localLocale)) {
-      sb.auth.updateUser({ data: { locale: localLocale } })
+    // No locale in user metadata yet — detect and save it
+    await detectLocale()
+    const detectedLocale = localStorage.getItem('dj_locale')
+    if (detectedLocale && ['en', 'es'].includes(detectedLocale)) {
+      sb.auth.updateUser({ data: { locale: detectedLocale } })
     }
   }
 }
@@ -23,14 +25,22 @@ export function useAuth() {
     const { data, error } = await sb.auth.signInWithPassword({ email, password })
     if (error) throw error
     currentUser.value = data.user
-    syncLocaleFromUser(data.user)
+    await syncLocaleFromUser(data.user)
     return data.user
   }
 
   async function signUp(email, password) {
     const { data, error } = await sb.auth.signUp({ email, password })
     if (error) throw error
-    if (data.user && data.session) currentUser.value = data.user
+    if (data.user && data.session) {
+      currentUser.value = data.user
+      // New user — detect locale from browser/IP and persist to their profile
+      await detectLocale()
+      const detectedLocale = localStorage.getItem('dj_locale')
+      if (detectedLocale && ['en', 'es'].includes(detectedLocale)) {
+        sb.auth.updateUser({ data: { locale: detectedLocale } })
+      }
+    }
     return data
   }
 
@@ -56,7 +66,7 @@ export function useAuth() {
     const { data: { session } } = await sb.auth.getSession()
     if (session) {
       currentUser.value = session.user
-      syncLocaleFromUser(session.user)
+      await syncLocaleFromUser(session.user)
     }
     return session
   }

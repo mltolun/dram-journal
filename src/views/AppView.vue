@@ -233,7 +233,7 @@ import { myFollowers } from '../composables/useSubscriptions.js'
 import { loadEarnedBadges, checkBadges } from '../composables/useBadges.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
-import { useI18n } from '../composables/useI18n.js'
+import { useI18n, detectLocale } from '../composables/useI18n.js'
 import { searchQuery } from '../composables/useSearch.js'
 import { COLOR_HEX } from '../lib/constants.js'
 import {
@@ -420,6 +420,9 @@ const selectedWhiskies = computed(() =>
 )
 
 onMounted(async () => {
+  // Detect locale from browser/IP for first-time visitors (no-op if already set)
+  if (!localStorage.getItem('dj_locale')) detectLocale()
+
   if (route.query.list === 'wishlist') activeList.value = 'wishlist'
   const session = await getSession()
   if (session) {

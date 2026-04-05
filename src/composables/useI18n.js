@@ -1,5 +1,79 @@
 import { ref, computed } from 'vue'
 
+// ─── Supported locales ────────────────────────────────────────────────────────
+const SUPPORTED = ['en', 'es']
+
+// Countries where Spanish is the primary/official language
+const SPANISH_COUNTRIES = new Set([
+  'AR','BO','CL','CO','CR','CU','DO','EC','SV','GQ',
+  'GT','HN','MX','NI','PA','PY','PE','ES','UY','VE',
+])
+
+/**
+ * Map a BCP-47 language tag or ISO-3166-1 country code to one of our supported
+ * locale keys. Returns null if we can't confidently map it.
+ */
+function mapToSupportedLocale(langOrCountry) {
+  if (!langOrCountry) return null
+  const base = langOrCountry.split(/[-_]/)[0].toLowerCase()
+  if (base === 'es') return 'es'
+  if (base === 'en') return 'en'
+  // country code path (uppercase two-letter)
+  if (SPANISH_COUNTRIES.has(langOrCountry.toUpperCase())) return 'es'
+  return null
+}
+
+/**
+ * Detect the best locale for a first-time visitor.
+ *
+ * Strategy (in order of priority):
+ *  1. navigator.language / navigator.languages  — instant, no network
+ *  2. IP-geolocation via ipapi.co               — catches VPN-free regional signals
+ *
+ * Only called when there is no existing 'dj_locale' in localStorage.
+ * Saves the result so it only runs once.
+ */
+export async function detectLocale() {
+  if (localStorage.getItem('dj_locale')) return  // already set by user or previous visit
+
+  // 1. Browser language preference
+  const browserLangs = navigator.languages?.length
+    ? navigator.languages
+    : [navigator.language || '']
+
+  for (const lang of browserLangs) {
+    const mapped = mapToSupportedLocale(lang)
+    if (mapped) {
+      _applyLocale(mapped)
+      return
+    }
+  }
+
+  // 2. IP geolocation fallback (best-effort, silently ignored on failure)
+  try {
+    const res  = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) })
+    const data = await res.json()
+    const mapped = mapToSupportedLocale(data.country_code) ||
+                   mapToSupportedLocale(data.languages?.split(',')[0])
+    if (mapped) {
+      _applyLocale(mapped)
+      return
+    }
+  } catch {
+    // Network unavailable or timed out — stay on default
+  }
+
+  // 3. Hard fallback
+  _applyLocale('en')
+}
+
+function _applyLocale(l) {
+  if (!SUPPORTED.includes(l)) return
+  locale.value = l
+  localStorage.setItem('dj_locale', l)
+}
+
+// ─── Reactive locale ──────────────────────────────────────────────────────────
 const locale = ref(localStorage.getItem('dj_locale') || 'en')
 
 export function useI18n() {
