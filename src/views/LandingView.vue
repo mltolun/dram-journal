@@ -146,7 +146,8 @@
       <div class="l-section-eyebrow">{{ L.compare.eyebrow }}</div>
       <h2 class="l-section-title">{{ L.compare.title }}</h2>
       <p class="l-compare-desc">{{ L.compare.desc }}</p>
-      <div class="l-compare-mock">
+      <!-- Desktop: vertical bar columns -->
+      <div class="l-compare-mock l-compare-mock--desktop">
         <div class="l-cmp-col" v-for="(w, i) in compareWhiskies" :key="i"
              :style="`--ci:${i}`">
           <!-- Header: fixed height so bars never overlap it -->
@@ -162,6 +163,28 @@
               <span class="l-cmp-bar-num">{{ val }}</span>
               <div class="l-cmp-bar-fill"></div>
               <span class="l-cmp-bar-lbl">{{ L.compareBarLabels[j] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile: horizontal bars, 2 whiskies -->
+      <div class="l-compare-mock l-compare-mock--mobile">
+        <div class="l-cmp-hcol" v-for="(w, i) in compareWhiskies.slice(0, 2)" :key="i"
+             :style="`--ci:${i}`">
+          <div class="l-cmp-hcol-header">
+            <span class="wcard-type" :class="`type-${w.type}`">{{ w.typeLabel }}</span>
+            <div class="l-cmp-name">{{ w.name }}</div>
+            <div class="l-cmp-dist">{{ w.dist }}</div>
+          </div>
+          <div class="l-cmp-hbars">
+            <div class="l-cmp-hbar" v-for="(val, j) in w.vals" :key="j"
+                 :style="`--delay:${j * 0.06 + i * 0.1}s`">
+              <span class="l-cmp-hbar-lbl">{{ L.compareBarLabels[j] }}</span>
+              <div class="l-cmp-hbar-track">
+                <div class="l-cmp-hbar-fill" :style="`width:${val * 20}%`"></div>
+              </div>
+              <span class="l-cmp-hbar-val">{{ val }}</span>
             </div>
           </div>
         </div>
@@ -873,6 +896,73 @@ const langOpen     = ref(false)
   margin-top: 3px;
 }
 
+/* Show/hide desktop vs mobile compare mock */
+.l-compare-mock--mobile { display: none; }
+
+/* Mobile compare: horizontal bars, 2 whiskies side by side */
+.l-compare-mock--mobile {
+  flex-direction: row;
+  gap: 12px;
+  padding: 20px 16px;
+}
+.l-cmp-hcol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: lFadeUp 0.5s calc(var(--ci, 0) * 0.1s) ease both;
+}
+.l-cmp-hcol-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-bottom: 8px;
+  border-bottom: 0.5px solid rgba(0,0,0,0.07);
+}
+.l-cmp-hbars {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.l-cmp-hbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  animation: lBarReveal 0.45s calc(0.3s + var(--delay, 0s)) ease both;
+}
+.l-cmp-hbar-lbl {
+  font-size: 0.5rem;
+  color: #9A8878;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: 34px;
+  flex-shrink: 0;
+}
+.l-cmp-hbar-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(0,0,0,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.l-cmp-hbar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: #B06A0A;
+  transform-origin: left;
+  animation: lBarReveal 0.45s calc(0.3s + var(--delay, 0s)) ease both;
+}
+.l-cmp-hcol:nth-child(2) .l-cmp-hbar-fill { background: #5070A0; }
+.l-cmp-hbar-val {
+  font-size: 0.5rem;
+  color: #9A8878;
+  font-family: 'JetBrains Mono', monospace;
+  width: 8px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
 /* ── SOCIAL ── */
 .l-social {
   padding: 80px 48px;
@@ -1147,7 +1237,8 @@ const langOpen     = ref(false)
 
 @media (max-width: 600px) {
   .l-features-grid { grid-template-columns: 1fr; }
-  .l-compare-mock { padding: 20px 10px 20px; overflow-x: auto; }
+  .l-compare-mock--desktop { display: none; }
+  .l-compare-mock--mobile { display: flex; }
   .l-badges-grid  { grid-template-columns: 1fr; }
 }
 
