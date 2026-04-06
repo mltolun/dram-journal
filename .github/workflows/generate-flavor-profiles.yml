@@ -1,4 +1,4 @@
-name: Generate Flavor Profiles
+name: OLD Generate Flavor Profiles
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Generate Price Ranges
+name: OLD Generate Price Ranges
 
 on:
   workflow_dispatch:
