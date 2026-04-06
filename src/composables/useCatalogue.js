@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
+import { currentUser } from './useAuth.js'
 
 // Words to strip from scan results before searching
 const NOISE_WORDS = new Set([
@@ -58,6 +59,7 @@ export function useCatalogue() {
   let   debounceTimer = null
 
   async function search(query) {
+    if (!currentUser.value) { results.value = []; return }
     if (!query || query.trim().length < 2) {
       results.value = []
       return

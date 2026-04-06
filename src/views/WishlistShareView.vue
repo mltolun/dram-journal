@@ -57,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Sparkles as SparklesIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
@@ -78,6 +78,13 @@ const loading = ref(true)
 const importing = ref(false)
 const importedIds = ref(new Set())
 const sharedAt = ref(null)
+
+// Prevent search engines from indexing shared wishlist pages
+const noindexMeta = document.createElement('meta')
+noindexMeta.name = 'robots'
+noindexMeta.content = 'noindex, nofollow'
+document.head.appendChild(noindexMeta)
+onUnmounted(() => document.head.removeChild(noindexMeta))
 
 const sharedDate = computed(() => {
   if (!sharedAt.value) return ''

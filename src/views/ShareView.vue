@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
@@ -96,6 +96,13 @@ const typeBadgeStyle = TYPE_BADGE_STYLE
 const whisky  = ref(null)
 const loading = ref(true)
 const importing = ref(false)
+
+// Prevent search engines from indexing shared dram pages
+const noindexMeta = document.createElement('meta')
+noindexMeta.name = 'robots'
+noindexMeta.content = 'noindex, nofollow'
+document.head.appendChild(noindexMeta)
+onUnmounted(() => document.head.removeChild(noindexMeta))
 
 const details = computed(() => [
   { label: t.value.shareDetailLabels.distillery, val: whisky.value?.distillery },
