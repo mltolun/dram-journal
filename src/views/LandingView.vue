@@ -146,32 +146,10 @@
       <div class="l-section-eyebrow">{{ L.compare.eyebrow }}</div>
       <h2 class="l-section-title">{{ L.compare.title }}</h2>
       <p class="l-compare-desc">{{ L.compare.desc }}</p>
-      <!-- Desktop: vertical bar columns -->
-      <div class="l-compare-mock l-compare-mock--desktop">
-        <div class="l-cmp-col" v-for="(w, i) in compareWhiskies" :key="i"
-             :style="`--ci:${i}`">
-          <!-- Header: fixed height so bars never overlap it -->
-          <div class="l-cmp-header">
-            <span class="wcard-type" :class="`type-${w.type}`">{{ w.typeLabel }}</span>
-            <div class="l-cmp-name">{{ w.name }}</div>
-            <div class="l-cmp-dist">{{ w.dist }}</div>
-          </div>
-          <!-- Chart: bars + value above + label below, all in one column -->
-          <div class="l-cmp-bars">
-            <div class="l-cmp-bar" v-for="(val, j) in w.vals" :key="j"
-                 :style="`--h:${val * 16}px; --delay:${j * 0.05 + i * 0.1}s`">
-              <span class="l-cmp-bar-num">{{ val }}</span>
-              <div class="l-cmp-bar-fill"></div>
-              <span class="l-cmp-bar-lbl">{{ L.compareBarLabels[j] }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mobile: horizontal bars, 2 whiskies -->
-      <div class="l-compare-mock l-compare-mock--mobile">
-        <div class="l-cmp-hcol" v-for="(w, i) in compareWhiskies.slice(0, 2)" :key="i"
-             :style="`--ci:${i}`">
+      <!-- Horizontal bars: all 3 whiskies on desktop, 2 on mobile -->
+      <div class="l-compare-mock">
+        <div class="l-cmp-hcol" v-for="(w, i) in compareWhiskies" :key="i"
+             :style="`--ci:${i}`" :class="{ 'l-cmp-hcol--hide-mobile': i === 2 }">
           <div class="l-cmp-hcol-header">
             <span class="wcard-type" :class="`type-${w.type}`">{{ w.typeLabel }}</span>
             <div class="l-cmp-name">{{ w.name }}</div>
@@ -805,106 +783,14 @@ const langOpen     = ref(false)
   background: #FFFFFF;
   border: 0.5px solid rgba(0,0,0,0.08);
   border-radius: 14px;
-  padding: 28px 20px 24px;
+  padding: 28px 24px 24px;
   display: flex;
-  max-width: 640px;
+  gap: 12px;
+  max-width: 720px;
   margin: 0 auto;
   box-shadow: 0 4px 20px rgba(0,0,0,0.07);
 }
 
-.l-cmp-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 8px;
-  border-right: 0.5px solid rgba(0,0,0,0.06);
-  animation: lFadeUp 0.5s calc(var(--ci, 0) * 0.1s) ease both;
-}
-.l-cmp-col:last-child { border-right: none; }
-
-/* Fixed-height header so bars never collide with text */
-.l-cmp-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-height: 72px;
-  justify-content: flex-start;
-  padding-bottom: 10px;
-}
-.l-cmp-name {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #111111;
-  text-align: center;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-.l-cmp-dist {
-  font-size: 0.58rem;
-  color: #9A8878;
-  text-align: center;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* Chart area: bars sit at the bottom, value above, label below */
-.l-cmp-bars {
-  display: flex;
-  gap: 5px;
-  align-items: flex-end;
-  width: 100%;
-  justify-content: center;
-}
-
-/* Each bar column: label → [spacer to align tops] → fill → number → axis label */
-.l-cmp-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 22px;
-}
-
-/* Value sits above the bar */
-.l-cmp-bar-num {
-  font-size: 0.54rem;
-  color: #9A8878;
-  font-family: 'JetBrains Mono', monospace;
-  line-height: 1;
-}
-
-.l-cmp-bar-fill {
-  width: 100%;
-  height: var(--h, 20px);
-  border-radius: 3px 3px 0 0;
-  background: #B06A0A;
-  animation: lBarGrow 0.5s calc(var(--delay, 0s)) ease both;
-  transform-origin: bottom;
-}
-.l-cmp-col:nth-child(2) .l-cmp-bar-fill { background: #5070A0; }
-.l-cmp-col:nth-child(3) .l-cmp-bar-fill { background: #408060; }
-
-/* Axis label sits directly below each bar */
-.l-cmp-bar-lbl {
-  font-size: 0.48rem;
-  color: #BBAA9A;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-family: 'JetBrains Mono', monospace;
-  white-space: nowrap;
-  margin-top: 3px;
-}
-
-/* Show/hide desktop vs mobile compare mock */
-.l-compare-mock--mobile { display: none; }
-
-/* Mobile compare: horizontal bars, 2 whiskies side by side */
-.l-compare-mock--mobile {
-  flex-direction: row;
-  gap: 12px;
-  padding: 20px 16px;
-}
 .l-cmp-hcol {
   flex: 1;
   display: flex;
@@ -918,6 +804,18 @@ const langOpen     = ref(false)
   gap: 3px;
   padding-bottom: 8px;
   border-bottom: 0.5px solid rgba(0,0,0,0.07);
+}
+.l-cmp-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111111;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.l-cmp-dist {
+  font-size: 0.58rem;
+  color: #9A8878;
+  font-family: 'JetBrains Mono', monospace;
 }
 .l-cmp-hbars {
   display: flex;
@@ -954,6 +852,7 @@ const langOpen     = ref(false)
   animation: lBarReveal 0.45s calc(0.3s + var(--delay, 0s)) ease both;
 }
 .l-cmp-hcol:nth-child(2) .l-cmp-hbar-fill { background: #5070A0; }
+.l-cmp-hcol:nth-child(3) .l-cmp-hbar-fill { background: #408060; }
 .l-cmp-hbar-val {
   font-size: 0.5rem;
   color: #9A8878;
@@ -1237,8 +1136,7 @@ const langOpen     = ref(false)
 
 @media (max-width: 600px) {
   .l-features-grid { grid-template-columns: 1fr; }
-  .l-compare-mock--desktop { display: none; }
-  .l-compare-mock--mobile { display: flex; }
+  .l-cmp-hcol--hide-mobile { display: none; }
   .l-badges-grid  { grid-template-columns: 1fr; }
 }
 

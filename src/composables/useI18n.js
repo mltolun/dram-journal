@@ -974,7 +974,7 @@ const TRANSLATIONS = {
           { label: 'Fanático de la Turba',  desc: '10 whiskies con ahumado 4+' },
           { label: 'El Crítico',            desc: 'Puntúa 50 whiskies' },
           { label: 'Arqueólogo de Sabores', desc: 'Completa los 5 atributos de sabor en 20 entradas' },
-          { label: 'Mariposa Social',       desc: '5 personas siguen tu diario' },
+          { label: 'Alma de la Fiesta',       desc: '5 personas siguen tu diario' },
         ],
       },
       cta: {
