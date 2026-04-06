@@ -5,8 +5,17 @@
     <nav class="l-nav">
       <div class="l-nav-brand">The <span>Dram</span> Journal</div>
       <div class="l-nav-actions">
-        <button class="l-btn-ghost" @click="goToApp('login')">Sign in</button>
-        <button class="l-btn-primary" @click="goToApp('register')">Start free</button>
+        <div class="l-lang-wrap">
+          <button class="l-btn-ghost l-lang-btn" @click="langOpen = !langOpen" :class="{ active: langOpen }">
+            <GlobeIcon :size="15" />
+          </button>
+          <div v-if="langOpen" class="l-lang-dropdown">
+            <button @click="setLocale('en'); langOpen = false" :class="{ selected: locale === 'en' }">English</button>
+            <button @click="setLocale('es'); langOpen = false" :class="{ selected: locale === 'es' }">Español</button>
+          </div>
+        </div>
+        <button class="l-btn-ghost" @click="goToApp('login')">{{ L.nav.signIn }}</button>
+        <button class="l-btn-primary" @click="goToApp('register')">{{ L.nav.startFree }}</button>
       </div>
     </nav>
 
@@ -14,24 +23,18 @@
     <section class="l-hero">
       <div class="l-hero-glow"></div>
       <div class="l-hero-content">
-        <div class="l-eyebrow">Your whisky, recorded forever</div>
-        <h1 class="l-hero-title">
-          Every dram<br>deserves a story.
-        </h1>
-        <p class="l-hero-sub">
-          The Dram Journal is your personal whisky logbook — track tastings,
-          build a wishlist, compare bottles side by side, and share drams
-          with fellow enthusiasts.
-        </p>
+        <div class="l-eyebrow">{{ L.hero.eyebrow }}</div>
+        <h1 class="l-hero-title" v-html="L.hero.title"></h1>
+        <p class="l-hero-sub">{{ L.hero.sub }}</p>
         <div class="l-hero-cta">
           <button class="l-btn-primary l-btn-lg" @click="goToApp('register')">
-            <BookOpenIcon :size="16" /> Start your journal
+            <BookOpenIcon :size="16" /> {{ L.hero.ctaMain }}
           </button>
           <button class="l-btn-outline l-btn-lg" @click="goToApp('login')">
-            Sign in
+            {{ L.nav.signIn }}
           </button>
         </div>
-        <p class="l-hero-note">Start free · No credit card required</p>
+        <p class="l-hero-note">{{ L.hero.note }}</p>
       </div>
 
       <!-- Mock whisky card -->
@@ -48,11 +51,11 @@
           <div class="l-mock-dist">Glengyle Distillery · Campbeltown</div>
           <div class="l-mock-notes">
             <div class="l-mock-note-row">
-              <span class="l-mock-note-lbl">Nose</span>
+              <span class="l-mock-note-lbl">{{ L.tasting.nose }}</span>
               <span class="l-mock-note-val">Citrus zest, vanilla, heather honey</span>
             </div>
             <div class="l-mock-note-row">
-              <span class="l-mock-note-lbl">Palate</span>
+              <span class="l-mock-note-lbl">{{ L.tasting.palate }}</span>
               <span class="l-mock-note-val">Apple, dark chocolate, peat smoke</span>
             </div>
           </div>
@@ -72,8 +75,8 @@
         <div class="l-mock-float">
           <div class="l-mock-float-icon"><GlassWaterIcon :size="18" /></div>
           <div>
-            <div class="l-mock-float-title">New badge!</div>
-            <div class="l-mock-float-sub">First Dram</div>
+            <div class="l-mock-float-title">{{ L.hero.floatBadge }}</div>
+            <div class="l-mock-float-sub">{{ L.hero.floatName }}</div>
           </div>
         </div>
       </div>
@@ -81,8 +84,8 @@
 
     <!-- ── FEATURES GRID ── -->
     <section class="l-features">
-      <div class="l-section-eyebrow">What's inside</div>
-      <h2 class="l-section-title">Everything a whisky lover needs</h2>
+      <div class="l-section-eyebrow">{{ L.features.eyebrow }}</div>
+      <h2 class="l-section-title">{{ L.features.title }}</h2>
       <div class="l-features-grid">
         <div class="l-feat-card" v-for="feat in features" :key="feat.title">
           <div class="l-feat-icon">
@@ -100,13 +103,9 @@
     <!-- ── FLAVOUR PROFILE SHOWCASE ── -->
     <section class="l-showcase">
       <div class="l-showcase-text">
-        <div class="l-section-eyebrow">Tasting notes</div>
-        <h2 class="l-section-title">Rate every dimension<br>of your dram</h2>
-        <p class="l-showcase-desc">
-          Go beyond nose and palate. Score each whisky on sweetness, smokiness,
-          body, fruitiness and spice — then watch your flavour fingerprint emerge
-          across your entire collection.
-        </p>
+        <div class="l-section-eyebrow">{{ L.showcase.eyebrow }}</div>
+        <h2 class="l-section-title" v-html="L.showcase.title"></h2>
+        <p class="l-showcase-desc">{{ L.showcase.desc }}</p>
       </div>
       <div class="l-profile-card">
         <div class="l-profile-header">
@@ -128,11 +127,11 @@
         </div>
         <div class="l-profile-notes">
           <div class="l-pnote">
-            <span class="l-pnote-lbl">Nose</span>
+            <span class="l-pnote-lbl">{{ L.tasting.nose }}</span>
             <span class="l-pnote-val">Sherry, dried fruit, toffee, subtle peat smoke</span>
           </div>
           <div class="l-pnote">
-            <span class="l-pnote-lbl">Palate</span>
+            <span class="l-pnote-lbl">{{ L.tasting.palate }}</span>
             <span class="l-pnote-val">Rich raisins, coffee, dark chocolate, maritime smoke</span>
           </div>
         </div>
@@ -141,12 +140,9 @@
 
     <!-- ── COMPARE ── -->
     <section class="l-compare">
-      <div class="l-section-eyebrow">Side by side</div>
-      <h2 class="l-section-title">Compare up to 3 whiskies at once</h2>
-      <p class="l-compare-desc">
-        Select any bottles from your journal and instantly see how they stack up
-        across every tasting dimension.
-      </p>
+      <div class="l-section-eyebrow">{{ L.compare.eyebrow }}</div>
+      <h2 class="l-section-title">{{ L.compare.title }}</h2>
+      <p class="l-compare-desc">{{ L.compare.desc }}</p>
       <div class="l-compare-mock">
         <div class="l-cmp-col" v-for="(w, i) in compareWhiskies" :key="i"
              :style="`--ci:${i}`">
@@ -162,7 +158,7 @@
                  :style="`--h:${val * 16}px; --delay:${j * 0.05 + i * 0.1}s`">
               <span class="l-cmp-bar-num">{{ val }}</span>
               <div class="l-cmp-bar-fill"></div>
-              <span class="l-cmp-bar-lbl">{{ ['Sweet','Smoke','Body','Fruit','Spice'][j] }}</span>
+              <span class="l-cmp-bar-lbl">{{ L.compareBarLabels[j] }}</span>
             </div>
           </div>
         </div>
@@ -172,12 +168,9 @@
     <!-- ── SOCIAL ── -->
     <section class="l-social">
       <div class="l-social-text">
-        <div class="l-section-eyebrow">Community</div>
-        <h2 class="l-section-title">Share the dram,<br>share the love</h2>
-        <p class="l-social-desc">
-          Send a whisky recommendation directly to a friend. Follow fellow collectors.
-          Share your wishlist publicly. Every bottle is a conversation starter.
-        </p>
+        <div class="l-section-eyebrow">{{ L.social.eyebrow }}</div>
+        <h2 class="l-section-title" v-html="L.social.title"></h2>
+        <p class="l-social-desc">{{ L.social.desc }}</p>
         <ul class="l-social-list">
           <li v-for="item in socialItems" :key="item">
             <CheckIcon :size="14" class="l-check" />{{ item }}
@@ -188,7 +181,7 @@
         <div class="l-msg-card">
           <div class="l-msg-header">
             <span class="l-msg-pill">
-              <GlassWaterIcon :size="10" /> Shared dram
+              <GlassWaterIcon :size="10" /> {{ L.social.msgPill }}
             </span>
             <span class="l-msg-date">2 Apr</span>
           </div>
@@ -202,8 +195,8 @@
         <div class="l-scan-card">
           <div class="l-scan-icon"><CameraIcon :size="22" /></div>
           <div>
-            <div class="l-scan-title">Scan a bottle</div>
-            <div class="l-scan-sub">AI identifies distillery, age &amp; style automatically</div>
+            <div class="l-scan-title">{{ L.social.scanTitle }}</div>
+            <div class="l-scan-sub">{{ L.social.scanSub }}</div>
           </div>
         </div>
       </div>
@@ -213,12 +206,9 @@
     <section class="l-badges">
       <div class="l-badges-inner">
         <div class="l-badges-text">
-          <div class="l-section-eyebrow">Achievements</div>
-          <h2 class="l-section-title">Collect badges<br>as you explore</h2>
-          <p class="l-badges-desc">
-            Every milestone — your first dram, a new country, a century of bottles —
-            unlocks a badge. Eight to earn, zero to buy.
-          </p>
+          <div class="l-section-eyebrow">{{ L.badgesSection.eyebrow }}</div>
+          <h2 class="l-section-title" v-html="L.badgesSection.title"></h2>
+          <p class="l-badges-desc">{{ L.badgesSection.desc }}</p>
         </div>
         <div class="l-badges-grid">
           <div class="l-bdg" v-for="badge in badges" :key="badge.label">
@@ -236,26 +226,27 @@
 
     <!-- ── FINAL CTA ── -->
     <section class="l-cta">
-      <h2 class="l-cta-title">Your collection starts tonight.</h2>
-      <p class="l-cta-sub">Join whisky lovers already logging their drams. Start free today.</p>
+      <h2 class="l-cta-title">{{ L.cta.title }}</h2>
+      <p class="l-cta-sub">{{ L.cta.sub }}</p>
       <button class="l-btn-primary l-btn-xl" @click="goToApp('register')">
-        <BookOpenIcon :size="18" /> Create your journal
+        <BookOpenIcon :size="18" /> {{ L.cta.btn }}
       </button>
     </section>
 
     <!-- ── FOOTER ── -->
     <footer class="l-footer">
       <div class="l-footer-brand">The <span>Dram</span> Journal</div>
-      <div class="l-footer-copy">A labour of love for whisky enthusiasts.</div>
+      <div class="l-footer-copy">{{ L.footer.copy }}</div>
     </footer>
 
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { currentUser, useAuth } from '../composables/useAuth.js'
+import { useI18n, detectLocale } from '../composables/useI18n.js'
 import {
   BookOpen as BookOpenIcon,
   Star as StarIcon,
@@ -276,8 +267,10 @@ import {
 
 const router = useRouter()
 const { getSession } = useAuth()
+const { locale, t, setLocale } = useI18n()
 
 onMounted(async () => {
+  await detectLocale()
   await getSession()
   if (currentUser.value) router.push('/app')
 })
@@ -288,21 +281,10 @@ function goToApp(tab) {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const mockBars = [
-  { label: 'Sweetness',  val: 3, pct: 55 },
-  { label: 'Smokiness',  val: 2, pct: 38 },
-  { label: 'Body',       val: 4, pct: 72 },
-  { label: 'Fruitiness', val: 2, pct: 44 },
-  { label: 'Spiciness',  val: 3, pct: 60 },
-]
-
-const profileAttrs = [
-  { label: 'Sweetness',  val: 2, pct: 40 },
-  { label: 'Smokiness',  val: 5, pct: 100 },
-  { label: 'Body',       val: 4, pct: 80 },
-  { label: 'Fruitiness', val: 3, pct: 60 },
-  { label: 'Spiciness',  val: 3, pct: 60 },
-]
+const mockBarData  = [ { val: 3, pct: 55 }, { val: 2, pct: 38 }, { val: 4, pct: 72 }, { val: 2, pct: 44 }, { val: 3, pct: 60 } ]
+const profileData  = [ { val: 2, pct: 40 }, { val: 5, pct: 100 }, { val: 4, pct: 80 }, { val: 3, pct: 60 }, { val: 3, pct: 60 } ]
+const featureIcons = [ NotebookPenIcon, HeartIcon, CameraIcon, Columns2Icon, TrophyIcon, UsersIcon ]
+const badgeIcons   = [ GlassWaterIcon, HashIcon, TrophyIcon, GlobeIcon, FlameIcon, StarIcon, FlaskConicalIcon, UsersIcon ]
 
 const compareWhiskies = [
   { name: 'Ardbeg 10',    dist: 'Ardbeg',      type: 'scotch', typeLabel: 'Scotch', vals: [2,5,4,2,3] },
@@ -310,32 +292,13 @@ const compareWhiskies = [
   { name: 'Redbreast 12', dist: 'Midleton',    type: 'irish',  typeLabel: 'Irish',  vals: [4,1,3,4,2] },
 ]
 
-const features = [
-  { icon: NotebookPenIcon,  title: 'Tasting Journal',      desc: 'Log every bottle with nose, palate, finish, personal notes, photos and a star rating. Your collection, beautifully organised.',         tags: ['Unlimited entries', 'Photo uploads', 'Star ratings'] },
-  { icon: HeartIcon,        title: 'Wishlist',             desc: 'Track bottles you want to try next. Add notes and reasons, then share your wishlist publicly with a single link.',                       tags: ['Public link', 'Import from friends'] },
-  { icon: CameraIcon,       title: 'Bottle Scanner',       desc: 'Point your camera at any bottle and AI identifies the whisky, auto-filling distillery, age, style and flavour profile from the catalogue.', tags: ['AI-powered', 'Catalogue of thousands'] },
-  { icon: Columns2Icon,     title: 'Side-by-side Compare', desc: 'Select up to 3 bottles and compare every tasting dimension in a clear visual breakdown. Discover patterns in what you love.',            tags: ['Up to 3 at once', 'Visual charts'] },
-  { icon: TrophyIcon,       title: 'Stats & Badges',       desc: 'Track countries, distilleries and styles explored. Earn badges for every milestone — from your first dram to the Century Club.',         tags: ['8 badges', 'Collection stats', 'Passport'] },
-  { icon: UsersIcon,        title: 'Friends & Sharing',    desc: 'Follow other collectors, send dram recommendations directly to their inbox, and import shared bottles into your own journal.',            tags: ['Direct sharing', 'Follow friends', 'Activity feed'] },
-]
-
-const socialItems = [
-  'Direct dram sharing with tasting notes',
-  'Public wishlist links anyone can view',
-  'Follow friends & see their activity',
-  'Import shared bottles to your journal',
-]
-
-const badges = [
-  { icon: GlassWaterIcon,   label: 'First Dram',           desc: 'Log your first whisky' },
-  { icon: HashIcon,         label: 'The Tenner',           desc: '10 whiskies in your journal' },
-  { icon: TrophyIcon,       label: 'Century Club',         desc: '100 whiskies in your journal'},
-  { icon: GlobeIcon,        label: 'Globe Trotter',        desc: 'Taste whiskies from 5+ countries' },
-  { icon: FlameIcon,        label: 'Peat Freak',           desc: '10 whiskies with smokiness 4+' },
-  { icon: StarIcon,         label: 'The Critic',           desc: 'Rate 50 whiskies'},
-  { icon: FlaskConicalIcon, label: 'Flavor Archaeologist', desc: 'Complete all 5 flavor attributes on 20 entries'},
-  { icon: UsersIcon,        label: 'Social Butterfly',     desc: '5 people follow your journal'},
-]
+const mockBars     = computed(() => mockBarData.map((d, i) => ({ ...d, label: t.value.landing.mockBarLabels[i] })))
+const profileAttrs = computed(() => profileData.map((d, i) => ({ ...d, label: t.value.landing.mockBarLabels[i] })))
+const features     = computed(() => t.value.landing.features.items.map((item, i) => ({ ...item, icon: featureIcons[i] })))
+const badges       = computed(() => t.value.landing.badgesSection.items.map((item, i) => ({ ...item, icon: badgeIcons[i] })))
+const socialItems  = computed(() => t.value.landing.social.items)
+const L            = computed(() => t.value.landing)
+const langOpen     = ref(false)
 </script>
 
 <style scoped>
@@ -1180,6 +1143,45 @@ const badges = [
 
 @media (max-width: 600px) {
   .l-features-grid { grid-template-columns: 1fr; }
-  .l-compare-mock { padding: 20px 10px 20px; }
+  .l-compare-mock { padding: 20px 10px 20px; overflow-x: auto; }
+  .l-badges-grid  { grid-template-columns: 1fr; }
 }
+
+/* ── Language toggle ── */
+.l-lang-wrap {
+  position: relative;
+}
+.l-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  color: #9A8878;
+}
+.l-lang-btn.active { color: #C8A96A; }
+.l-lang-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #E8DDD5;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 110px;
+}
+.l-lang-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.83rem;
+  color: #4A3728;
+}
+.l-lang-dropdown button:hover { background: #F5EFE8; }
+.l-lang-dropdown button.selected { font-weight: 600; color: #C8A96A; }
 </style>
