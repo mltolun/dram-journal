@@ -4,12 +4,11 @@ import AppView            from './views/AppView.vue'
 import ShareView          from './views/ShareView.vue'
 import ResetView          from './views/ResetView.vue'
 import WishlistShareView  from './views/WishlistShareView.vue'
-import { sb }             from './lib/supabase.js'
 
 // We use hash history (#/) so GitHub Pages works without a 404 redirect hack
 const routes = [
   { path: '/',                component: LandingView },
-  { path: '/app',             component: AppView,    meta: { requiresAuth: true } },
+  { path: '/app',             component: AppView },
   { path: '/share/:id',       component: ShareView },
   { path: '/wishlist/:id',    component: WishlistShareView },
   { path: '/reset',           component: ResetView },
@@ -18,10 +17,4 @@ const routes = [
 export const router = createRouter({
   history: createWebHashHistory(),
   routes,
-})
-
-router.beforeEach(async (to) => {
-  if (!to.meta.requiresAuth) return true
-  const { data: { session } } = await sb.auth.getSession()
-  if (!session) return { path: '/' }
 })
