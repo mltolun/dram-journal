@@ -511,18 +511,18 @@ async function main() {
   console.log('')
   console.log(`✓ Done — ${processed} processed, ${errors} errors`)
 
-  // Clean up all activity_feed rows — they have now been included in this week's
-  // emails, so there is nothing to keep until the next run.
-  const cutoff = new Date().toISOString()
+  // Clean up activity_feed rows older than 3 months — after emails have been sent.
+  const cutoff = new Date()
+  cutoff.setMonth(cutoff.getMonth() - 3)
   const { error: cleanupError } = await sb
     .from('activity_feed')
     .delete()
-    .lt('created_at', cutoff)
+    .lt('created_at', cutoff.toISOString())
 
   if (cleanupError) {
     console.warn(`⚠ activity_feed cleanup failed: ${cleanupError.message}`)
   } else {
-    console.log('[cleanup] activity_feed: old rows cleared')
+    console.log('[cleanup] activity_feed: rows older than 3 months cleared')
   }
 }
 
