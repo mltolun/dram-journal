@@ -14,8 +14,11 @@
             <button @click="setLocale('es'); langOpen = false" :class="{ selected: locale === 'es' }">Español</button>
           </div>
         </div>
-        <button class="l-btn-ghost" @click="goToApp('login')">{{ L.nav.signIn }}</button>
-        <button class="l-btn-primary" @click="goToApp('register')">{{ L.nav.startFree }}</button>
+        <button class="l-btn-ghost l-nav-auth-btn" @click="goToApp('login')">{{ L.nav.signIn }}</button>
+        <button class="l-btn-primary l-nav-auth-btn" @click="goToApp('register')">{{ L.nav.startFree }}</button>
+        <button class="l-btn-ghost l-nav-user-icon" @click="goToApp('login')" :aria-label="L.nav.signIn">
+          <UserIcon :size="20" />
+        </button>
       </div>
     </nav>
 
@@ -263,6 +266,7 @@ import {
   Hash as HashIcon,
   Lock as LockIcon,
   FlaskConical as FlaskConicalIcon,
+  User as UserIcon,
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -1184,4 +1188,12 @@ const langOpen     = ref(false)
 }
 .l-lang-dropdown button:hover { background: #F5EFE8; }
 .l-lang-dropdown button.selected { font-weight: 600; color: #C8A96A; }
+
+/* ── Mobile nav auth ── */
+.l-nav-user-icon { display: none; padding: 6px; }
+
+@media (max-width: 600px) {
+  .l-nav-auth-btn { display: none; }
+  .l-nav-user-icon { display: inline-flex; align-items: center; justify-content: center; }
+}
 </style>
