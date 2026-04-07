@@ -147,12 +147,23 @@ const totalInboxCount = computed(() =>
   unreadCount.value + pendingRequests.value.length
 )
 
+let pollInterval = null
+const onVisibilityChange = () => {
+  if (document.visibilityState === 'visible') loadInbox()
+}
+
 onMounted(() => {
   document.addEventListener('click', onClickOutside, true)
+  document.addEventListener('visibilitychange', onVisibilityChange)
   loadSubscriptions()
   loadInbox()
+  pollInterval = setInterval(loadInbox, 2 * 60 * 1000)
 })
-onBeforeUnmount(() => document.removeEventListener('click', onClickOutside, true))
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside, true)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  clearInterval(pollInterval)
+})
 
 // Safe-area top padding is handled by CSS env(safe-area-inset-top) on .sticky-top
 const headerStyle = computed(() => ({}))

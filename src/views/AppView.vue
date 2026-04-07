@@ -419,17 +419,15 @@ const selectedWhiskies = computed(() =>
   selected.value.map(id => journal.value.find(w => w.id === id)).filter(Boolean)
 )
 
-onMounted(async () => {
-  // Detect locale from browser/IP for first-time visitors (no-op if already set)
-  if (!localStorage.getItem('dj_locale')) detectLocale()
+let badgeWatcherActive = false
 
-  if (route.query.list === 'wishlist') activeList.value = 'wishlist'
-  const session = await getSession()
-  if (session) {
-    await loadWhiskies()
-    await loadEarnedBadges()
-    await checkBadges()
+async function initUserData() {
+  await loadWhiskies()
+  await loadEarnedBadges()
+  await checkBadges()
 
+  if (!badgeWatcherActive) {
+    badgeWatcherActive = true
     watch(
       () => {
         const j = journal.value
@@ -448,6 +446,25 @@ onMounted(async () => {
       },
       checkBadges,
     )
+  }
+}
+
+onMounted(async () => {
+  // Detect locale from browser/IP for first-time visitors (no-op if already set)
+  if (!localStorage.getItem('dj_locale')) detectLocale()
+
+  if (route.query.list === 'wishlist') activeList.value = 'wishlist'
+  const session = await getSession()
+  if (session) {
+    await initUserData()
+  }
+})
+
+// Handle login that happens after the component is already mounted
+// (onMounted ran while user was on the login screen, so getSession() returned null)
+watch(currentUser, async (newUser, oldUser) => {
+  if (newUser && !oldUser) {
+    await initUserData()
   }
 })
 
