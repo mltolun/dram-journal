@@ -6,4 +6,9 @@ export default defineConfig({
     vue(),
   ],
   base: process.env.VITE_BASE_PATH || '/',
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    setupFiles: ['./src/tests/setup.js'],
+  },
 })

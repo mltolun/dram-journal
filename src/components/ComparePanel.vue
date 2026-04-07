@@ -190,12 +190,6 @@ const { t } = useI18n()
   gap: 4px;
   align-items: flex-start;
 }
-/* Remove right border on last column cells */
-.cp-cell:nth-child(var(--cols)n) { border-right: none; }
-/* Simpler: remove right border via last-child within each row group */
-.cp-table > .cp-cell:last-of-type { border-right: none; }
-
-/* Use JS-friendly approach — remove right border from every Nth cell */
 .cp-cell:last-child { border-right: none; }
 
 .cp-cell--top {
