@@ -126,12 +126,12 @@ ${journalLines}
 Their current wishlist (whiskies they already want to try — do NOT recommend these):
 ${wishlistNames}
 
-IMPORTANT: You MUST choose recommendations exclusively from the following catalogue. Do not invent whiskies not on this list. Use the EXACT name and distillery as written in the catalogue.
+IMPORTANT: You MUST choose recommendations exclusively from the following catalogue. Do not invent whiskies not on this list. Use the EXACT name and distillery as written in the catalogue. The catalogue is in random order — do NOT favour well-known brands or cluster picks alphabetically. Prioritise lesser-known distilleries that genuinely match the taste profile.
 
 Available catalogue (name | distillery | type | region):
 ${catalogueLines}
 
-Based on their flavour preferences, ratings, and tasting notes, recommend exactly 3 whiskies from the catalogue above that they have NOT tried yet and are NOT already on their wishlist. Focus on their highest-rated whiskies to understand what they love.
+Based on their flavour preferences, ratings, and tasting notes, recommend exactly 3 whiskies from the catalogue above that they have NOT tried yet and are NOT already on their wishlist. Focus on their highest-rated whiskies to understand what they love. Spread your picks across different distilleries.
 
 Respond ONLY with a valid JSON array — no explanation, no markdown, no backticks. Use the exact name and distillery from the catalogue. Each item must have exactly these keys:
 [
@@ -160,7 +160,7 @@ async function callGemma(prompt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
+      generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
     }),
   })
 
