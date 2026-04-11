@@ -51,7 +51,7 @@ Rules:
 - Return only the JSON object. Nothing else. First character: { Last character: }`
 
 // Sample whisky bottle image — Glenfiddich 12 on Wikimedia Commons (public domain)
-const SAMPLE_IMAGE_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Glenfiddich12.jpg/220px-Glenfiddich12.jpg'
+const SAMPLE_IMAGE_URL = 'https://m.media-amazon.com/images/I/81k28xgNFoL._AC_SL1500_.jpg'
 
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 
