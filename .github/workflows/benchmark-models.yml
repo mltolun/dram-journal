@@ -1,0 +1,21 @@
+name: Benchmark AI Models
+
+on:
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run benchmark
+        env:
+          GEMINI_KEY: ${{ secrets.VITE_GEMINI_KEY }}
+        run: node scripts/benchmark-models.js
