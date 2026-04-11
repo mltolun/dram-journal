@@ -14,8 +14,6 @@
  *   - Tokens: usageMetadata from the response (if available)
  */
 
-import 'dotenv/config'
-
 // ── Load env ──────────────────────────────────────────────────────────────────
 const API_KEY = process.env.GEMINI_KEY
 if (!API_KEY) { console.error('GEMINI_KEY not set'); process.exit(1) }
