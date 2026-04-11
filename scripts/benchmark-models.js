@@ -14,21 +14,11 @@
  *   - Tokens: usageMetadata from the response (if available)
  */
 
-import { readFileSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
+import 'dotenv/config'
 
 // ── Load env ──────────────────────────────────────────────────────────────────
-const __dir = dirname(fileURLToPath(import.meta.url))
-const envPath = resolve(__dir, '../.env')
-const env = Object.fromEntries(
-  readFileSync(envPath, 'utf8')
-    .split('\n')
-    .filter(l => l && !l.startsWith('#'))
-    .map(l => l.split('=').map(s => s.trim()))
-)
-const API_KEY = env.GEMINI_KEY
-if (!API_KEY) { console.error('GEMINI_KEY not found in .env'); process.exit(1) }
+const API_KEY = process.env.GEMINI_KEY
+if (!API_KEY) { console.error('GEMINI_KEY not set'); process.exit(1) }
 
 // ── Models to benchmark ───────────────────────────────────────────────────────
 const MODELS = [
@@ -102,8 +92,12 @@ async function benchmark(model) {
     ttft:        ttft  != null ? ttft.toFixed(0)  : 'n/a',
     total:       total.toFixed(0),
     chars:       totalText.length,
-    promptTokens:  usageMeta?.promptTokenCount     ?? '?',
-    outputTokens:  usageMeta?.candidatesTokenCount ?? '?',
+    promptTokens: usageMeta?.promptTokenCount ?? '?',
+    outputTokens: (() => {
+      if (!usageMeta) return '?'
+      const out = usageMeta.totalTokenCount - usageMeta.promptTokenCount
+      return out > 0 ? out : 'n/a'
+    })(),
     text:        totalText,
   }
 }
