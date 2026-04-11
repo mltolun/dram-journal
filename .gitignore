@@ -2,3 +2,4 @@
 .env.local
 node_modules
 dist
+scripts/create-demo-user.js
