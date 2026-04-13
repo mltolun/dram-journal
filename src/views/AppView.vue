@@ -25,6 +25,7 @@
           @compare="toggleCompare"
           @filter="filtersOpen = !filtersOpen"
           @add="openAddModal"
+          @scan="scanOpen = true"
         />
       </div>
 
@@ -697,6 +698,10 @@ function onSaved(w) {
   flex-direction: column-reverse;
   align-items: flex-end;
   gap: 8px;
+}
+/* FAB is only for mobile — desktop uses the toolbar Add Entry button */
+@media (min-width: 769px) {
+  .fab-wrap { display: none; }
 }
 .fab {
   width: 52px;

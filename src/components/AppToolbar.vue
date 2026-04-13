@@ -43,11 +43,27 @@
           aria-label="Filter journal"
         ><SlidersHorizontalIcon :size="14" aria-hidden="true" /> <span class="btn-label">Filters</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
 
-        <button
-          class="btn-t btn-primary btn-add-desktop"
-          @click="$emit('add')"
-          aria-label="Add new entry"
-        ><PlusIcon :size="14" aria-hidden="true" /> <span class="btn-label">Add Entry</span></button>
+        <!-- Add Entry dropdown (desktop only) -->
+        <div class="add-entry-wrap" ref="addWrap">
+          <button
+            class="btn-t btn-primary btn-add-desktop"
+            @click.stop="addOpen = !addOpen"
+            :aria-expanded="addOpen"
+            aria-label="Add new entry"
+          ><PlusIcon :size="14" aria-hidden="true" /> <span class="btn-label">Add Entry</span></button>
+          <transition name="add-menu">
+            <div v-if="addOpen" class="add-menu" role="menu">
+              <button class="add-menu-item" @click.stop="choose('add')" role="menuitem">
+                <SearchIcon :size="14" aria-hidden="true" />
+                Search catalogue
+              </button>
+              <button class="add-menu-item" @click.stop="choose('scan')" role="menuitem">
+                <CameraIcon :size="14" aria-hidden="true" />
+                Scan bottle
+              </button>
+            </div>
+          </transition>
+        </div>
       </div>
 
     </div>
@@ -55,7 +71,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from '../composables/useI18n.js'
 import { searchQuery } from '../composables/useSearch.js'
 import {
@@ -64,6 +80,7 @@ import {
   SlidersHorizontal as SlidersHorizontalIcon,
   Search as SearchIcon,
   Plus as PlusIcon,
+  Camera as CameraIcon,
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
@@ -77,12 +94,28 @@ const props = defineProps({
   filterCount:     { type: Number, default: 0 },
 })
 
-defineEmits(['compare', 'filter', 'add'])
+const emit = defineEmits(['compare', 'filter', 'add', 'scan'])
 
 const showToolbar = computed(() =>
   props.selectedCount > 0 ||
   props.activeList === 'journal'
 )
+
+const addOpen = ref(false)
+const addWrap = ref(null)
+
+function choose(action) {
+  addOpen.value = false
+  if (action === 'add') emit('add')
+  else emit('scan')
+}
+
+function onClickOutside(e) {
+  if (addWrap.value && !addWrap.value.contains(e.target)) addOpen.value = false
+}
+
+onMounted(() => document.addEventListener('click', onClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 </script>
 
 <style scoped>
@@ -152,9 +185,49 @@ const showToolbar = computed(() =>
   flex-shrink: 0;
 }
 
+/* Desktop Add Entry dropdown */
+.add-entry-wrap {
+  position: relative;
+}
+.add-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg-modal);
+  border: 0.5px solid var(--border-hi);
+  border-radius: 10px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+  min-width: 170px;
+  z-index: 400;
+}
+.add-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+.add-menu-item:hover { background: rgba(200,130,42,0.08); color: var(--text-primary); }
+.add-menu-item + .add-menu-item { border-top: 0.5px solid var(--border); }
+
+.add-menu-enter-active { transition: opacity 0.15s, transform 0.15s; }
+.add-menu-leave-active { transition: opacity 0.1s, transform 0.1s; }
+.add-menu-enter-from,
+.add-menu-leave-to { opacity: 0; transform: scale(0.92) translateY(-6px); }
+
 /* Desktop Add Entry button — hidden on mobile (FAB used instead) */
 @media (max-width: 768px) {
-  .btn-add-desktop { display: none; }
+  .add-entry-wrap { display: none; }
 }
 
 /* ── Mobile: icon-only buttons ── */
