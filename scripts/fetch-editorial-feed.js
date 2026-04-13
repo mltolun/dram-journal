@@ -42,13 +42,13 @@ const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
 const FEEDS = [
   // ── General whisky news & reviews ──────────────────────────────────────────
   {
-    name: 'Master of Malt',
-    url:  'https://www.masterofmalt.com/blog/feed',
+    name: 'WhiskyCast',
+    url:  'https://whiskycast.com/feed/',
     defaultType: 'news',
   },
   {
-    name: 'The Whisky Exchange',
-    url:  'https://blog.thewhiskyexchange.com/feed',
+    name: 'Drink Hacker',
+    url:  'https://www.drinkhacker.com/category/whiskey/feed/',
     defaultType: 'news',
   },
   {
@@ -69,19 +69,42 @@ const FEEDS = [
   // ── Awards-heavy sources ───────────────────────────────────────────────────
   // IWSC and World Whiskies Awards don't publish RSS; WhiskyIntelligence
   // aggregates their press releases, so it covers awards as well.
-  // We add Whisky Advocate's main feed which covers competition results.
+  // Whisky Advocate's News feed covers competition results and reviews.
   {
     name: 'Whisky Advocate',
-    url:  'https://whiskyadvocate.com/feed/',
+    url:  'https://whiskyadvocate.com/News/feed/',
     defaultType: 'news',
   },
 ]
 
 // Maximum items to pull per feed per run (keeps runtime short)
-const MAX_ITEMS_PER_FEED = 10
+const MAX_ITEMS_PER_FEED = 3
 
 // How many days back to consider an item "fresh enough" to insert
 const MAX_AGE_DAYS = 7
+
+// ── HTML entity decoder ───────────────────────────────────────────────────────
+//
+// Converts numeric and named HTML entities to their Unicode equivalents
+// so titles like &#8217; or &amp; render as clean text.
+
+const HTML_ENTITIES = {
+  '&amp;':   '&',  '&lt;':    '<',  '&gt;':    '>',
+  '&quot;':  '"',  '&apos;':  "'",  '&nbsp;':  ' ',
+  '&ndash;': '–',  '&mdash;': '—',  '&hellip;': '…',
+  '&lsquo;': '\u2018', '&rsquo;': '\u2019',
+  '&ldquo;': '\u201C', '&rdquo;': '\u201D',
+}
+
+function decodeEntities(str) {
+  if (!str) return str
+  // Numeric entities (decimal and hex)
+  str = str.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+  str = str.replace(/&#([0-9]+);/g,      (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+  // Named entities
+  str = str.replace(/&[a-z]+;/gi, entity => HTML_ENTITIES[entity.toLowerCase()] ?? entity)
+  return str
+}
 
 // ── Minimal RSS/Atom parser ───────────────────────────────────────────────────
 //
@@ -144,10 +167,10 @@ function parseXml(xml, sourceName) {
       .slice(0, 300) || null
 
     items.push({
-      title:       title.replace(/<[^>]+>/g, '').trim(),
+      title:       decodeEntities(title.replace(/<[^>]+>/g, '').trim()),
       link:        link || null,
       pubDate,
-      description,
+      description: decodeEntities(description),
       categories:  categories(block),
       sourceName,
     })

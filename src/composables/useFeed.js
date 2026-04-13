@@ -102,9 +102,24 @@ export function useFeed() {
         created_at: item.published_at,
       }))
 
-      // ── Merge by timestamp, newest first ──────────────────────────────────
-      const all = [...socialItems, ...editorialItems]
-      all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      // ── Merge: social first, editorial interleaved every 3 social items ──
+      // Sort each list by timestamp independently, then weave editorial in
+      // so user activity always appears before news items of the same era.
+      socialItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      editorialItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+      const all = []
+      let eIdx = 0
+      const SOCIAL_PER_EDITORIAL = 3
+      for (let i = 0; i < socialItems.length; i++) {
+        all.push(socialItems[i])
+        // After every N social items, inject one editorial item
+        if ((i + 1) % SOCIAL_PER_EDITORIAL === 0 && eIdx < editorialItems.length) {
+          all.push(editorialItems[eIdx++])
+        }
+      }
+      // Append any remaining editorial items at the end
+      while (eIdx < editorialItems.length) all.push(editorialItems[eIdx++])
 
       console.log('[feed] total items:', all.length)
       feedItems.value = all
