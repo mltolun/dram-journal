@@ -40,6 +40,24 @@ export function useAuth() {
       if (detectedLocale && ['en', 'es'].includes(detectedLocale)) {
         sb.auth.updateUser({ data: { locale: detectedLocale } })
       }
+      // Auto-follow admin/creator account so new users see activity in Feed
+      const adminEmail = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',')[0]?.trim().toLowerCase()
+      if (adminEmail && adminEmail !== data.user.email?.toLowerCase()) {
+        try {
+          const { data: adminId } = await sb.rpc('get_user_id_by_email', { p_email: adminEmail })
+          if (adminId) {
+            await sb.from('subscriptions').insert({
+              follower_id:     data.user.id,
+              following_id:    adminId,
+              status:          'accepted',
+              follower_email:  data.user.email?.toLowerCase(),
+              following_email: adminEmail,
+            })
+          }
+        } catch (_) {
+          // Non-fatal — don't block signup if this fails
+        }
+      }
     }
     return data
   }

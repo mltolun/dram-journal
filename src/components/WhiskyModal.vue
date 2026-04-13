@@ -725,7 +725,7 @@ async function save() {
 }
 .view-value {
   font-size: 0.9rem;
-  color: var(--ink);
+  color: var(--text-primary);
   line-height: 1.4;
 }
 .view-notes {

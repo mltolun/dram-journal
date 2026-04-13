@@ -42,6 +42,12 @@
           @click="$emit('filter')"
           aria-label="Filter journal"
         ><SlidersHorizontalIcon :size="14" aria-hidden="true" /> <span class="btn-label">Filters</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
+
+        <button
+          class="btn-t btn-primary btn-add-desktop"
+          @click="$emit('add')"
+          aria-label="Add new entry"
+        ><PlusIcon :size="14" aria-hidden="true" /> <span class="btn-label">Add Entry</span></button>
       </div>
 
     </div>
@@ -57,6 +63,7 @@ import {
   Columns2 as Columns2Icon,
   SlidersHorizontal as SlidersHorizontalIcon,
   Search as SearchIcon,
+  Plus as PlusIcon,
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
@@ -70,7 +77,7 @@ const props = defineProps({
   filterCount:     { type: Number, default: 0 },
 })
 
-defineEmits(['compare', 'filter'])
+defineEmits(['compare', 'filter', 'add'])
 
 const showToolbar = computed(() =>
   props.selectedCount > 0 ||
@@ -143,6 +150,11 @@ const showToolbar = computed(() =>
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+/* Desktop Add Entry button — hidden on mobile (FAB used instead) */
+@media (max-width: 768px) {
+  .btn-add-desktop { display: none; }
 }
 
 /* ── Mobile: icon-only buttons ── */

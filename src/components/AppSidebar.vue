@@ -31,6 +31,10 @@
       <div v-else-if="earnedCount === badges.length" class="qs-complete">
         <SparklesIcon :size="12" style="display:inline;vertical-align:middle;margin-right:4px;" /> {{ t.allBadgesEarned }}
       </div>
+
+      <button class="qs-stats-link" @click="statsOpen = true">
+        <BarChart2Icon :size="11" aria-hidden="true" /> View stats &amp; badges →
+      </button>
     </div>
 
     <div class="sidebar-divider"></div>
@@ -278,6 +282,24 @@ const nextBadgePct = computed(() => {
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.04em;
 }
+
+.qs-stats-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 5px 18px 8px;
+  background: none;
+  border: none;
+  color: var(--peat-light);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.67rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+.qs-stats-link:hover { color: var(--amber-light); }
 
 /* ── Divider ── */
 .sidebar-divider {

@@ -24,6 +24,7 @@
           :filter-count="activeFilterCount"
           @compare="toggleCompare"
           @filter="filtersOpen = !filtersOpen"
+          @add="openAddModal"
         />
       </div>
 
@@ -141,7 +142,7 @@
         </div>
 
         <!-- ── Timeline (journal sub-view) ── -->
-        <TimelinePanel v-if="activeList === 'journal' && viewMode === 'timeline'" @open-entry="openViewModal" />
+        <TimelinePanel v-if="activeList === 'journal' && viewMode === 'timeline'" :entries="filteredJournal" @open-entry="openViewModal" />
 
         <!-- ── Community Feed ── -->
         <FeedPanel v-if="activeList === 'feed'" />
@@ -617,6 +618,7 @@ function onSaved(w) {
   max-width: 160px;
 }
 .filter-select:focus { border-color: var(--amber); }
+.filter-select option { background: var(--bg-modal); color: var(--text-primary); }
 .filter-sort-group {
   display: flex;
   align-items: center;

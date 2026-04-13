@@ -1,5 +1,5 @@
 <template>
-  <header :style="headerStyle">
+  <header>
     <div class="header-top">
 
       <!-- Brand -->
@@ -166,7 +166,6 @@ onBeforeUnmount(() => {
 })
 
 // Safe-area top padding is handled by CSS env(safe-area-inset-top) on .sticky-top
-const headerStyle = computed(() => ({}))
 
 const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()

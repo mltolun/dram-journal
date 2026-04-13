@@ -252,7 +252,7 @@ header { padding:12px 24px; padding-top: max(12px, calc(env(safe-area-inset-top,
 .form-row label { display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--peat-light); margin-bottom:5px; display:flex; align-items:center; gap:6px; }
 .form-row input, .form-row select, .form-row textarea { width:100%; background:var(--bg-input); border:0.5px solid var(--border); border-radius:8px; color:var(--text-primary); font-family:'Inter',sans-serif; font-size:0.85rem; padding:8px 11px; outline:none; transition:border-color 0.18s; }
 .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color:var(--amber); box-shadow:0 0 0 3px rgba(200,130,42,0.1); }
-.form-row select option { background:var(--bg-modal); }
+.form-row select option { background:var(--bg-modal); color:var(--text-primary); }
 .form-row textarea { resize:vertical; min-height:56px; }
 .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
 .form-section-lbl { font-size:0.65rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin:1rem 20px 0.6rem; }
@@ -276,7 +276,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 /* ── AUTOCOMPLETE ── */
 .ac-wrap { position:relative; }
 .ac-dropdown { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg-modal); border:0.5px solid var(--border-hi); border-radius:10px; z-index:400; max-height:220px; overflow-y:auto; box-shadow:var(--shadow-modal); }
-.ac-item { padding:8px 12px; font-size:0.84rem; color:var(--cream-dark); cursor:pointer; transition:background 0.12s; display:flex; align-items:center; justify-content:space-between; }
+.ac-item { padding:8px 12px; font-size:0.84rem; color:var(--text-primary); cursor:pointer; transition:background 0.12s; display:flex; align-items:center; justify-content:space-between; }
 .ac-item:hover, .ac-item.focused { background:rgba(200,130,42,0.08); }
 .ac-item-match { color:var(--amber-light); font-weight:500; }
 .ac-empty { padding:10px 12px; font-size:0.7rem; color:var(--peat-light); }
@@ -317,6 +317,9 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(200,130,42,0.2); border-radius:2px; }
+
+/* ── FAB: mobile only ── */
+@media (min-width: 769px) { .fab-wrap { display: none; } }
 
 @media(max-width:768px) {
   .app-layout {

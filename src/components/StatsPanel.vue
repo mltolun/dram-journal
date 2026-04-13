@@ -27,6 +27,26 @@
         </div>
       </div>
 
+      <!-- My Rankings -->
+      <div class="stats-section">
+        <div class="stats-section-label">My Rankings</div>
+        <div class="stats-section-sub">Personal scores based on your own tastings — not community or global averages.</div>
+        <div class="rankings-summary">
+          <div class="ranking-stat">
+            <div class="ranking-num">{{ ratedCount }}</div>
+            <div class="ranking-lbl">Rated</div>
+          </div>
+          <div class="ranking-stat">
+            <div class="ranking-num">{{ avgRating }}</div>
+            <div class="ranking-lbl">Avg. Score</div>
+          </div>
+          <div class="ranking-stat">
+            <div class="ranking-num">{{ topCountry }}</div>
+            <div class="ranking-lbl">Top Region</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Achievements -->
       <div class="stats-section">
         <div class="stats-section-label">{{ t.statsAchievements }}</div>
@@ -131,6 +151,15 @@ defineEmits(['close'])
 
 const { badges, earnedCount, passport, flavorProfile, continentPassport } = useBadges()
 const { t } = useI18n()
+
+const ratedCount = computed(() => journal.value.filter(w => w.rating != null).length)
+const avgRating = computed(() => {
+  const rated = journal.value.filter(w => w.rating != null)
+  if (!rated.length) return '—'
+  const avg = rated.reduce((s, w) => s + w.rating, 0) / rated.length
+  return avg.toFixed(1)
+})
+const topCountry = computed(() => passport.value[0]?.country ?? '—')
 
 const CONTINENT_KEY_MAP = {
   'British Isles': 'statsContinentBritishIsles',
@@ -274,6 +303,48 @@ function continentLabel(continent) {
   text-transform: uppercase;
   color: var(--amber, #A8620A);
   margin-bottom: 14px;
+}
+
+/* ── My Rankings ── */
+.stats-section-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  color: var(--peat-light);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.rankings-summary {
+  display: flex;
+  gap: 0;
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ranking-stat {
+  flex: 1;
+  text-align: center;
+  padding: 14px 10px;
+  border-right: 0.5px solid var(--border);
+}
+.ranking-stat:last-child { border-right: none; }
+
+.ranking-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--amber-light);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.ranking-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--peat-light);
 }
 
 /* ── Badge grid ── */
