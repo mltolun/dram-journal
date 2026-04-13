@@ -455,6 +455,11 @@ const TRANSLATIONS = {
     feedHoursAgo: (h) => `${h}h ago`,
     feedDaysAgo: (d) => `${d}d ago`,
     feedRefresh: 'Refresh',
+    // Editorial content types
+    editorialType_news:         'NEWS',
+    editorialType_event:        'EVENT',
+    editorialType_award:        'AWARD',
+    editorialType_announcement: 'ANNOUNCEMENT',
     badges: {
       first_dram:       { name: 'First Dram',           desc: 'Log your first whisky' },
       tenner:           { name: 'The Tenner',            desc: '10 whiskies in your journal' },
@@ -902,6 +907,11 @@ const TRANSLATIONS = {
     feedHoursAgo: (h) => `hace ${h}h`,
     feedDaysAgo: (d) => `hace ${d}d`,
     feedRefresh: 'Actualizar',
+    // Tipos de contenido editorial
+    editorialType_news:         'NOTICIA',
+    editorialType_event:        'EVENTO',
+    editorialType_award:        'PREMIO',
+    editorialType_announcement: 'ANUNCIO',
     badges: {
       first_dram:       { name: 'Primer Dram',           desc: 'Registra tu primer whisky' },
       tenner:           { name: 'El Diez',               desc: '10 whiskies en tu diario' },
