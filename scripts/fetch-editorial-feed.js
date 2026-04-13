@@ -237,15 +237,19 @@ async function fetchFeed(feed) {
 
 // ── Deduplication ─────────────────────────────────────────────────────────────
 //
-// We use source_url as the dedup key — if the same URL is already in the
-// table we skip it. Fetch the existing URLs for the last 60 days upfront.
+// Two-layer approach:
+//   1. In-memory pre-check: load ALL existing source_urls before inserting so
+//      we skip known duplicates without hitting the DB per item. No date cap —
+//      a URL that was pruned and re-appears in a feed should still be skipped
+//      as long as it lives in the table.
+//   2. DB-level safety net: insert with onConflict: 'source_url' + ignoreDuplicates
+//      so a race condition or missed URL can never produce a duplicate row.
+//      (Requires a UNIQUE constraint on editorial_feed.source_url in Supabase.)
 
 async function loadExistingUrls() {
-  const cutoff = new Date(Date.now() - 60 * 86_400_000).toISOString()
   const { data, error } = await sb
     .from('editorial_feed')
     .select('source_url')
-    .gte('created_at', cutoff)
 
   if (error) {
     console.warn('  [dedup] Could not load existing URLs:', error.message)
@@ -341,7 +345,7 @@ async function main() {
   let inserted = 0
   for (let i = 0; i < toInsert.length; i += BATCH) {
     const batch = toInsert.slice(i, i + BATCH)
-    const { error } = await sb.from('editorial_feed').insert(batch)
+    const { error } = await sb.from('editorial_feed').upsert(batch, { onConflict: 'source_url', ignoreDuplicates: true })
     if (error) {
       console.error(`  [insert] Batch ${i / BATCH + 1} error: ${error.message}`)
     } else {
