@@ -108,7 +108,8 @@ const groupedFeed = computed(() => {
 })
 
 function verbFor(type) {
-  if (type === 'rating') return t.value.feedRated
+  if (type === 'rating')       return t.value.feedRated
+  if (type === 'wishlist_add') return t.value.feedWishlisted
   return t.value.feedLogged // journal_add and anything else
 }
 

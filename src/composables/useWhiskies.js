@@ -114,10 +114,11 @@ export function useWhiskies() {
     whiskies.value.push(merged)
     setSync('ok')
 
-    // Log activity for followers — only journal entries (not wishlist)
-    if ((fields.list || 'journal') === 'journal') {
+    // Log activity for followers — journal and wishlist entries
+    const list = fields.list || 'journal'
+    if (list === 'journal' || list === 'wishlist') {
       await logActivity({
-        type:       'journal_add',
+        type:       list === 'wishlist' ? 'wishlist_add' : 'journal_add',
         whiskyId:   data.id,
         whiskyName: data.name,
         distillery: data.distillery,
