@@ -63,7 +63,7 @@ export function useFeed() {
           const names = [...new Set(needPhoto.map(i => i.whisky_name))]
           const { data: cData, error: cError } = await sb
             .from('catalogue')
-            .select('name, photo_url, nose, palate')
+            .select('name, photo_url, nose, palate, dulzor, ahumado, cuerpo, frutado, especiado')
             .in('name', names)
           console.log('[feed] catalogue:', cData?.length, 'error:', cError?.message)
           for (const c of (cData || [])) {
@@ -71,6 +71,11 @@ export function useFeed() {
               photo_url: c.photo_url || null,
               nose:      c.nose      || null,
               palate:    c.palate    || null,
+              dulzor:    c.dulzor    ?? null,
+              ahumado:   c.ahumado   ?? null,
+              cuerpo:    c.cuerpo    ?? null,
+              frutado:   c.frutado   ?? null,
+              especiado: c.especiado ?? null,
             })
           }
         }
@@ -82,6 +87,11 @@ export function useFeed() {
             photo_url: cat?.photo_url ?? null,
             nose:      cat?.nose      ?? null,
             palate:    cat?.palate    ?? null,
+            dulzor:    cat?.dulzor    ?? null,
+            ahumado:   cat?.ahumado   ?? null,
+            cuerpo:    cat?.cuerpo    ?? null,
+            frutado:   cat?.frutado   ?? null,
+            especiado: cat?.especiado ?? null,
           }
         })
       }

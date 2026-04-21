@@ -67,25 +67,36 @@
 
           <!-- ── Social activity card ── -->
           <div v-else class="feed-item">
-            <div class="feed-item-user-dot" :title="displayName(item.user_id)">{{ displayName(item.user_id)[0].toUpperCase() }}</div>
-            <div class="feed-thumb">
-              <img v-if="item.photo_url" :src="item.photo_url" :alt="item.whisky_name" class="feed-thumb-img">
-              <div v-else class="feed-thumb-ph"><GlassWaterIcon :size="24" /></div>
+            <!-- Left: bottle image -->
+            <div class="feed-card-img">
+              <img v-if="item.photo_url" :src="item.photo_url" :alt="item.whisky_name" class="feed-card-img-el">
+              <div v-else class="feed-card-img-ph"><GlassWaterIcon :size="32" /></div>
             </div>
-            <div class="feed-body">
-              <div class="feed-action">
-                <span class="feed-user">{{ displayName(item.user_id) }}</span>
-                <span class="feed-verb">{{ verbFor(item.type) }}</span>
-                <span class="feed-whisky">{{ item.whisky_name }}</span>
-                <span v-if="item.whisky_distillery" class="feed-distillery"> · {{ item.whisky_distillery }}</span>
+            <!-- Right: content -->
+            <div class="feed-card-body">
+              <!-- User row -->
+              <div class="feed-card-user-row">
+                <div class="feed-card-avatar">{{ displayName(item.user_id)[0].toUpperCase() }}</div>
+                <div class="feed-card-user-info">
+                  <span class="feed-card-username">{{ displayName(item.user_id) }}</span>
+                  <span class="feed-card-time">{{ relativeTime(item.created_at) }}</span>
+                </div>
+                <div v-if="item.rating" class="feed-card-rating">
+                  <StarIcon :size="11" class="feed-card-rating-star" />
+                  <span class="feed-card-rating-val">{{ item.rating }}.0</span>
+                </div>
               </div>
-              <div v-if="item.rating" class="feed-rating">
-                <span v-for="n in 5" :key="n" class="feed-star" :class="{ filled: n <= item.rating }"><StarIcon :size="10" /></span>
+              <!-- Whisky name + distillery -->
+              <div class="feed-card-whisky-name">{{ item.whisky_name }}</div>
+              <div v-if="item.whisky_distillery" class="feed-card-whisky-sub">{{ item.whisky_distillery }}</div>
+              <!-- Quote: notes or palate -->
+              <div v-if="item.notes || item.palate || item.nose" class="feed-card-quote">
+                "{{ item.notes || item.palate || item.nose }}"
               </div>
-              <div v-if="item.nose" class="feed-tasting"><span class="feed-tasting-label">{{ t.nose }}</span> {{ item.nose }}</div>
-              <div v-if="item.palate" class="feed-tasting"><span class="feed-tasting-label">{{ t.palate }}</span> {{ item.palate }}</div>
-              <div v-if="item.notes" class="feed-tasting"><span class="feed-tasting-label">{{ t.notes }}</span> {{ item.notes }}</div>
-              <div class="feed-time">{{ relativeTime(item.created_at) }}</div>
+              <!-- Flavor tags -->
+              <div v-if="flavorTags(item).length" class="feed-card-tags">
+                <span v-for="tag in flavorTags(item)" :key="tag" class="feed-card-tag">{{ tag }}</span>
+              </div>
             </div>
           </div>
 
@@ -108,7 +119,7 @@ import { useI18n } from '../composables/useI18n.js'
 import { searchQuery } from '../composables/useSearch.js'
 
 const { feedItems, feedLoading, displayNames, loadFeed } = useFeed()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 function displayName(userId) {
   return displayNames.value.get(userId) || userId.slice(0, 8)
@@ -136,6 +147,21 @@ const filteredFeed = computed(() => {
     )
   })
 })
+
+const FLAVOR_TAG_MAP = [
+  { key: 'ahumado',   threshold: 3, en: 'Smoky',   es: 'Ahumado'  },
+  { key: 'dulzor',    threshold: 3, en: 'Sweet',    es: 'Dulce'    },
+  { key: 'frutado',   threshold: 3, en: 'Fruity',   es: 'Frutado'  },
+  { key: 'especiado', threshold: 3, en: 'Spiced',   es: 'Especiado'},
+  { key: 'cuerpo',    threshold: 4, en: 'Full Body', es: 'Cuerpo'  },
+]
+
+function flavorTags(item) {
+  return FLAVOR_TAG_MAP
+    .filter(f => item[f.key] != null && item[f.key] >= f.threshold)
+    .map(f => locale.value === 'es' ? f.es : f.en)
+    .slice(0, 4)
+}
 
 function verbFor(type) {
   if (type === 'rating')       return t.value.feedRated
@@ -270,119 +296,172 @@ onMounted(loadFeed)
   gap: 0;
 }
 
+/* ── Rich social card ── */
 .feed-item {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 0.5px solid var(--border, rgba(200, 130, 42, 0.1));
-}
-
-.feed-item:first-child {
-  border-top: 0.5px solid var(--border, rgba(200, 130, 42, 0.1));
-}
-
-/* ── Bottle thumbnail ── */
-.feed-thumb {
-  flex-shrink: 0;
-  width: 44px;
-  height: 54px;
-  border-radius: 8px;
-  background: rgba(200, 130, 42, 0.07);
+  align-items: stretch;
+  gap: 0;
+  border-radius: 12px;
   border: 0.5px solid var(--border, rgba(200, 130, 42, 0.15));
+  background: rgba(200, 130, 42, 0.04);
   overflow: hidden;
+  margin-bottom: 12px;
+}
+
+/* Left image panel */
+.feed-card-img {
+  flex-shrink: 0;
+  width: 140px;
+  min-height: 200px;
+  background: rgba(200, 130, 42, 0.07);
+  border-right: 0.5px solid var(--border, rgba(200, 130, 42, 0.12));
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
-.feed-thumb-img {
+.feed-card-img-el {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 2px;
+  object-fit: cover;
+  object-position: center;
 }
 
-.feed-thumb-ph {
-  font-size: 1.3rem;
-  opacity: 0.45;
+.feed-card-img-ph {
+  opacity: 0.3;
+  color: var(--amber-light, #E8A84C);
 }
 
-/* ── Body ── */
-.feed-body {
+/* Right content */
+.feed-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* User row: avatar + name/time + rating */
+.feed-card-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.feed-card-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(200, 130, 42, 0.15);
+  border: 0.5px solid rgba(200, 130, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--amber-light, #E8A84C);
+  flex-shrink: 0;
+}
+
+.feed-card-user-info {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.feed-action {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.82rem;
-  line-height: 1.4;
-  color: var(--text-secondary, #C0A882);
-  flex-wrap: wrap;
-}
-
-.feed-user {
-  font-weight: 600;
-  color: var(--text-primary, #F8F4EE);
-  margin-right: 4px;
-}
-
-.feed-verb {
-  color: var(--peat-light, #8A7060);
-  margin-right: 4px;
-}
-
-.feed-whisky {
-  color: var(--amber-light, #E8A84C);
-  font-weight: 500;
-}
-
-.feed-distillery {
-  color: var(--peat-light, #8A7060);
-  font-size: 0.78rem;
-}
-
-/* ── Rating ── */
-.feed-rating {
-  display: flex;
   gap: 1px;
 }
 
-.feed-star {
-  font-size: 0.7rem;
-  color: var(--border, rgba(200, 130, 42, 0.2));
+.feed-card-username {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary, #F8F4EE);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.feed-star.filled {
+.feed-card-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.57rem;
+  color: var(--peat-light, #8A7060);
+  letter-spacing: 0.04em;
+}
+
+.feed-card-rating {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.feed-card-rating-star {
   color: var(--amber, #A8620A);
 }
 
-/* ── Tasting notes ── */
-.feed-tasting {
+.feed-card-rating-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--amber-light, #E8A84C);
+}
+
+/* Whisky name & distillery */
+.feed-card-whisky-name {
   font-family: 'Inter', sans-serif;
-  font-size: 0.76rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--amber, #A8620A);
+  line-height: 1.25;
+}
+
+.feed-card-whisky-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--peat-light, #8A7060);
+  margin-top: -2px;
+}
+
+/* Tasting quote */
+.feed-card-quote {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
   color: var(--text-secondary, #C0A882);
-  line-height: 1.45;
+  line-height: 1.55;
+  border-left: 2px solid rgba(200, 130, 42, 0.35);
+  padding-left: 10px;
+  margin: 2px 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.feed-tasting-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--peat-light, #8A7060);
-  margin-right: 4px;
+/* Flavor tags */
+.feed-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
 }
 
-/* ── Timestamp ── */
+.feed-card-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: var(--amber, #A8620A);
+  background: rgba(200, 130, 42, 0.1);
+  border: 0.5px solid rgba(200, 130, 42, 0.25);
+  border-radius: 20px;
+  padding: 3px 8px;
+}
+
+/* ── Timestamp (kept for editorial use) ── */
 .feed-time {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
@@ -416,35 +495,6 @@ onMounted(loadFeed)
   border-color: var(--amber, #A8620A);
 }
 
-/* ── Social item: inline user dot ── */
-.feed-item {
-  position: relative;
-}
-
-.feed-item-user-dot {
-  position: absolute;
-  top: 14px;
-  left: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: rgba(200, 130, 42, 0.12);
-  border: 0.5px solid var(--border-hi, rgba(200, 130, 42, 0.35));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.58rem;
-  font-weight: 600;
-  color: var(--amber-light, #E8A84C);
-  flex-shrink: 0;
-  cursor: default;
-}
-
-/* Shift the rest of the item to make room for the dot */
-.feed-item .feed-thumb {
-  margin-left: 26px;
-}
 
 /* ── Follow hint bar ── */
 .feed-follow-hint {

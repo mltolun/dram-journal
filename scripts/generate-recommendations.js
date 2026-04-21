@@ -477,6 +477,30 @@ async function main() {
       // 7. Fetch follower activity for this user (last 7 days)
       const followerActivity = await fetchFollowerActivity(userId)
 
+      // Enrich activity with catalogue photo + flavor data
+      if (followerActivity.length > 0) {
+        const actNames = [...new Set(followerActivity.map(a => a.whisky_name).filter(Boolean))]
+        if (actNames.length > 0) {
+          const { data: catRows } = await sb
+            .from('catalogue')
+            .select('name, photo_url, dulzor, ahumado, cuerpo, frutado, especiado')
+            .in('name', actNames)
+          const catMap = {}
+          for (const c of (catRows || [])) catMap[c.name] = c
+          for (const a of followerActivity) {
+            const c = catMap[a.whisky_name]
+            if (c) {
+              a.photo_url = c.photo_url ?? null
+              a.dulzor    = c.dulzor    ?? null
+              a.ahumado   = c.ahumado   ?? null
+              a.cuerpo    = c.cuerpo    ?? null
+              a.frutado   = c.frutado   ?? null
+              a.especiado = c.especiado ?? null
+            }
+          }
+        }
+      }
+
       // Build author email map for display names in the email
       const authorIds = [...new Set(followerActivity.map(a => a.user_id))]
       const authorEmailMap = await buildEmailMap(authorIds)

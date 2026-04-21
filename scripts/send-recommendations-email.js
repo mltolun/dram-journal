@@ -211,67 +211,102 @@ function groupActivity(events, authorEmailMap) {
   })
 }
 
-function activityEventRow(event) {
+const FLAVOR_TAGS = [
+  { key: 'ahumado',   threshold: 3, en: 'Smoky',     es: 'Ahumado'   },
+  { key: 'dulzor',    threshold: 3, en: 'Sweet',      es: 'Dulce'     },
+  { key: 'frutado',   threshold: 3, en: 'Fruity',     es: 'Frutado'   },
+  { key: 'especiado', threshold: 3, en: 'Spiced',     es: 'Especiado' },
+  { key: 'cuerpo',    threshold: 4, en: 'Full Body',  es: 'Cuerpo'    },
+]
+
+function flavorTagsHtml(event, locale = 'en') {
+  const tags = FLAVOR_TAGS
+    .filter(f => event[f.key] != null && event[f.key] >= f.threshold)
+    .map(f => locale === 'es' ? f.es : f.en)
+    .slice(0, 4)
+  if (!tags.length) return ''
+  const pills = tags.map(tag =>
+    `<span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;
+                  letter-spacing:0.06em;color:${AMBER};background:rgba(200,130,42,0.1);
+                  border:0.5px solid rgba(200,130,42,0.3);border-radius:20px;
+                  padding:2px 7px;margin-right:4px;">${tag}</span>`
+  ).join('')
+  return `<div style="margin-top:8px;">${pills}</div>`
+}
+
+function activityCard(event, locale = 'en') {
   const dateStr = new Date(event.created_at).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'short',
   })
 
-  const detail = event.type === 'rating'
-    ? `<strong>${event.whisky_name}</strong>${event.distillery ? ` <span style="color:${PEAT_LIGHT};">· ${event.distillery}</span>` : ''} — ${event.rating}/5`
-    : `<strong>${event.whisky_name}</strong>${event.distillery ? ` <span style="color:${PEAT_LIGHT};">· ${event.distillery}</span>` : ''}`
-
-  const notesHtml = event.notes
-    ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;
-                   color:${PEAT_LIGHT};margin-top:4px;line-height:1.5;
-                   padding-left:10px;border-left:2px solid rgba(200,130,42,0.3);">
-         "${event.notes}"
-       </div>`
+  const quote = event.notes || event.palate || event.nose || ''
+  const quoteHtml = quote
+    ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:${PEAT_LIGHT};
+                   line-height:1.55;border-left:2px solid rgba(200,130,42,0.35);
+                   padding-left:10px;margin:6px 0;">"${quote}"</div>`
     : ''
 
+  const ratingHtml = event.rating
+    ? `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+                    color:${AMBER_LIGHT};">&#9733; ${event.rating}.0</span>`
+    : ''
+
+  const imgHtml = event.photo_url
+    ? `<td width="80" style="padding:0;vertical-align:top;">
+         <img src="${event.photo_url}" alt="${event.whisky_name || ''}"
+              width="80" height="110"
+              style="width:80px;height:110px;object-fit:cover;display:block;
+                     border-radius:8px 0 0 8px;" />
+       </td>`
+    : `<td width="16" style="padding:0;background:rgba(200,130,42,0.06);
+                              border-radius:8px 0 0 8px;vertical-align:top;"></td>`
+
   return `
+  <table cellpadding="0" cellspacing="0" border="0" width="100%"
+         style="margin-bottom:10px;border-radius:8px;overflow:hidden;
+                border:1px solid rgba(200,130,42,0.18);
+                background:rgba(200,130,42,0.04);">
     <tr>
-      <td style="padding:6px 0 6px 16px;border-bottom:1px solid rgba(200,130,42,0.07);">
-        <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:${CREAM_DARK};line-height:1.5;">
-          ${detail}
-          <span style="white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:9px;
-                       color:${PEAT_LIGHT};margin-left:8px;">${dateStr}</span>
-        </div>
-        ${notesHtml}
+      ${imgHtml}
+      <td style="padding:12px 14px;vertical-align:top;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td>
+              <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;font-weight:600;
+                          color:${AMBER};line-height:1.2;margin-bottom:2px;">
+                ${event.whisky_name || ''}
+              </div>
+              ${event.distillery ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;
+                          font-style:italic;color:${PEAT_LIGHT};margin-bottom:6px;">
+                ${event.distillery}</div>` : ''}
+            </td>
+            <td align="right" valign="top" style="white-space:nowrap;padding-left:8px;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;
+                          color:${PEAT_LIGHT};">${dateStr}</div>
+              ${ratingHtml ? `<div style="margin-top:2px;">${ratingHtml}</div>` : ''}
+            </td>
+          </tr>
+        </table>
+        ${quoteHtml}
+        ${flavorTagsHtml(event, locale)}
       </td>
-    </tr>`
+    </tr>
+  </table>`
 }
 
-function activityUserBlock(userGroup) {
-  const typeBlocks = userGroup.groups.map(g => {
-    const rows = g.events.map(activityEventRow).join('')
-    return `
-  <tr>
-    <td style="padding:4px 0 2px;">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;
-                  text-transform:uppercase;color:${PEAT_LIGHT};">
-        ${g.icon}&nbsp;${g.label}
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <table cellpadding="0" cellspacing="0" border="0" width="100%">
-        ${rows}
-      </table>
-    </td>
-  </tr>`
-  }).join('')
+function activityUserBlock(userGroup, locale = 'en') {
+  const allEvents = userGroup.groups.flatMap(g => g.events)
+  const cards = allEvents.map(e => activityCard(e, locale)).join('')
 
   return `
   <tr>
-    <td style="padding:14px 0 4px;border-bottom:1px solid rgba(200,130,42,0.18);">
+    <td style="padding:14px 0 4px;">
       <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
-                  color:${AMBER_LIGHT};margin-bottom:4px;">
+                  color:${AMBER_LIGHT};margin-bottom:8px;padding-bottom:4px;
+                  border-bottom:1px solid rgba(200,130,42,0.18);">
         ${userGroup.authorName}
       </div>
-      <table cellpadding="0" cellspacing="0" border="0" width="100%">
-        ${typeBlocks}
-      </table>
+      ${cards}
     </td>
   </tr>`
 }
@@ -285,7 +320,7 @@ function buildEmailHtml(recs, followerActivity, authorEmailMap, generatedAt) {
   const cards         = recs.map(recCard).join('')
   const hasActivity   = followerActivity && followerActivity.length > 0
   const activityRows  = hasActivity
-    ? groupActivity(followerActivity, authorEmailMap).map(activityUserBlock).join('')
+    ? groupActivity(followerActivity, authorEmailMap).map(g => activityUserBlock(g, _s === STRINGS.es ? 'es' : 'en')).join('')
     : `<tr><td style="padding:16px 0;font-family:'Inter',Arial,sans-serif;font-size:12px;
                       color:${PEAT_LIGHT};line-height:1.6;">
          ${_s.noFriends}
@@ -476,17 +511,14 @@ function buildEmailText(recs, followerActivity, authorEmailMap, generatedAt) {
   if (followerActivity && followerActivity.length > 0) {
     const userGroups = groupActivity(followerActivity, authorEmailMap)
     const actLines = userGroups.map(ug => {
-      const typeLines = ug.groups.map(g => {
-        const label = g.type === 'rating' ? _s.txtRated : _s.txtAdded
-        const items = g.events.map(e => {
-          const detail = g.type === 'rating'
-            ? `"${e.whisky_name}" ${e.rating}/5${e.distillery ? ' (' + e.distillery + ')' : ''}`
-            : `"${e.whisky_name}"${e.distillery ? ' (' + e.distillery + ')' : ''}`
-          return `    • ${detail}`
-        }).join('\n')
-        return `  ${label}:\n${items}`
+      const allEvents = ug.groups.flatMap(g => g.events)
+      const items = allEvents.map(e => {
+        const rating = e.rating ? ` ${e.rating}/5` : ''
+        const note   = e.notes || e.palate || e.notes || ''
+        const dist   = e.distillery ? ` (${e.distillery})` : ''
+        return `    • "${e.whisky_name}"${dist}${rating}${note ? '\n      "' + note + '"' : ''}`
       }).join('\n')
-      return `${ug.authorName}\n${typeLines}`
+      return `${ug.authorName}\n${items}`
     }).join('\n\n')
 
     activityText = `\n\n${_s.txtFriendsHdr}\n-----------------\n${actLines}`
