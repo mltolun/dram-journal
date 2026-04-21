@@ -311,8 +311,8 @@ onMounted(loadFeed)
 /* Left image panel */
 .feed-card-img {
   flex-shrink: 0;
-  width: 140px;
-  min-height: 200px;
+  width: 80px;
+  min-height: 120px;
   background: rgba(200, 130, 42, 0.07);
   border-right: 0.5px solid var(--border, rgba(200, 130, 42, 0.12));
   display: flex;
