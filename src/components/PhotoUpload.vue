@@ -1,6 +1,7 @@
 <template>
   <div class="photo-upload-area" @click="fileInput?.click()">
-    <input ref="fileInput" type="file" accept="image/*" style="display:none" @change="onFile">
+    <!-- `capture` lets mobile browsers surface the camera option when available -->
+    <input ref="fileInput" type="file" accept="image/*" capture="environment" style="display:none" @change="onFile">
     <div v-if="!previewSrc">
       <div style="opacity:0.3"><CameraIcon :size="22" /></div>
       <div class="photo-upload-hint">Click to add a photo · Max 600px · JPEG compressed</div>

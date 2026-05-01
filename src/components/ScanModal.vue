@@ -19,7 +19,8 @@
           <div class="scan-drop-hint">{{ t.orDragDrop }}</div>
         </div>
         <div class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
-        <input ref="fileInput" type="file" accept="image/*"
+        <!-- `capture` nudges mobile browsers to offer the camera flow instead of only the gallery -->
+        <input ref="fileInput" type="file" accept="image/*" capture="environment"
           style="display:none" @change="onFileChange" />
       </div>
 
