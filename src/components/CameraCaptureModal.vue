@@ -1,5 +1,5 @@
 <template>
-  <Teleport to="body">
+  <Teleport v-if="modelValue" to="body">
     <div class="camera-capture-backdrop" @click.self="close">
       <div class="camera-capture-modal" role="dialog" aria-modal="true" :aria-label="title">
         <div class="camera-capture-head">
@@ -85,6 +85,11 @@ watch(() => props.modelValue, async (isOpen) => {
 onBeforeUnmount(stopCamera)
 
 async function startCamera() {
+  if (streamRef.value && videoRef.value?.srcObject) {
+    starting.value = false
+    return
+  }
+
   if (!navigator?.mediaDevices?.getUserMedia) {
     errorMsg.value = t.value.cameraNotSupported
     return
@@ -129,7 +134,10 @@ function close() {
 
 function capturePhoto() {
   const video = videoRef.value
-  if (!video || !video.videoWidth || !video.videoHeight) return
+  if (!video || !video.videoWidth || !video.videoHeight) {
+    errorMsg.value = t.value.cameraUnavailable
+    return
+  }
 
   const canvas = document.createElement('canvas')
   canvas.width = video.videoWidth

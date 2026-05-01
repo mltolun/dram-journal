@@ -311,8 +311,9 @@ onMounted(loadFeed)
 /* Left image panel */
 .feed-card-img {
   flex-shrink: 0;
-  width: 140px;
-  min-height: 200px;
+  width: clamp(84px, 22vw, 104px);
+  aspect-ratio: 1 / 1;
+  align-self: center;
   background: rgba(200, 130, 42, 0.07);
   border-right: 0.5px solid var(--border, rgba(200, 130, 42, 0.12));
   display: flex;
@@ -337,10 +338,10 @@ onMounted(loadFeed)
 .feed-card-body {
   flex: 1;
   min-width: 0;
-  padding: 16px 16px 14px;
+  padding: 14px 14px 13px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 /* User row: avatar + name/time + rating */
@@ -413,7 +414,7 @@ onMounted(loadFeed)
 /* Whisky name & distillery */
 .feed-card-whisky-name {
   font-family: 'Inter', sans-serif;
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 600;
   color: var(--amber, #A8620A);
   line-height: 1.25;
@@ -430,7 +431,7 @@ onMounted(loadFeed)
 /* Tasting quote */
 .feed-card-quote {
   font-family: 'Inter', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--text-secondary, #C0A882);
   line-height: 1.55;
   border-left: 2px solid rgba(200, 130, 42, 0.35);
@@ -452,13 +453,23 @@ onMounted(loadFeed)
 
 .feed-card-tag {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.58rem;
+  font-size: 0.55rem;
   letter-spacing: 0.06em;
   color: var(--amber, #A8620A);
   background: rgba(200, 130, 42, 0.1);
   border: 0.5px solid rgba(200, 130, 42, 0.25);
   border-radius: 20px;
   padding: 3px 8px;
+}
+
+@media (max-width: 560px) {
+  .feed-card-img {
+    width: 84px;
+  }
+
+  .feed-card-body {
+    padding: 12px 12px 11px;
+  }
 }
 
 /* ── Timestamp (kept for editorial use) ── */
