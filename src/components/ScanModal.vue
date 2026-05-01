@@ -9,10 +9,7 @@
 
       <!-- Step 1: pick image -->
       <div v-if="step === 'pick'">
-        <div class="scan-source-panel" :class="{ 'scan-source-panel--hover': dragging }"
-          @dragover.prevent="dragging = true"
-          @dragleave="dragging = false"
-          @drop.prevent="onDrop">
+        <div class="scan-source-panel">
           <div class="scan-source-grid">
             <button type="button" class="scan-source-card" @click="openGallery">
               <div class="scan-source-icon"><ImagesIcon :size="24" /></div>
@@ -26,8 +23,6 @@
               <div class="scan-source-copy">Use the native camera</div>
             </button>
           </div>
-
-          <div class="scan-drop-hint">{{ t.orDragDrop }}</div>
         </div>
         <div class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
 
@@ -175,7 +170,6 @@ const MODEL_LABELS = {
 }
 
 const step       = ref('pick')
-const dragging   = ref(false)
 const previewSrc = ref(null)
 const imageFile  = ref(null)   // kept for Gemma upload
 const imageB64   = ref(null)   // kept for Gemini inline
@@ -230,12 +224,6 @@ function reset() {
 }
 
 // ── File loading ──────────────────────────────────────────────────────────────
-
-function onDrop(e) {
-  dragging.value = false
-  const file = e.dataTransfer.files[0]
-  if (file) loadFile(file)
-}
 
 function onFileChange(e) {
   const file = e.target.files[0]
@@ -577,10 +565,6 @@ async function save() {
   transition: all 0.2s;
   background: var(--bg-card);
 }
-.scan-source-panel--hover {
-  border-color: var(--amber);
-  background: rgba(200,130,42,0.06);
-}
 .scan-source-card {
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -621,8 +605,6 @@ async function save() {
   color: var(--text-muted);
 }
 .scan-modal { max-width: 420px; padding: 0 1.25rem 1.25rem; }
-
-.scan-drop-hint  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--peat-light); text-transform: uppercase; text-align: center; margin-top: 0.9rem; }
 
 .scan-quota {
   font-family: 'JetBrains Mono', monospace;
