@@ -170,7 +170,7 @@ function onCapturedPhoto(file) {
   align-items: center;
   justify-content: center;
   padding: 18px;
-  z-index: 60;
+  z-index: 1100;
 }
 .photo-source-modal {
   width: min(100%, 360px);

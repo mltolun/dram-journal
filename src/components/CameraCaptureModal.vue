@@ -158,7 +158,7 @@ function capturePhoto() {
 .camera-capture-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;
