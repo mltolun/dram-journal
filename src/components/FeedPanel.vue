@@ -320,13 +320,15 @@ onMounted(loadFeed)
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: 8px;
 }
 
 .feed-card-img-el {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
+  display: block;
 }
 
 .feed-card-img-ph {
