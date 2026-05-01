@@ -10,7 +10,7 @@
       <!-- Step 1: pick image -->
       <div v-if="step === 'pick'">
         <div class="scan-drop" :class="{ 'scan-drop--hover': dragging }"
-          @click="fileInput.click()"
+          @click="showSourceModal = true"
           @dragover.prevent="dragging = true"
           @dragleave="dragging = false"
           @drop.prevent="onDrop">
@@ -19,9 +19,41 @@
           <div class="scan-drop-hint">{{ t.orDragDrop }}</div>
         </div>
         <div class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
+
+        <input ref="galleryInput" type="file" accept="image/*" style="display:none" @change="onFileChange" />
         <!-- `capture` nudges mobile browsers to offer the camera flow instead of only the gallery -->
-        <input ref="fileInput" type="file" accept="image/*" capture="environment"
+        <input ref="cameraInput" type="file" accept="image/*" capture="environment"
           style="display:none" @change="onFileChange" />
+
+        <Teleport to="body">
+          <div v-if="showSourceModal" class="scan-source-backdrop" @click.self="showSourceModal = false">
+            <div class="scan-source-modal" role="dialog" aria-modal="true" aria-label="Choose scan photo source">
+              <div class="scan-source-head">
+                <div>
+                  <div class="scan-source-title">{{ t.tapToPhoto }}</div>
+                  <div class="scan-source-subtitle">Choose where to get the image from.</div>
+                </div>
+                <button type="button" class="scan-source-close" @click="showSourceModal = false" aria-label="Close">
+                  <XIcon :size="18" />
+                </button>
+              </div>
+
+              <div class="scan-source-grid">
+                <button type="button" class="scan-source-card" @click="openGallery">
+                  <div class="scan-source-icon"><ImagesIcon :size="24" /></div>
+                  <div class="scan-source-label">Gallery</div>
+                  <div class="scan-source-copy">Open your photo library</div>
+                </button>
+
+                <button type="button" class="scan-source-card" @click="openCamera">
+                  <div class="scan-source-icon"><CameraIcon :size="24" /></div>
+                  <div class="scan-source-label">Take photo</div>
+                  <div class="scan-source-copy">Use the native camera</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Teleport>
       </div>
 
       <!-- Step 2: preview + confirm -->
@@ -130,6 +162,7 @@ import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import {
   Camera as CameraIcon, GlassWater as GlassWaterIcon,
+  Images as ImagesIcon,
   Check as CheckIcon,
   X as XIcon,
   AlertTriangle as AlertTriangleIcon
@@ -168,7 +201,9 @@ const imageB64   = ref(null)   // kept for Gemini inline
 const imageMime  = ref('image/jpeg')
 const result     = ref({})
 const errorMsg   = ref('')
-const fileInput  = ref(null)
+const galleryInput = ref(null)
+const cameraInput  = ref(null)
+const showSourceModal = ref(false)
 const scansToday = ref(0)
 
 const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-proxy`
@@ -226,6 +261,7 @@ function onFileChange(e) {
   const file = e.target.files[0]
   if (file) loadFile(file)
   e.target.value = ''
+  showSourceModal.value = false
 }
 
 function loadFile(file) {
@@ -243,6 +279,16 @@ function loadFile(file) {
   })
 
   step.value = 'preview'
+}
+
+function openGallery() {
+  showSourceModal.value = false
+  galleryInput.value?.click()
+}
+
+function openCamera() {
+  showSourceModal.value = false
+  cameraInput.value?.click()
 }
 
 // ── Prompt ────────────────────────────────────────────────────────────────────
@@ -542,6 +588,96 @@ async function save() {
 </script>
 
 <style scoped>
+.scan-source-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(12, 12, 12, 0.62);
+}
+.scan-source-modal {
+  width: min(100%, 360px);
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+}
+.scan-source-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.scan-source-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.scan-source-subtitle {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.scan-source-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.scan-source-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.scan-source-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-input);
+  padding: 14px 12px;
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.scan-source-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--amber);
+  background: rgba(200,130,42,0.05);
+}
+.scan-source-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+  background: rgba(200,130,42,0.12);
+}
+.scan-source-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.scan-source-copy {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
 .scan-modal { max-width: 420px; padding: 0 1.25rem 1.25rem; }
 
 .scan-drop {
