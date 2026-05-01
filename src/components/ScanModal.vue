@@ -9,13 +9,24 @@
 
       <!-- Step 1: pick image -->
       <div v-if="step === 'pick'">
-        <div class="scan-drop" :class="{ 'scan-drop--hover': dragging }"
-          @click="showSourceModal = true"
+        <div class="scan-source-panel" :class="{ 'scan-source-panel--hover': dragging }"
           @dragover.prevent="dragging = true"
           @dragleave="dragging = false"
           @drop.prevent="onDrop">
-          <div class="scan-drop-icon"><CameraIcon :size="48" /></div>
-          <div class="scan-drop-label">{{ t.tapToPhoto }}</div>
+          <div class="scan-source-grid">
+            <button type="button" class="scan-source-card" @click="openGallery">
+              <div class="scan-source-icon"><ImagesIcon :size="24" /></div>
+              <div class="scan-source-label">Gallery</div>
+              <div class="scan-source-copy">Open your photo library</div>
+            </button>
+
+            <button type="button" class="scan-source-card" @click="openCamera">
+              <div class="scan-source-icon"><CameraIcon :size="24" /></div>
+              <div class="scan-source-label">Take photo</div>
+              <div class="scan-source-copy">Use the native camera</div>
+            </button>
+          </div>
+
           <div class="scan-drop-hint">{{ t.orDragDrop }}</div>
         </div>
         <div class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
@@ -24,36 +35,6 @@
         <!-- `capture` nudges mobile browsers to offer the camera flow instead of only the gallery -->
         <input ref="cameraInput" type="file" accept="image/*" capture="environment"
           style="display:none" @change="onFileChange" />
-
-        <Teleport to="body">
-          <div v-if="showSourceModal" class="scan-source-backdrop" @click.self="showSourceModal = false">
-            <div class="scan-source-modal" role="dialog" aria-modal="true" aria-label="Choose scan photo source">
-              <div class="scan-source-head">
-                <div>
-                  <div class="scan-source-title">{{ t.tapToPhoto }}</div>
-                  <div class="scan-source-subtitle">Choose where to get the image from.</div>
-                </div>
-                <button type="button" class="scan-source-close" @click="showSourceModal = false" aria-label="Close">
-                  <XIcon :size="18" />
-                </button>
-              </div>
-
-              <div class="scan-source-grid">
-                <button type="button" class="scan-source-card" @click="openGallery">
-                  <div class="scan-source-icon"><ImagesIcon :size="24" /></div>
-                  <div class="scan-source-label">Gallery</div>
-                  <div class="scan-source-copy">Open your photo library</div>
-                </button>
-
-                <button type="button" class="scan-source-card" @click="openCamera">
-                  <div class="scan-source-icon"><CameraIcon :size="24" /></div>
-                  <div class="scan-source-label">Take photo</div>
-                  <div class="scan-source-copy">Use the native camera</div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </Teleport>
       </div>
 
       <!-- Step 2: preview + confirm -->
@@ -203,7 +184,6 @@ const result     = ref({})
 const errorMsg   = ref('')
 const galleryInput = ref(null)
 const cameraInput  = ref(null)
-const showSourceModal = ref(false)
 const scansToday = ref(0)
 
 const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-proxy`
@@ -261,7 +241,6 @@ function onFileChange(e) {
   const file = e.target.files[0]
   if (file) loadFile(file)
   e.target.value = ''
-  showSourceModal.value = false
 }
 
 function loadFile(file) {
@@ -282,12 +261,10 @@ function loadFile(file) {
 }
 
 function openGallery() {
-  showSourceModal.value = false
   galleryInput.value?.click()
 }
 
 function openCamera() {
-  showSourceModal.value = false
   cameraInput.value?.click()
 }
 
@@ -588,56 +565,21 @@ async function save() {
 </script>
 
 <style scoped>
-.scan-source-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  background: rgba(12, 12, 12, 0.62);
-}
-.scan-source-modal {
-  width: min(100%, 360px);
-  padding: 16px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
-}
-.scan-source-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.scan-source-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.scan-source-subtitle {
-  margin-top: 4px;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-}
-.scan-source-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  color: var(--text-primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
 .scan-source-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+.scan-source-panel {
+  border: 1.5px dashed var(--border-hi);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s;
+  background: var(--bg-card);
+}
+.scan-source-panel--hover {
+  border-color: var(--amber);
+  background: rgba(200,130,42,0.06);
 }
 .scan-source-card {
   border: 1px solid var(--border);
@@ -680,22 +622,7 @@ async function save() {
 }
 .scan-modal { max-width: 420px; padding: 0 1.25rem 1.25rem; }
 
-.scan-drop {
-  border: 1.5px dashed var(--border-hi);
-  border-radius: 12px;
-  padding: 3rem 1.5rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: var(--bg-card);
-}
-.scan-drop:hover, .scan-drop--hover {
-  border-color: var(--amber);
-  background: rgba(200,130,42,0.06);
-}
-.scan-drop-icon  { color: var(--peat-light); opacity: 0.4; margin-bottom: 0.75rem; }
-.scan-drop-label { font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.3rem; }
-.scan-drop-hint  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--peat-light); text-transform: uppercase; }
+.scan-drop-hint  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--peat-light); text-transform: uppercase; text-align: center; margin-top: 0.9rem; }
 
 .scan-quota {
   font-family: 'JetBrains Mono', monospace;
