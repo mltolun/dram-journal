@@ -10,29 +10,35 @@
     >
       <div v-if="!previewSrc">
         <div style="opacity:0.3"><CameraIcon :size="22" /></div>
-        <div class="photo-upload-hint">Click to add a photo · Max 600px · JPEG compressed</div>
+        <div class="photo-upload-hint">{{ t.photoUploadHint }}</div>
       </div>
       <div v-else class="photo-preview-wrap">
         <img :src="previewSrc" class="photo-preview" alt="">
-        <button class="photo-remove" @click.stop="$emit('remove')" title="Remove photo"><XIcon :size="12" /></button>
-        <div v-if="kb" class="photo-upload-hint">~{{ kb }} KB after compression</div>
-        <div v-else class="photo-upload-hint">Current photo</div>
+        <button class="photo-remove" @click.stop="$emit('remove')" :title="t.removePhoto"><XIcon :size="12" /></button>
+        <div v-if="kb" class="photo-upload-hint">{{ t.photoCompressed(kb) }}</div>
+        <div v-else class="photo-upload-hint">{{ t.currentPhoto }}</div>
       </div>
     </div>
 
     <input ref="galleryInput" type="file" accept="image/*" style="display:none" @change="onFile">
-    <!-- `capture` nudges iOS toward the native camera flow. -->
     <input ref="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" @change="onFile">
+    <CameraCaptureModal
+      v-model="showCameraModal"
+      :title="t.takePhoto"
+      :subtitle="t.cameraCapturePhotoSubtitle"
+      @captured="onCapturedPhoto"
+      @fallback="openCameraPickerFallback"
+    />
 
     <Teleport to="body">
       <div v-if="showSourceModal" class="photo-source-backdrop" @click.self="showSourceModal = false">
-        <div class="photo-source-modal" role="dialog" aria-modal="true" aria-label="Choose photo source">
+        <div class="photo-source-modal" role="dialog" aria-modal="true" :aria-label="t.choosePhotoSource">
           <div class="photo-source-head">
             <div>
-              <div class="photo-source-title">Add photo</div>
-              <div class="photo-source-subtitle">Choose where to get the image from.</div>
+              <div class="photo-source-title">{{ t.addPhoto }}</div>
+              <div class="photo-source-subtitle">{{ t.photoSourceSubtitle }}</div>
             </div>
-            <button type="button" class="photo-source-close" @click="showSourceModal = false" aria-label="Close">
+            <button type="button" class="photo-source-close" @click="showSourceModal = false" :aria-label="t.close">
               <XIcon :size="18" />
             </button>
           </div>
@@ -40,14 +46,14 @@
           <div class="photo-source-grid">
             <button type="button" class="photo-source-card" @click="openGallery">
               <div class="photo-source-icon"><ImagesIcon :size="24" /></div>
-              <div class="photo-source-label">Gallery</div>
-              <div class="photo-source-copy">Open your photo library</div>
+              <div class="photo-source-label">{{ t.gallery }}</div>
+              <div class="photo-source-copy">{{ t.photoLibraryCopy }}</div>
             </button>
 
             <button type="button" class="photo-source-card" @click="openCamera">
               <div class="photo-source-icon"><CameraIcon :size="24" /></div>
-              <div class="photo-source-label">Take photo</div>
-              <div class="photo-source-copy">Use the native camera</div>
+              <div class="photo-source-label">{{ t.takePhoto }}</div>
+              <div class="photo-source-copy">{{ t.nativeCameraCopy }}</div>
             </button>
           </div>
         </div>
@@ -59,12 +65,16 @@
 <script setup>
 import { ref } from 'vue'
 import { X as XIcon, Camera as CameraIcon, Images as ImagesIcon } from 'lucide-vue-next'
+import CameraCaptureModal from './CameraCaptureModal.vue'
+import { useI18n } from '../composables/useI18n.js'
 
 const props = defineProps({ previewSrc: String, kb: Number })
 const emit  = defineEmits(['picked', 'remove'])
+const { t } = useI18n()
 const galleryInput = ref(null)
 const cameraInput = ref(null)
 const showSourceModal = ref(false)
+const showCameraModal = ref(false)
 
 function onFile(e) {
   const file = e.target.files[0]
@@ -81,7 +91,21 @@ function openGallery() {
 
 function openCamera() {
   showSourceModal.value = false
+  if (navigator?.mediaDevices?.getUserMedia) {
+    showCameraModal.value = true
+    return
+  }
+  openCameraPickerFallback()
+}
+
+function openCameraPickerFallback() {
+  showCameraModal.value = false
   cameraInput.value?.click()
+}
+
+function onCapturedPhoto(file) {
+  showCameraModal.value = false
+  emit('picked', file)
 }
 </script>
 

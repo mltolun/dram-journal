@@ -13,23 +13,29 @@
           <div class="scan-source-grid">
             <button type="button" class="scan-source-card" @click="openGallery">
               <div class="scan-source-icon"><ImagesIcon :size="24" /></div>
-              <div class="scan-source-label">Gallery</div>
-              <div class="scan-source-copy">Open your photo library</div>
+              <div class="scan-source-label">{{ t.gallery }}</div>
+              <div class="scan-source-copy">{{ t.photoLibraryCopy }}</div>
             </button>
 
             <button type="button" class="scan-source-card" @click="openCamera">
               <div class="scan-source-icon"><CameraIcon :size="24" /></div>
-              <div class="scan-source-label">Take photo</div>
-              <div class="scan-source-copy">Use the native camera</div>
+              <div class="scan-source-label">{{ t.takePhoto }}</div>
+              <div class="scan-source-copy">{{ t.nativeCameraCopy }}</div>
             </button>
           </div>
         </div>
         <div class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
 
         <input ref="galleryInput" type="file" accept="image/*" style="display:none" @change="onFileChange" />
-        <!-- `capture` nudges mobile browsers to offer the camera flow instead of only the gallery -->
         <input ref="cameraInput" type="file" accept="image/*" capture="environment"
           style="display:none" @change="onFileChange" />
+        <CameraCaptureModal
+          v-model="showCameraModal"
+          :title="t.scanBottle"
+          :subtitle="t.cameraBottleSubtitle"
+          @captured="loadFile"
+          @fallback="openCameraPickerFallback"
+        />
       </div>
 
       <!-- Step 2: preview + confirm -->
@@ -136,6 +142,7 @@ import { compressImage } from '../utils/compressImage.js'
 import { useI18n } from '../composables/useI18n.js'
 import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
+import CameraCaptureModal from './CameraCaptureModal.vue'
 import {
   Camera as CameraIcon, GlassWater as GlassWaterIcon,
   Images as ImagesIcon,
@@ -178,6 +185,7 @@ const result     = ref({})
 const errorMsg   = ref('')
 const galleryInput = ref(null)
 const cameraInput  = ref(null)
+const showCameraModal = ref(false)
 const scansToday = ref(0)
 
 const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-proxy`
@@ -253,6 +261,16 @@ function openGallery() {
 }
 
 function openCamera() {
+  if (navigator?.mediaDevices?.getUserMedia) {
+    showCameraModal.value = true
+    return
+  }
+  openCameraPickerFallback()
+}
+
+function openCameraPickerFallback() {
+  showCameraModal.value = false
+  toast(t.value.cameraPickerFallback)
   cameraInput.value?.click()
 }
 

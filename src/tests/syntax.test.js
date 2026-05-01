@@ -18,6 +18,7 @@ import AuthBox from '../components/AuthBox.vue'
 import Autocomplete from '../components/Autocomplete.vue'
 import BadgeToast from '../components/BadgeToast.vue'
 import CatalogueSearch from '../components/CatalogueSearch.vue'
+import CameraCaptureModal from '../components/CameraCaptureModal.vue'
 import ComparePanel from '../components/ComparePanel.vue'
 import FeatureRequestPanel from '../components/FeatureRequestPanel.vue'
 import FeedPanel from '../components/FeedPanel.vue'
@@ -51,6 +52,7 @@ const allComponents = [
   ['Autocomplete', Autocomplete],
   ['BadgeToast', BadgeToast],
   ['CatalogueSearch', CatalogueSearch],
+  ['CameraCaptureModal', CameraCaptureModal],
   ['ComparePanel', ComparePanel],
   ['FeatureRequestPanel', FeatureRequestPanel],
   ['FeedPanel', FeedPanel],
