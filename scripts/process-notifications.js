@@ -13,6 +13,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { emailIcon, emailIconImg } from './email-icons.js'
 
 const SUPABASE_URL         = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
@@ -347,6 +348,7 @@ ${_s.txtSignoff}`
 // ── Badge earned ─────────────────────────────────────────────────────────────
 
 function badgeEarnedHtml(badgeIcon, badgeName, badgeDesc) {
+  const iconImg = emailIconImg(badgeIcon, APP_URL, { size: 40, alt: badgeName })
   return shell(`
     <tr>
       <td style="padding:28px 32px 8px;">
@@ -354,7 +356,7 @@ function badgeEarnedHtml(badgeIcon, badgeName, badgeDesc) {
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
           ${_s.badgeTag}
         </div>
-        <div style="font-size:40px;line-height:1;margin-bottom:14px;">${badgeIcon}</div>
+        <div style="margin-bottom:14px;">${iconImg}</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:8px;">
           ${badgeName}
@@ -378,9 +380,10 @@ function badgeEarnedHtml(badgeIcon, badgeName, badgeDesc) {
 }
 
 function badgeEarnedText(badgeIcon, badgeName, badgeDesc) {
+  const glyph = emailIcon(badgeIcon, '🏆')
   return `${_s.txtBrand} — ${_s.badgeTxtHdr}
 
-${badgeIcon} ${badgeName}
+${glyph} ${badgeName}
 
 ${badgeDesc}
 
@@ -525,9 +528,10 @@ async function main() {
         console.log(`   ✉ direct_message → ${n.to_email} (${meta.whisky_name})`)
       } else if (n.type === 'badge_earned') {
         const meta = n.meta ? JSON.parse(n.meta) : {}
+        const badgeGlyph = emailIcon(meta.badge_icon, '🏆')
         await sendEmail(
           n.to_email,
-          _s.badgeSubject(meta.badge_icon || 'trophy', meta.badge_name || 'Achievement'),
+          _s.badgeSubject(badgeGlyph, meta.badge_name || 'Achievement'),
           badgeEarnedHtml(meta.badge_icon || 'trophy', meta.badge_name || 'Achievement', meta.badge_desc || ''),
           badgeEarnedText(meta.badge_icon || 'trophy', meta.badge_name || 'Achievement', meta.badge_desc || ''),
         )

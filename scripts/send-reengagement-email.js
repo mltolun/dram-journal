@@ -14,6 +14,8 @@
  *   EMAIL_FROM     — verified sender address
  */
 
+import { emailIcon, emailIconImg } from './email-icons.js'
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const EMAIL_FROM     = process.env.EMAIL_FROM || 'The Dram Journal <hello@dramjournal.online>'
 const APP_URL        = 'https://dramjournal.online'
@@ -238,10 +240,15 @@ function streakWarningHtml({ streak, daysLeft, badge }) {
                     border:1px solid rgba(200,130,42,0.15);">
           <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;
                       text-transform:uppercase;color:${AMBER};margin-bottom:4px;">${_s.streakAlsoClose}</div>
-          <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${CREAM};line-height:1.5;">
-            ${badge.icon} ${_s.streakAlsoBody(badge.rem, badge.rem > 1 ? 's' : '')}
-            <span style="color:${AMBER_LIGHT};">${badge.name}</span>
-          </div>
+          <table cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td valign="top" style="padding-right:8px;">${emailIconImg(badge.icon, APP_URL, { size: 16, alt: badge.name })}</td>
+              <td style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${CREAM};line-height:1.5;">
+                ${_s.streakAlsoBody(badge.rem, badge.rem > 1 ? 's' : '')}
+                <span style="color:${AMBER_LIGHT};">${badge.name}</span>
+              </td>
+            </tr>
+          </table>
         </div>
       </td>
     </tr>` : ''
@@ -311,6 +318,7 @@ ${_s.txtSignoff}`
 function badgeProximityHtml({ badge }) {
   const pct = Math.round(((badge.target - badge.rem) / badge.target) * 100)
   const plural = badge.rem !== 1 ? 's' : ''
+  const iconImg = emailIconImg(badge.icon, APP_URL, { size: 40, alt: badge.name })
 
   return shell(`
     <tr>
@@ -319,7 +327,7 @@ function badgeProximityHtml({ badge }) {
                     text-transform:uppercase;color:${AMBER};margin-bottom:10px;">
           ${_s.badgeTag}
         </div>
-        <div style="font-size:40px;line-height:1;margin-bottom:14px;">${badge.icon}</div>
+        <div style="margin-bottom:14px;">${iconImg}</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:8px;">
           ${badge.name}
@@ -358,9 +366,10 @@ function badgeProximityHtml({ badge }) {
 
 function badgeProximityText({ badge }) {
   const plural = badge.rem !== 1 ? 's' : ''
+  const glyph = emailIcon(badge.icon, '🏆')
   return `${_s.txtBrand} — ${_s.badgeTag}
 
-${badge.icon} ${badge.name}
+${glyph} ${badge.name}
 
 ${_s.badgeBodyTxt(badge.rem, plural)}
 ${_s.badgeProgress}: ${badge.target - badge.rem} / ${badge.target}
@@ -383,7 +392,7 @@ function lapsedHtml({ friendActivity, stats, daysSince }) {
     { icon: 'globe', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
   ].map(s => `
     <td style="text-align:center;padding:10px 16px;">
-      <div style="font-size:20px;">${s.icon}</div>
+      <div style="width:20px;height:20px;margin:0 auto 4px;">${emailIconImg(s.icon, APP_URL, { size: 20, alt: s.label })}</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;
                   color:${CREAM};margin:4px 0 2px;">${s.value}</div>
       <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:${PEAT_LIGHT};">${s.label}</div>
@@ -488,7 +497,7 @@ function finalNudgeHtml({ stats }) {
     { icon: 'globe', value: stats.countries, label: _s.lapsedCountryLabel(stats.countries) },
   ].map(s => `
     <td style="text-align:center;padding:10px 16px;">
-      <div style="font-size:20px;">${s.icon}</div>
+      <div style="width:20px;height:20px;margin:0 auto 4px;">${emailIconImg(s.icon, APP_URL, { size: 20, alt: s.label })}</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;
                   color:${CREAM};margin:4px 0 2px;">${s.value}</div>
       <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:${PEAT_LIGHT};">${s.label}</div>
@@ -632,7 +641,7 @@ export async function sendReengagementEmail(toEmail, type, payload, locale = 'en
 
   } else if (type === 'badge_proximity') {
     const plural = badge.rem !== 1 ? 's' : ''
-    subject = _s.subjectBadge(badge.icon, badge.rem, plural, badge.name)
+    subject = _s.subjectBadge(emailIcon(badge.icon, '🏆'), badge.rem, plural, badge.name)
     html    = badgeProximityHtml({ badge })
     text    = badgeProximityText({ badge })
 
