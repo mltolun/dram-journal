@@ -49,17 +49,17 @@
             class="btn-t btn-primary btn-add-desktop"
             @click.stop="addOpen = !addOpen"
             :aria-expanded="addOpen"
-            aria-label="Add new entry"
-          ><PlusIcon :size="14" aria-hidden="true" /> <span class="btn-label">Add Entry</span></button>
+            :aria-label="t.addEntry"
+          ><PlusIcon :size="14" aria-hidden="true" /> <span class="btn-label">{{ t.addEntry }}</span></button>
           <transition name="add-menu">
             <div v-if="addOpen" class="add-menu" role="menu">
               <button class="add-menu-item" @click.stop="choose('add')" role="menuitem">
                 <SearchIcon :size="14" aria-hidden="true" />
-                Search catalogue
+                {{ t.searchCatalogue }}
               </button>
               <button class="add-menu-item" @click.stop="choose('scan')" role="menuitem">
                 <CameraIcon :size="14" aria-hidden="true" />
-                Scan bottle
+                {{ t.scanBottle }}
               </button>
             </div>
           </transition>

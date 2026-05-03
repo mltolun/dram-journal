@@ -171,7 +171,7 @@
     </div><!-- /main-content -->
 
     <!-- ── Floating Action Button ── -->
-    <div class="fab-wrap" ref="fabWrap">
+    <div v-if="showFab" class="fab-wrap" ref="fabWrap">
       <button
         class="fab"
         @click.stop="fabOpen = !fabOpen"
@@ -184,11 +184,11 @@
         <div v-if="fabOpen" class="fab-menu" role="menu">
           <button class="fab-menu-item" @click.stop="chooseFab('add')" role="menuitem">
             <SearchIcon :size="14" aria-hidden="true" />
-            Search catalogue
+            {{ t.searchCatalogue }}
           </button>
           <button class="fab-menu-item" @click.stop="chooseFab('scan')" role="menuitem">
             <CameraIcon :size="14" aria-hidden="true" />
-            {{ t.scan }} bottle
+            {{ t.scanBottle }}
           </button>
         </div>
       </transition>
@@ -286,6 +286,7 @@ const viewMode      = ref('gallery') // 'gallery' | 'list'
 // FAB
 const fabOpen = ref(false)
 const fabWrap = ref(null)
+const showFab = computed(() => activeList.value !== 'feed')
 
 function chooseFab(action) {
   fabOpen.value = false
@@ -299,6 +300,10 @@ function onFabClickOutside(e) {
 
 onMounted(() => document.addEventListener('click', onFabClickOutside))
 onBeforeUnmount(() => document.removeEventListener('click', onFabClickOutside))
+
+watch(activeList, () => {
+  fabOpen.value = false
+})
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 const filtersOpen      = ref(false)
