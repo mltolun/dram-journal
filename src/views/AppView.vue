@@ -184,11 +184,11 @@
         <div v-if="fabOpen" class="fab-menu" role="menu">
           <button class="fab-menu-item" @click.stop="chooseFab('add')" role="menuitem">
             <SearchIcon :size="14" aria-hidden="true" />
-            {{ t.searchCatalogue }}
+            <span class="fab-menu-label">{{ t.searchCatalogue }}</span>
           </button>
           <button class="fab-menu-item" @click.stop="chooseFab('scan')" role="menuitem">
             <CameraIcon :size="14" aria-hidden="true" />
-            {{ t.scanBottle }}
+            <span class="fab-menu-label">{{ t.scanBottle }}</span>
           </button>
         </div>
       </transition>
@@ -735,11 +735,11 @@ function onSaved(w) {
   border-radius: 10px;
   box-shadow: var(--shadow-modal);
   overflow: hidden;
-  min-width: 170px;
+  min-width: 190px;
 }
 .fab-menu-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 9px;
   width: 100%;
   padding: 11px 14px;
@@ -753,7 +753,17 @@ function onSaved(w) {
   font-family: 'Inter', sans-serif;
   text-align: left;
 }
+.fab-menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.3;
+  white-space: normal;
+}
 .fab-menu-item:hover { background: rgba(200,130,42,0.08); color: var(--text-primary); }
+.fab-menu-item svg {
+  margin-top: 1px;
+  flex-shrink: 0;
+}
 .fab-menu-item + .fab-menu-item { border-top: 0.5px solid var(--border); }
 
 /* FAB menu transition */

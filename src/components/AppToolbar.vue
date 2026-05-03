@@ -55,11 +55,11 @@
             <div v-if="addOpen" class="add-menu" role="menu">
               <button class="add-menu-item" @click.stop="choose('add')" role="menuitem">
                 <SearchIcon :size="14" aria-hidden="true" />
-                {{ t.searchCatalogue }}
+                <span class="add-menu-label">{{ t.searchCatalogue }}</span>
               </button>
               <button class="add-menu-item" @click.stop="choose('scan')" role="menuitem">
                 <CameraIcon :size="14" aria-hidden="true" />
-                {{ t.scanBottle }}
+                <span class="add-menu-label">{{ t.scanBottle }}</span>
               </button>
             </div>
           </transition>
@@ -198,12 +198,12 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
   border-radius: 10px;
   box-shadow: var(--shadow-modal);
   overflow: hidden;
-  min-width: 170px;
+  min-width: 190px;
   z-index: 400;
 }
 .add-menu-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 9px;
   width: 100%;
   padding: 11px 14px;
@@ -217,7 +217,17 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
   font-family: 'Inter', sans-serif;
   text-align: left;
 }
+.add-menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.3;
+  white-space: normal;
+}
 .add-menu-item:hover { background: rgba(200,130,42,0.08); color: var(--text-primary); }
+.add-menu-item svg {
+  margin-top: 1px;
+  flex-shrink: 0;
+}
 .add-menu-item + .add-menu-item { border-top: 0.5px solid var(--border); }
 
 .add-menu-enter-active { transition: opacity 0.15s, transform 0.15s; }
