@@ -240,5 +240,17 @@ export function useWhiskies() {
     return data
   }
 
-  return { whiskies, journal, wishlist, trash, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToTrash, restoreFromTrash, moveToJournal, logDram }
+  async function getDramLogs(whiskyId) {
+    const { data, error } = await sb
+      .from('dram_logs')
+      .select('id, tasted_at, rating, notes, created_at')
+      .eq('whisky_id', whiskyId)
+      .eq('user_id', currentUser.value.id)
+      .order('tasted_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  }
+
+  return { whiskies, journal, wishlist, trash, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToTrash, restoreFromTrash, moveToJournal, logDram, getDramLogs }
 }

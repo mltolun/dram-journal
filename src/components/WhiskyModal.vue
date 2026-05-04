@@ -130,14 +130,6 @@
         </div>
 
         <div class="modal-actions">
-          <button
-            v-if="isJournal"
-            class="btn-save"
-            :disabled="editLoading"
-            @click="openDramLog"
-          >
-            <PlusIcon :size="14" /> {{ t.logAnotherDram }}
-          </button>
           <button class="btn-save" :disabled="editLoading" @click="emit('share', props.editing || form)">
             <Share2Icon :size="14" /> Share
           </button>
@@ -145,48 +137,63 @@
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
 
-        <div v-if="isJournal" class="dram-summary-row">
-          <div class="view-field">
-            <div class="view-label">{{ t.dramsLogged }}</div>
-            <div class="view-value view-bottle-val">
-              <PackageIcon :size="13" /> × {{ form.dram_count ?? 1 }}
-              <span v-if="form.last_dram_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(form.last_dram_at) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="isJournal && dramLogOpen" class="dram-log-panel">
-          <div class="view-section-lbl">{{ t.logAnotherDram }}</div>
-          <div class="form-grid-2">
-            <div class="form-row">
-              <label>{{ t.dramDate }}</label>
-              <input type="date" v-model="dramForm.tasted_at">
-            </div>
-            <div class="form-row">
-              <label>{{ t.rating }}</label>
-              <div class="star-picker">
-                <button
-                  v-for="n in 5"
-                  :key="n"
-                  type="button"
-                  class="star-btn"
-                  :class="{ filled: n <= dramForm.rating }"
-                  @click="dramForm.rating = dramForm.rating === n ? 0 : n"
-                  :title="`${n} star${n > 1 ? 's' : ''}`"
-                ><StarIcon :size="14" /></button>
-                <span v-if="dramForm.rating" class="star-clear" @click="dramForm.rating = 0"><XIcon :size="10" /></span>
+        <div v-if="isJournal" class="dram-history-section">
+          <div class="dram-history-header">
+            <div class="dram-summary">
+              <div class="view-label">{{ t.dramsLogged }}</div>
+              <div class="view-value">
+                <PackageIcon :size="13" /> × {{ form.dram_count ?? 1 }}
+                <span v-if="form.last_dram_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(form.last_dram_at) }}</span>
               </div>
             </div>
-          </div>
-          <div class="form-row">
-            <label>{{ t.dramNotes }}</label>
-            <textarea v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder"></textarea>
-          </div>
-          <div class="modal-actions modal-actions--dram">
-            <button class="btn-save" :disabled="dramSaving" @click="saveDram">
-              <CheckIcon v-if="!dramSaving" :size="14" /> {{ dramSaving ? t.saving : t.saveDram }}
+            <button class="btn-log-dram" :disabled="dramSaving" @click="openDramLog">
+              <PlusIcon :size="14" /> {{ t.logAnotherDram }}
             </button>
-            <button class="btn-cancel" :disabled="dramSaving" @click="dramLogOpen = false">{{ t.cancel }}</button>
+          </div>
+
+          <div v-if="dramLogOpen" class="dram-log-form">
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>{{ t.dramDate }}</label>
+                <input type="date" v-model="dramForm.tasted_at">
+              </div>
+              <div class="form-row">
+                <label>{{ t.rating }}</label>
+                <div class="star-picker">
+                  <button
+                    v-for="n in 5"
+                    :key="n"
+                    type="button"
+                    class="star-btn"
+                    :class="{ filled: n <= dramForm.rating }"
+                    @click="dramForm.rating = dramForm.rating === n ? 0 : n"
+                    :title="`${n} star${n > 1 ? 's' : ''}`"
+                  ><StarIcon :size="14" /></button>
+                  <span v-if="dramForm.rating" class="star-clear" @click="dramForm.rating = 0"><XIcon :size="10" /></span>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>{{ t.dramNotes }}</label>
+              <textarea v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder" rows="2"></textarea>
+            </div>
+            <div class="modal-actions modal-actions--dram">
+              <button class="btn-save" :disabled="dramSaving" @click="saveDram">
+                <CheckIcon v-if="!dramSaving" :size="14" /> {{ dramSaving ? t.saving : t.saveDram }}
+              </button>
+              <button class="btn-cancel" :disabled="dramSaving" @click="dramLogOpen = false">{{ t.cancel }}</button>
+            </div>
+          </div>
+
+          <div v-if="dramLogs.length > 0" class="dram-log-list">
+            <div class="view-label" style="margin-bottom: 8px;">{{ t.dramHistory }}</div>
+            <div v-for="log in dramLogs" :key="log.id" class="dram-log-item">
+              <div class="dram-log-date">{{ formatDate(log.tasted_at) }}</div>
+              <div v-if="log.rating" class="dram-log-rating">
+                <StarIcon :size="11" v-for="s in 5" :key="s" :class="{ filled: s <= log.rating }" />
+              </div>
+              <div v-if="log.notes" class="dram-log-notes">{{ log.notes }}</div>
+            </div>
           </div>
         </div>
 
@@ -457,7 +464,7 @@ const props = defineProps({
 })
 const emit  = defineEmits(['saved', 'close', 'share'])
 
-const { insertWhisky, updateWhisky, logDram } = useWhiskies()
+const { insertWhisky, updateWhisky, logDram, getDramLogs } = useWhiskies()
 const { pendingBlob, previewUrl, compressedKb, clearPhoto, loadExisting, uploadPhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
@@ -471,6 +478,8 @@ const cataloguePicked = ref(null)
 const manualMode      = ref(false)
 const scanMode        = ref(false)
 const dramLogOpen     = ref(false)
+const dramLogs        = ref([])
+const dramLogsLoading = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
@@ -567,6 +576,17 @@ onMounted(async () => {
     }
   }
   dramLogOpen.value = !!props.quickLog
+
+  if (props.editing?.id && (props.editing?.list || props.list) === 'journal') {
+    dramLogsLoading.value = true
+    try {
+      dramLogs.value = await getDramLogs(props.editing.id)
+    } catch {
+      dramLogs.value = []
+    } finally {
+      dramLogsLoading.value = false
+    }
+  }
 })
 
 async function saveDram() {
@@ -589,6 +609,7 @@ async function saveDram() {
     dramForm.tasted_at = new Date().toISOString().split('T')[0]
     dramForm.rating = 0
     dramForm.notes = ''
+    dramLogs.value = await getDramLogs(props.editing.id)
   } catch (e) {
     toast('⚠ ' + e.message)
   } finally {
@@ -843,15 +864,88 @@ async function save() {
   letter-spacing: 0.06em;
   margin: 12px 0 8px;
 }
-.dram-summary-row {
-  margin-top: 2px;
+.dram-history-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--border);
 }
-.dram-log-panel {
-  margin-top: 10px;
+.dram-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dram-summary {
+  flex: 1;
+}
+.dram-summary .view-value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-log-dram {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 0.5px solid var(--amber);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--amber);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-log-dram:hover {
+  background: var(--amber);
+  color: var(--bg-card);
+}
+.btn-log-dram:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.dram-log-form {
+  margin-top: 12px;
   padding: 12px 12px 2px;
   border: 0.5px solid var(--border);
   border-radius: 10px;
   background: rgba(200, 130, 42, 0.03);
+}
+.dram-log-list {
+  margin-top: 12px;
+}
+.dram-log-item {
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+.dram-log-item:last-child {
+  border-bottom: none;
+}
+.dram-log-date {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.dram-log-rating {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.dram-log-rating svg {
+  color: var(--border-hi);
+}
+.dram-log-rating svg.filled {
+  color: var(--amber-light);
+}
+.dram-log-notes {
+  font-size: 0.82rem;
+  color: var(--peat-light);
+  font-style: italic;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 .modal-actions--dram {
   margin-top: 6px;
