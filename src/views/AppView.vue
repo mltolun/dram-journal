@@ -108,6 +108,7 @@
                 @delete="doDelete(w)"
                 @share="openShareModal(w)"
                 @move="doMoveToJournal(w)"
+                @dram="openLogModal(w)"
               />
             </div>
           </div>
@@ -139,6 +140,7 @@
             @toggle="toggleSelect(w.id)"
             @delete="doDelete(w)"
             @share="openShareModal(w)"
+            @dram="openLogModal(w)"
           />
         </div>
 
@@ -207,9 +209,10 @@
       :prefill="scanPrefill"
       :list="activeList"
       :view-mode="isViewMode"
+      :quick-log="quickLogMode"
       @saved="onSaved"
       @share="openShareModal"
-      @close="modalOpen = false; scanPrefill = null"
+      @close="modalOpen = false; scanPrefill = null; quickLogMode = false"
     />
 
     <ShareModal
@@ -294,6 +297,7 @@ const sharePromptWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
 const viewMode      = ref('gallery') // 'gallery' | 'list'
+const quickLogMode   = ref(false)
 
 // FAB
 const fabOpen = ref(false)
@@ -520,12 +524,21 @@ function openAddModal() {
   editingWhisky.value = null
   scanPrefill.value   = null
   isViewMode.value    = false
+  quickLogMode.value  = false
   modalOpen.value = true
 }
 
 function openViewModal(w) {
   editingWhisky.value = w
   isViewMode.value    = true
+  quickLogMode.value  = false
+  modalOpen.value = true
+}
+
+function openLogModal(w) {
+  editingWhisky.value = w
+  isViewMode.value    = true
+  quickLogMode.value  = true
   modalOpen.value = true
 }
 
@@ -579,6 +592,7 @@ async function doMoveToJournal(w) {
 
 function onSaved(w) {
   modalOpen.value = false
+  quickLogMode.value = false
   toast(editingWhisky.value ? t.value.whiskyUpdated(w.name) : t.value.whiskyAdded(w.name))
   if (!editingWhisky.value && (w.list || activeList.value) === 'journal') {
     sharePromptWhisky.value = w

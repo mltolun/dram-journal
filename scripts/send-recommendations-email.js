@@ -3,7 +3,7 @@
  *
  * Sends a branded HTML "Weekly Update" email combining:
  *   - Personalised whisky recommendations (from Gemini)
- *   - Activity digest from followed users (new journal entries & ratings)
+ *   - Activity digest from followed users (new journal entries, dram logs & ratings)
  *
  * Required environment variables:
  *   RESEND_API_KEY — your Resend API key
@@ -47,6 +47,7 @@ const STRINGS = {
     footerSub:        'Sent every Monday · Manage followers in app settings',
     rated:            'Rated',
     addedToJournal:   'Added to journal',
+    loggedAnotherDram:'Logged another dram',
     subject:          'Your weekly dram update — The Dram Journal',
     txtHeader:        'THE DRAM JOURNAL — WEEKLY UPDATE',
     txtPicksHdr:      'YOUR PICKS THIS WEEK',
@@ -54,6 +55,7 @@ const STRINGS = {
     txtFriendsHdr:    'FRIENDS THIS WEEK',
     txtRated:         'Rated',
     txtAdded:         'Added to journal',
+    txtLoggedDram:    'Logged another dram',
     txtGeneratedOn:   (dateStr) => `Generated on ${dateStr}`,
     txtOpen:          'Open your journal at https://dramjournal.online',
     txtSignoff:       'Sláinte',
@@ -74,6 +76,7 @@ const STRINGS = {
     footerSub:        'Enviado cada lunes · Gestiona seguidores en la configuración',
     rated:            'Valoró',
     addedToJournal:   'Añadió al diario',
+    loggedAnotherDram:'Registró otro dram',
     subject:          'Tu actualización semanal — The Dram Journal',
     txtHeader:        'THE DRAM JOURNAL — ACTUALIZACIÓN SEMANAL',
     txtPicksHdr:      'TUS SELECCIONES ESTA SEMANA',
@@ -81,6 +84,7 @@ const STRINGS = {
     txtFriendsHdr:    'AMIGOS ESTA SEMANA',
     txtRated:         'Valoró',
     txtAdded:         'Añadió al diario',
+    txtLoggedDram:    'Registró otro dram',
     txtGeneratedOn:   (dateStr) => `Generado el ${dateStr}`,
     txtOpen:          'Abre tu diario en https://dramjournal.online',
     txtSignoff:       'Sláinte',
@@ -131,6 +135,7 @@ function eventTypePriority(type) {
   switch (type) {
     case 'rating':       return 3
     case 'journal_add':  return 2
+    case 'dram_logged':  return 2
     case 'entry':        return 2
     case 'wishlist_add': return 1
     default:             return 0
@@ -139,6 +144,7 @@ function eventTypePriority(type) {
 
 function eventKey(event) {
   return [
+    event.id || '',
     event.user_id || '',
     event.whisky_id || '',
     (event.whisky_name || '').trim().toLowerCase(),
@@ -257,12 +263,14 @@ function groupActivity(events, authorEmailMap) {
 
   return userOrder.map(uid => {
     const u = byUser[uid]
-    const typeOrder = ['rating', 'journal_add', 'entry', 'wishlist_add'].filter(t => u.byType[t])
+    const typeOrder = ['rating', 'dram_logged', 'journal_add', 'entry', 'wishlist_add'].filter(t => u.byType[t])
     const groups = typeOrder.map(type => ({
       type,
-      icon:   type === 'rating' ? 'star' : 'book-open',
+      icon:   type === 'rating' ? 'star' : 'glass-water',
       label:  type === 'rating'
         ? _s.rated
+        : type === 'dram_logged'
+          ? _s.loggedAnotherDram
         : type === 'wishlist_add'
           ? _s.addedToJournal
           : _s.addedToJournal,

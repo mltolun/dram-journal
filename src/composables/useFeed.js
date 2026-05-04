@@ -40,20 +40,8 @@ export function useFeed() {
         if (error) throw error
         console.log('[feed] raw social:', data?.length, 'error:', error)
 
-        // Collapse all events for the same (user_id, whisky_name) into one card.
-        const merged = new Map()
-        for (const item of (data || [])) {
-          const key = `${item.user_id}|${item.whisky_name}`
-          if (!merged.has(key)) {
-            merged.set(key, { ...item, source: 'social' })
-          } else {
-            const existing = merged.get(key)
-            if (!existing.rating    && item.rating)    existing.rating    = item.rating
-            if (!existing.notes     && item.notes)     existing.notes     = item.notes
-            if (!existing.whisky_id && item.whisky_id) existing.whisky_id = item.whisky_id
-          }
-        }
-        socialItems = [...merged.values()].slice(0, 50)
+        // Keep each activity row so repeat drams remain visible in the feed.
+        socialItems = (data || []).map(item => ({ ...item, source: 'social' })).slice(0, 50)
 
         // Batch-fetch photos from catalogue directly by name+distillery.
         // (whiskies table is RLS-protected — we cannot read other users' rows.)

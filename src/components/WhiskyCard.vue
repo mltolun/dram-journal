@@ -20,6 +20,9 @@
         <span v-if="!isTrash && whisky.rating" class="wcard-rating-pill" @click.stop>
           <StarIcon :size="10" /> {{ whisky.rating }}
         </span>
+        <span v-if="!isTrash && whisky.dram_count" class="wcard-dram-pill" @click.stop>
+          <GlassWaterIcon :size="10" /> {{ whisky.dram_count }}
+        </span>
         <span v-if="isTrash" class="wcard-trash-pill">
           <Trash2Icon :size="10" /> {{ daysLeft }} {{ daysLeft === 1 ? t.trashDaySingular : t.trashDayPlural }}
         </span>
@@ -50,6 +53,7 @@
         <button class="wcard-btn del" @click.stop="$emit('delete')"><Trash2Icon :size="11" /></button>
       </template>
       <template v-else>
+        <button class="wcard-btn" @click.stop="$emit('dram')"><PlusIcon :size="11" /> {{ t.logAnotherDramShort }}</button>
         <button class="wcard-btn" @click.stop="$emit('share')"><Share2Icon :size="11" /> {{ t.share }}</button>
         <button class="wcard-btn" :class="{ 'compare-active': selected }" @click.stop="$emit('toggle')"><Columns2Icon :size="11" /> Compare</button>
         <button class="wcard-btn del" @click.stop="$emit('delete')"><Trash2Icon :size="11" /></button>
@@ -86,6 +90,7 @@
         <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.delete"><Trash2Icon :size="11" /></button>
       </template>
       <template v-else>
+        <button class="wcard-btn" @click="$emit('dram')" :aria-label="t.logAnotherDramShort"><PlusIcon :size="11" /></button>
         <button class="wcard-btn" @click="$emit('share')" :aria-label="t.share"><Share2Icon :size="11" /></button>
         <button class="wcard-btn" :class="{ 'compare-active': selected }" @click="$emit('toggle')" aria-label="Compare"><Columns2Icon :size="11" /></button>
         <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.delete"><Trash2Icon :size="11" /></button>
@@ -96,14 +101,14 @@
 
 <script setup>
 import { computed } from 'vue'
-import { ArrowUp as ArrowUpIcon, Columns2 as Columns2Icon, Trash2 as Trash2Icon, Share2 as Share2Icon, RotateCcw as RotateCcwIcon, Star as StarIcon } from 'lucide-vue-next'
+import { ArrowUp as ArrowUpIcon, Columns2 as Columns2Icon, Trash2 as Trash2Icon, Share2 as Share2Icon, RotateCcw as RotateCcwIcon, Star as StarIcon, Plus as PlusIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { ATTRS } from '../lib/constants.js'
 import { useI18n } from '../composables/useI18n.js'
 import { daysUntilFlush } from '../composables/useWhiskies.js'
 import placeholderImg from '../assets/bottle-placeholder.jpg'
 
 const props = defineProps({ whisky: Object, selected: Boolean, selectColor: String, compact: Boolean })
-defineEmits(['toggle', 'view', 'delete', 'share', 'move', 'restore'])
+defineEmits(['toggle', 'view', 'delete', 'share', 'move', 'restore', 'dram'])
 
 const { t } = useI18n()
 const isWishlist = computed(() => props.whisky?.list === 'wishlist')
@@ -125,6 +130,16 @@ const daysLeft   = computed(() => daysUntilFlush(props.whisky))
   font-size: 0.62rem;
   font-weight: 500;
   color: var(--amber-light);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: 0.04em;
+}
+.wcard-dram-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: #6ecb93;
   display: flex;
   align-items: center;
   gap: 3px;

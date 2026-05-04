@@ -138,6 +138,7 @@ async function main() {
     { data: allSubs,       error: e3 },
     { data: allStreakRecs,  error: e4 },
     { data: recentAct,     error: e5 },
+    { data: dramLogs,      error: e6 },
   ] = await Promise.all([
     sb.from('whiskies')
       .select('user_id, created_at, origin, ahumado, rating, dulzor, cuerpo, frutado, especiado')
@@ -153,6 +154,8 @@ async function main() {
     sb.from('activity_feed')
       .select('user_id, type, whisky_name, whisky_distillery, rating, created_at')
       .gte('created_at', new Date(Date.now() - 14 * 86400000).toISOString()),
+    sb.from('dram_logs')
+      .select('user_id, tasted_at, created_at'),
   ])
 
   if (e1) throw new Error(`entries: ${e1.message}`)
@@ -160,6 +163,7 @@ async function main() {
   if (e3) throw new Error(`subs: ${e3.message}`)
   if (e4) throw new Error(`streaks: ${e4.message}`)
   if (e5) throw new Error(`activity: ${e5.message}`)
+  if (e6) throw new Error(`dram logs: ${e6.message}`)
 
   // ── Index lookups ─────────────────────────────────────────────────────────
 
@@ -186,6 +190,12 @@ async function main() {
     ;(activityByUser[a.user_id] ??= []).push(a)
   }
 
+  // user_id → tasting log dates from repeat drams
+  const dramDatesByUser = {}
+  for (const d of dramLogs ?? []) {
+    ;(dramDatesByUser[d.user_id] ??= []).push(d.tasted_at || d.created_at)
+  }
+
   // ── Aggregate per-user journal stats ─────────────────────────────────────
 
   const userRaw = {}   // user_id → { dates[], countries Set, peaty, rated, fullFlavor }
@@ -198,6 +208,10 @@ async function main() {
     if ((e.dulzor    ?? 0) > 0 && (e.ahumado   ?? 0) > 0 &&
         (e.cuerpo    ?? 0) > 0 && (e.frutado   ?? 0) > 0 &&
         (e.especiado ?? 0) > 0)  s.fullFlavor++
+  }
+  for (const [userId, dates] of Object.entries(dramDatesByUser)) {
+    const s = (userRaw[userId] ??= { dates: [], countries: new Set(), peaty: 0, rated: 0, fullFlavor: 0 })
+    s.dates.push(...dates)
   }
 
   // ── Fetch all user emails via admin API ───────────────────────────────────

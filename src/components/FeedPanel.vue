@@ -86,6 +86,7 @@
                   <span class="feed-card-rating-val">{{ item.rating }}.0</span>
                 </div>
               </div>
+              <div class="feed-card-verb">{{ verbFor(item.type) }}</div>
               <!-- Whisky name + distillery -->
               <div class="feed-card-whisky-name">{{ item.whisky_name }}</div>
               <div v-if="item.whisky_distillery" class="feed-card-whisky-sub">{{ item.whisky_distillery }}</div>
@@ -165,6 +166,7 @@ function flavorTags(item) {
 
 function verbFor(type) {
   if (type === 'rating')       return t.value.feedRated
+  if (type === 'dram_logged')  return t.value.feedDramLogged
   if (type === 'wishlist_add') return t.value.feedWishlisted
   return t.value.feedLogged // journal_add and anything else
 }
@@ -411,6 +413,16 @@ onMounted(loadFeed)
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--amber-light, #E8A84C);
+}
+
+.feed-card-verb {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.61rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber-light, #E8A84C);
+  opacity: 0.85;
+  margin-top: 2px;
 }
 
 /* Whisky name & distillery */

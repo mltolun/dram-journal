@@ -130,11 +130,64 @@
         </div>
 
         <div class="modal-actions">
+          <button
+            v-if="isJournal"
+            class="btn-save"
+            :disabled="editLoading"
+            @click="openDramLog"
+          >
+            <PlusIcon :size="14" /> {{ t.logAnotherDram }}
+          </button>
           <button class="btn-save" :disabled="editLoading" @click="emit('share', props.editing || form)">
             <Share2Icon :size="14" /> Share
           </button>
           <button class="btn-save" :disabled="editLoading" @click="switchToEdit"><PencilIcon :size="14" /> {{ t.editBtn }}</button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
+        </div>
+
+        <div v-if="isJournal" class="dram-summary-row">
+          <div class="view-field">
+            <div class="view-label">{{ t.dramsLogged }}</div>
+            <div class="view-value view-bottle-val">
+              <PackageIcon :size="13" /> × {{ form.dram_count ?? 1 }}
+              <span v-if="form.last_dram_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(form.last_dram_at) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isJournal && dramLogOpen" class="dram-log-panel">
+          <div class="view-section-lbl">{{ t.logAnotherDram }}</div>
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label>{{ t.dramDate }}</label>
+              <input type="date" v-model="dramForm.tasted_at">
+            </div>
+            <div class="form-row">
+              <label>{{ t.rating }}</label>
+              <div class="star-picker">
+                <button
+                  v-for="n in 5"
+                  :key="n"
+                  type="button"
+                  class="star-btn"
+                  :class="{ filled: n <= dramForm.rating }"
+                  @click="dramForm.rating = dramForm.rating === n ? 0 : n"
+                  :title="`${n} star${n > 1 ? 's' : ''}`"
+                ><StarIcon :size="14" /></button>
+                <span v-if="dramForm.rating" class="star-clear" @click="dramForm.rating = 0"><XIcon :size="10" /></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>{{ t.dramNotes }}</label>
+            <textarea v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder"></textarea>
+          </div>
+          <div class="modal-actions modal-actions--dram">
+            <button class="btn-save" :disabled="dramSaving" @click="saveDram">
+              <CheckIcon v-if="!dramSaving" :size="14" /> {{ dramSaving ? t.saving : t.saveDram }}
+            </button>
+            <button class="btn-cancel" :disabled="dramSaving" @click="dramLogOpen = false">{{ t.cancel }}</button>
+          </div>
         </div>
 
         <!-- Lightbox -->
@@ -383,7 +436,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon, Share2 as Share2Icon } from 'lucide-vue-next'
+import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon, Share2 as Share2Icon, Plus as PlusIcon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -400,21 +453,24 @@ const props = defineProps({
   prefill: Object,
   list: { type: String, default: 'journal' },
   viewMode: { type: Boolean, default: false },
+  quickLog: { type: Boolean, default: false },
 })
 const emit  = defineEmits(['saved', 'close', 'share'])
 
-const { insertWhisky, updateWhisky } = useWhiskies()
+const { insertWhisky, updateWhisky, logDram } = useWhiskies()
 const { pendingBlob, previewUrl, compressedKb, clearPhoto, loadExisting, uploadPhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
 
 const saving       = ref(false)
+const dramSaving   = ref(false)
 const inViewMode   = ref(props.viewMode)
 const lightboxOpen = ref(false)
 const editLoading  = ref(false)  // true while fetching catalogue entry on mount
 const cataloguePicked = ref(null)
 const manualMode      = ref(false)
 const scanMode        = ref(false)
+const dramLogOpen     = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
@@ -441,6 +497,16 @@ function switchToEdit() {
   inViewMode.value = false
 }
 
+function openDramLog() {
+  dramLogOpen.value = true
+  if (!dramForm.tasted_at) dramForm.tasted_at = new Date().toISOString().split('T')[0]
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 const catalogueSearch = useCatalogue()
 const scanResults     = ref([])   // catalogue matches for the scanned whisky
 const scanSearching   = ref(false)
@@ -449,13 +515,20 @@ const form = reactive({
   name: '', distillery: '', origin: '', region: '', type: 'scotch', age: '', abv: '',
   price: '', date: new Date().toISOString().split('T')[0],
   nose: '', palate: '', notes: '', rating: 0,
-  bottle_count: null, last_finished: null,
+  bottle_count: null, last_finished: null, dram_count: 1, last_dram_at: null,
   ...Object.fromEntries(ATTRS.map(a => [a, DEFAULTS[a]])),
+})
+
+const dramForm = reactive({
+  tasted_at: new Date().toISOString().split('T')[0],
+  rating: 0,
+  notes: '',
 })
 
 onMounted(async () => {
   if (props.editing) {
     Object.assign(form, props.editing)
+    if (form.dram_count == null) form.dram_count = 1
     loadExisting(props.editing.photo_url || null)
 
     if (props.editing.catalogue_id) {
@@ -493,7 +566,35 @@ onMounted(async () => {
       }
     }
   }
+  dramLogOpen.value = !!props.quickLog
 })
+
+async function saveDram() {
+  if (!props.editing?.id) return
+  dramSaving.value = true
+  try {
+    const tastedAt = dramForm.tasted_at ? `${dramForm.tasted_at}T12:00:00.000Z` : new Date().toISOString()
+    await logDram({
+      whisky: props.editing,
+      tastedAt,
+      rating: dramForm.rating || null,
+      notes: dramForm.notes?.trim() || null,
+    })
+
+    form.dram_count = (form.dram_count || 1) + 1
+    form.last_dram_at = tastedAt
+
+    toast(t.value.dramLogged(form.name))
+    dramLogOpen.value = false
+    dramForm.tasted_at = new Date().toISOString().split('T')[0]
+    dramForm.rating = 0
+    dramForm.notes = ''
+  } catch (e) {
+    toast('⚠ ' + e.message)
+  } finally {
+    dramSaving.value = false
+  }
+}
 
 async function onPhotoSelected(file) {
   const { blob, dataUrl, kb } = await compressImage(file, 600, 0.78)
@@ -741,6 +842,19 @@ async function save() {
   color: var(--peat-light);
   letter-spacing: 0.06em;
   margin: 12px 0 8px;
+}
+.dram-summary-row {
+  margin-top: 2px;
+}
+.dram-log-panel {
+  margin-top: 10px;
+  padding: 12px 12px 2px;
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  background: rgba(200, 130, 42, 0.03);
+}
+.modal-actions--dram {
+  margin-top: 6px;
 }
 .view-slider-row {
   margin-bottom: 8px;
