@@ -127,6 +127,63 @@ function barRow(label, value) {
     </tr>`
 }
 
+function eventTypePriority(type) {
+  switch (type) {
+    case 'rating':       return 3
+    case 'journal_add':  return 2
+    case 'entry':        return 2
+    case 'wishlist_add': return 1
+    default:             return 0
+  }
+}
+
+function eventKey(event) {
+  return [
+    event.user_id || '',
+    event.whisky_id || '',
+    (event.whisky_name || '').trim().toLowerCase(),
+    (event.whisky_distillery || event.distillery || '').trim().toLowerCase(),
+  ].join('|')
+}
+
+function collapseActivityEvents(events) {
+  const merged = new Map()
+
+  for (const event of events || []) {
+    const key = eventKey(event)
+    if (!merged.has(key)) {
+      merged.set(key, { ...event })
+      continue
+    }
+
+    const existing = merged.get(key)
+    const existingDate = new Date(existing.created_at || 0).getTime()
+    const eventDate = new Date(event.created_at || 0).getTime()
+    const incomingIsNewer = eventDate > existingDate
+
+    if (incomingIsNewer) {
+      existing.created_at = event.created_at
+    }
+
+    if (eventTypePriority(event.type) > eventTypePriority(existing.type)) {
+      existing.type = event.type
+    }
+
+    if (!existing.rating && event.rating) existing.rating = event.rating
+    if (!existing.notes && event.notes) existing.notes = event.notes
+    if (!existing.photo_url && event.photo_url) existing.photo_url = event.photo_url
+    if (!existing.whisky_id && event.whisky_id) existing.whisky_id = event.whisky_id
+    if (!existing.whisky_distillery && event.whisky_distillery) existing.whisky_distillery = event.whisky_distillery
+    if (!existing.distillery && event.distillery) existing.distillery = event.distillery
+
+    for (const attr of ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']) {
+      if (existing[attr] == null && event[attr] != null) existing[attr] = event[attr]
+    }
+  }
+
+  return [...merged.values()].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+}
+
 // ─── Recommendation card ──────────────────────────────────────────────────────
 
 function recCard(rec) {
@@ -179,10 +236,11 @@ function recCard(rec) {
  *   [ { userId, authorName, groups: [ { type, icon, label, events: [...] } ] } ]
  */
 function groupActivity(events, authorEmailMap) {
+  const collapsedEvents = collapseActivityEvents(events)
   const userOrder = []
   const byUser = {}
 
-  for (const event of events) {
+  for (const event of collapsedEvents) {
     if (!byUser[event.user_id]) {
       const email = authorEmailMap[event.user_id] || 'a friend'
       byUser[event.user_id] = {
@@ -199,12 +257,15 @@ function groupActivity(events, authorEmailMap) {
 
   return userOrder.map(uid => {
     const u = byUser[uid]
-    // Preferred order: ratings first, then journal entries
-    const typeOrder = ['rating', 'entry'].filter(t => u.byType[t])
+    const typeOrder = ['rating', 'journal_add', 'entry', 'wishlist_add'].filter(t => u.byType[t])
     const groups = typeOrder.map(type => ({
       type,
       icon:   type === 'rating' ? 'star' : 'book-open',
-      label:  type === 'rating' ? _s.rated : _s.addedToJournal,
+      label:  type === 'rating'
+        ? _s.rated
+        : type === 'wishlist_add'
+          ? _s.addedToJournal
+          : _s.addedToJournal,
       events: u.byType[type],
     }))
     return { userId: uid, authorName: u.authorName, groups }
