@@ -581,7 +581,7 @@ async function saveDram() {
       notes: dramForm.notes?.trim() || null,
     })
 
-    form.dram_count = (form.dram_count || 1) + 1
+    // dram_count is incremented by logDram (and the DB trigger)
     form.last_dram_at = tastedAt
 
     toast(t.value.dramLogged(form.name))
