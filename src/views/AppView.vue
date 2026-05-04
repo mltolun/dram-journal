@@ -208,13 +208,22 @@
       :list="activeList"
       :view-mode="isViewMode"
       @saved="onSaved"
+      @share="openShareModal"
       @close="modalOpen = false; scanPrefill = null"
     />
 
     <ShareModal
       v-if="shareModalWhisky"
       :whisky="shareModalWhisky"
+      :initial-tab="shareModalInitialTab"
       @close="shareModalWhisky = null"
+    />
+
+    <PostSaveSharePrompt
+      v-if="sharePromptWhisky"
+      :whisky="sharePromptWhisky"
+      @share="launchShareFromPrompt"
+      @close="sharePromptWhisky = null"
     />
 
     <ScanModal
@@ -260,6 +269,7 @@ import WhiskyCard          from '../components/WhiskyCard.vue'
 import WhiskyModal         from '../components/WhiskyModal.vue'
 import ComparePanel        from '../components/ComparePanel.vue'
 import ShareModal          from '../components/ShareModal.vue'
+import PostSaveSharePrompt from '../components/PostSaveSharePrompt.vue'
 import ScanModal           from '../components/ScanModal.vue'
 import RecommendationsPanel from '../components/RecommendationsPanel.vue'
 import TimelinePanel       from '../components/TimelinePanel.vue'
@@ -279,6 +289,8 @@ const modalOpen     = ref(false)
 const editingWhisky = ref(null)
 const isViewMode    = ref(false)
 const shareModalWhisky = ref(null)
+const shareModalInitialTab = ref('send')
+const sharePromptWhisky = ref(null)
 const scanOpen      = ref(false)
 const scanPrefill   = ref(null)
 const viewMode      = ref('gallery') // 'gallery' | 'list'
@@ -517,8 +529,16 @@ function openViewModal(w) {
   modalOpen.value = true
 }
 
-function openShareModal(w) {
+function openShareModal(w, initialTab = 'send') {
   shareModalWhisky.value = w
+  shareModalInitialTab.value = initialTab
+}
+
+function launchShareFromPrompt() {
+  if (!sharePromptWhisky.value) return
+  shareModalWhisky.value = sharePromptWhisky.value
+  shareModalInitialTab.value = 'send'
+  sharePromptWhisky.value = null
 }
 
 async function doDelete(w) {
@@ -560,6 +580,9 @@ async function doMoveToJournal(w) {
 function onSaved(w) {
   modalOpen.value = false
   toast(editingWhisky.value ? t.value.whiskyUpdated(w.name) : t.value.whiskyAdded(w.name))
+  if (!editingWhisky.value && (w.list || activeList.value) === 'journal') {
+    sharePromptWhisky.value = w
+  }
 }
 </script>
 

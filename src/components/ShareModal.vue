@@ -30,16 +30,56 @@
       <!-- Send to friend tab -->
       <div v-else class="tab-body">
         <p class="share-desc">
-          Send <strong>{{ whisky.name }}</strong> directly to one of your friends.
-          They'll see it in their inbox inside the app.
+          Send <strong>{{ whisky.name }}</strong> to friends inside the app.
+          You can trim the payload first so the share feels intentional, not overexposed.
         </p>
 
         <div v-if="myFollowers.length === 0" class="share-empty">
-          You don't have any followers yet. Once someone follows you and you accept,
-          they'll appear here.
+          You don't have any followers yet.
+          Share the public link, or invite a friend to follow you first.
         </div>
 
         <div v-else>
+          <div class="share-preview">
+            <div class="share-preview-top">
+              <div class="share-preview-label">Privacy preview</div>
+              <div class="share-preview-count">{{ selectedCount ? selectedCount + ' selected' : 'No friends selected' }}</div>
+            </div>
+            <div class="share-preview-row">
+              <span v-if="includePhoto">Photo</span>
+              <span v-if="includeRating">Rating</span>
+              <span v-if="includeNotes">Notes</span>
+              <span v-if="!includePhoto || !includeRating || !includeNotes">Hidden fields: {{ hiddenFieldsLabel }}</span>
+            </div>
+          </div>
+
+          <div class="audience-presets">
+            <button class="preset-btn" :class="{ active: audiencePreset === 'recent' }" @click="applyPreset('recent')">
+              Recent
+            </button>
+            <button class="preset-btn" :class="{ active: audiencePreset === 'all' }" @click="applyPreset('all')">
+              All friends
+            </button>
+            <button class="preset-btn ghost" @click="applyPreset('clear')">
+              Clear
+            </button>
+          </div>
+
+          <div class="privacy-toggles">
+            <label class="toggle-pill">
+              <input v-model="includePhoto" type="checkbox">
+              Photo
+            </label>
+            <label class="toggle-pill">
+              <input v-model="includeRating" type="checkbox">
+              Rating
+            </label>
+            <label class="toggle-pill">
+              <input v-model="includeNotes" type="checkbox">
+              Notes
+            </label>
+          </div>
+
           <!-- Recently sent strip -->
           <div v-if="recentFollowers.length" class="recent-section">
             <div class="recent-label">Recently sent to</div>
@@ -48,13 +88,13 @@
                 v-for="sub in recentFollowers"
                 :key="sub.follower_id"
                 class="recent-chip"
-                :class="{ sent: sentTo.has(sub.follower_id), sending: sendingTo === sub.follower_id }"
-                :disabled="sentTo.has(sub.follower_id) || sendingTo === sub.follower_id"
-                @click="selectFriend(sub)"
+                :class="{ sent: selectedRecipientIds.has(sub.follower_id) || sentTo.has(sub.follower_id), sending: sendingTo !== null }"
+                :disabled="sendingTo !== null || sentTo.has(sub.follower_id)"
+                @click="toggleRecipient(sub)"
                 :title="sub.follower_email"
               >
                 <div class="chip-avatar" :style="{ background: avatarBg(sub.follower_email), color: avatarFg(sub.follower_email) }">
-                  <CheckIcon v-if="sentTo.has(sub.follower_id)" :size="12" />
+                  <CheckIcon v-if="selectedRecipientIds.has(sub.follower_id) || sentTo.has(sub.follower_id)" :size="12" />
                   <span v-else>{{ initials(sub.follower_email) }}</span>
                 </div>
                 <div class="chip-name">{{ firstName(sub.follower_email) }}</div>
@@ -85,45 +125,42 @@
               v-for="sub in filteredFollowers"
               :key="sub.id"
               class="follower-row"
-              :class="{ sent: sentTo.has(sub.follower_id), sending: sendingTo === sub.follower_id }"
-              :disabled="sentTo.has(sub.follower_id) || sendingTo === sub.follower_id"
-              @click="selectFriend(sub)"
+              :class="{ selected: selectedRecipientIds.has(sub.follower_id), sent: sentTo.has(sub.follower_id), sending: sendingTo !== null }"
+              :disabled="sendingTo !== null || sentTo.has(sub.follower_id)"
+              @click="toggleRecipient(sub)"
             >
               <div class="follower-avatar" :style="{ background: avatarBg(sub.follower_email), color: avatarFg(sub.follower_email) }">
-                {{ initials(sub.follower_email) }}
+                <CheckIcon v-if="selectedRecipientIds.has(sub.follower_id) || sentTo.has(sub.follower_id)" :size="11" />
+                <span v-else>{{ initials(sub.follower_email) }}</span>
               </div>
               <span class="follower-email">{{ sub.follower_email }}</span>
               <span class="follower-action">
-                <CheckIcon v-if="sentTo.has(sub.follower_id)" :size="12" />
-                <template v-else-if="sendingTo === sub.follower_id">…</template>
+                <template v-if="sentTo.has(sub.follower_id)">Sent</template>
+                <template v-else-if="selectedRecipientIds.has(sub.follower_id)">Selected</template>
                 <template v-else>Send <ArrowRightIcon :size="12" /></template>
               </span>
             </button>
           </div>
 
-          <!-- Compose panel — slides in after selecting a friend -->
-          <transition name="compose">
-            <div v-if="selectedFriend" class="compose-panel">
-              <div class="compose-to">
-                <div class="compose-avatar" :style="{ background: avatarBg(selectedFriend.follower_email), color: avatarFg(selectedFriend.follower_email) }">
-                  {{ initials(selectedFriend.follower_email) }}
-                </div>
-                <span class="compose-email">{{ selectedFriend.follower_email }}</span>
-                <button class="compose-clear" @click="selectedFriend = null"><XIcon :size="11" /></button>
+          <div class="compose-panel">
+            <div class="compose-to">
+              <div class="compose-avatar">
+                <SendIcon :size="11" />
               </div>
-              <textarea
-                v-model="message"
-                class="share-message"
-                placeholder="Add a message (optional)…"
-                rows="2"
-                maxlength="280"
-              ></textarea>
-              <button class="btn-send-confirm" @click="doSend(selectedFriend)" :disabled="sendingTo === selectedFriend.follower_id">
-                <SendIcon :size="13" />
-                {{ sendingTo === selectedFriend.follower_id ? 'Sending…' : 'Send to ' + firstName(selectedFriend.follower_email) }}
-              </button>
+              <span class="compose-email">{{ selectedSummary }}</span>
             </div>
-          </transition>
+            <textarea
+              v-model="message"
+              class="share-message"
+              placeholder="Add a message (optional)…"
+              rows="2"
+              maxlength="280"
+            ></textarea>
+            <button class="btn-send-confirm" @click="sendSelected" :disabled="sendingTo !== null || selectedCount === 0">
+              <SendIcon :size="13" />
+              {{ sendingTo !== null ? 'Sending…' : 'Send to ' + selectedCount + (selectedCount === 1 ? ' friend' : ' friends') }}
+            </button>
+          </div>
         </div>
 
         <div v-if="sendError" class="share-tip" style="color:#E24B4A;">{{ sendError }}</div>
@@ -137,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import {
   X as XIcon,
   Check as CheckIcon,
@@ -164,15 +201,18 @@ const AVATAR_PALETTE = [
   { bg: '#F1EFE8', fg: '#5F5E5A' },
 ]
 
-const props = defineProps({ whisky: Object })
-defineEmits(['close'])
+const props = defineProps({
+  whisky: Object,
+  initialTab: { type: String, default: 'link' },
+})
+const emit = defineEmits(['close'])
 
 const { toast } = useToast()
 const { t } = useI18n()
 const { sendMessage } = useMessages()
 const { loadSubscriptions } = useSubscriptions()
 
-const tab            = ref('link')
+const tab            = ref(props.initialTab || 'link')
 const shareUrl       = ref('')
 const tip            = ref('')
 const sentTo         = ref(new Set())
@@ -180,7 +220,11 @@ const sendingTo      = ref(null)
 const sendError      = ref('')
 const message        = ref('')
 const search         = ref('')
-const selectedFriend = ref(null)
+const selectedRecipientIds = ref(new Set())
+const audiencePreset = ref('recent')
+const includePhoto = ref(true)
+const includeRating = ref(true)
+const includeNotes = ref(true)
 
 // ── Avatar helpers ──────────────────────────────────────────────
 function avatarIndex(email) {
@@ -217,6 +261,28 @@ const recentFollowers = computed(() => {
     .filter(Boolean)
 })
 
+const selectedRecipients = computed(() =>
+  myFollowers.value.filter(sub =>
+    selectedRecipientIds.value.has(sub.follower_id) && !sentTo.value.has(sub.follower_id)
+  )
+)
+
+const selectedCount = computed(() => selectedRecipients.value.length)
+
+const selectedSummary = computed(() => {
+  if (!selectedCount.value) return 'Choose one or more friends'
+  if (selectedCount.value === 1) return `1 friend selected`
+  return `${selectedCount.value} friends selected`
+})
+
+const hiddenFieldsLabel = computed(() => {
+  const hidden = []
+  if (!includePhoto.value) hidden.push('photo')
+  if (!includeRating.value) hidden.push('rating')
+  if (!includeNotes.value) hidden.push('notes')
+  return hidden.join(', ')
+})
+
 // ── Filtered list ───────────────────────────────────────────────
 const filteredFollowers = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -226,8 +292,51 @@ const filteredFollowers = computed(() => {
   )
 })
 
+function setSelected(ids) {
+  selectedRecipientIds.value = new Set(ids)
+}
+
+function applyPreset(preset) {
+  audiencePreset.value = preset
+  sendError.value = ''
+  if (preset === 'all') {
+    setSelected(myFollowers.value.map(sub => sub.follower_id).filter(id => !sentTo.value.has(id)))
+    return
+  }
+  if (preset === 'recent') {
+    const ids = recentFollowers.value.map(sub => sub.follower_id).filter(id => !sentTo.value.has(id))
+    if (ids.length) {
+      setSelected(ids)
+      return
+    }
+  }
+  setSelected([])
+}
+
+function toggleRecipient(sub) {
+  sendError.value = ''
+  if (sentTo.value.has(sub.follower_id)) return
+  const next = new Set(selectedRecipientIds.value)
+  if (next.has(sub.follower_id)) next.delete(sub.follower_id)
+  else next.add(sub.follower_id)
+  selectedRecipientIds.value = next
+
+  if (next.size === myFollowers.value.length) audiencePreset.value = 'all'
+  else if (recentFollowers.value.length && recentFollowers.value.every(r => next.has(r.follower_id))) audiencePreset.value = 'recent'
+  else audiencePreset.value = 'manual'
+}
+
+const sharePayload = computed(() => {
+  const payload = { ...props.whisky }
+  if (!includePhoto.value) delete payload.photo_url
+  if (!includeRating.value) delete payload.rating
+  if (!includeNotes.value) delete payload.notes
+  return payload
+})
+
 // ── Lifecycle ───────────────────────────────────────────────────
 onMounted(async () => {
+  tab.value = props.initialTab || 'link'
   tip.value = t.value.generatingLink
   const { data: existing } = await sb
     .from('shared_whiskies')
@@ -252,6 +361,26 @@ onMounted(async () => {
   tip.value = t.value.linkPublicDram
 
   await loadSubscriptions()
+
+  if (tab.value === 'send') {
+    applyPreset('recent')
+    if (!selectedCount.value && myFollowers.value.length === 1) {
+      applyPreset('all')
+    }
+  }
+})
+
+watch(() => props.initialTab, next => {
+  tab.value = next || 'link'
+})
+
+watch(tab, next => {
+  if (next === 'send' && selectedCount.value === 0) {
+    applyPreset('recent')
+    if (!selectedCount.value && myFollowers.value.length === 1) {
+      applyPreset('all')
+    }
+  }
 })
 
 // ── Actions ─────────────────────────────────────────────────────
@@ -261,23 +390,39 @@ function copy() {
     .catch(() => toast(t.value.linkCopied))
 }
 
-function selectFriend(sub) {
-  if (sentTo.value.has(sub.follower_id)) return
-  selectedFriend.value = selectedFriend.value?.follower_id === sub.follower_id ? null : sub
-  message.value = ''
-  sendError.value = ''
-}
+async function sendSelected() {
+  if (!selectedCount.value) {
+    sendError.value = 'Pick at least one friend to send to.'
+    return
+  }
 
-async function doSend(sub) {
-  sendingTo.value = sub.follower_id
+  sendingTo.value = 'batch'
   sendError.value = ''
   try {
-    await sendMessage(sub.follower_id, sub.follower_email, props.whisky, message.value)
-    sentTo.value = new Set([...sentTo.value, sub.follower_id])
-    pushRecentId(sub.follower_id)
-    toast(`Sent to ${sub.follower_email}!`)
-    selectedFriend.value = null
-    message.value = ''
+    const failures = []
+    for (const sub of selectedRecipients.value) {
+      try {
+        await sendMessage(sub.follower_id, sub.follower_email, sharePayload.value, message.value)
+        sentTo.value = new Set([...sentTo.value, sub.follower_id])
+        pushRecentId(sub.follower_id)
+      } catch (err) {
+        failures.push(sub.follower_email)
+      }
+    }
+
+    const successCount = selectedRecipients.value.length - failures.length
+    if (successCount > 0) {
+      toast(`Sent to ${successCount} friend${successCount === 1 ? '' : 's'}!`)
+      if (failures.length === 0) {
+        emit('close')
+      }
+    }
+
+    if (failures.length > 0) {
+      sendError.value = `Could not send to ${failures.join(', ')}.`
+    } else {
+      message.value = ''
+    }
   } catch (err) {
     sendError.value = 'Could not send: ' + err.message
   } finally {
@@ -343,6 +488,86 @@ async function doSend(sub) {
   padding: 20px 0;
 }
 
+.share-preview {
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  background: rgba(200, 130, 42, 0.04);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.share-preview-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.share-preview-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--peat-light);
+}
+.share-preview-count {
+  font-size: 0.72rem;
+  color: var(--amber-light);
+}
+.share-preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.audience-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.preset-btn {
+  border: 0.5px solid var(--border-hi);
+  background: rgba(200, 130, 42, 0.06);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.preset-btn:hover { border-color: var(--amber); color: var(--text-primary); }
+.preset-btn.active { background: var(--amber); border-color: var(--amber); color: #fff; }
+.preset-btn.ghost {
+  background: transparent;
+}
+
+.privacy-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0.5px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.02);
+}
+.toggle-pill input {
+  accent-color: var(--amber);
+}
+
 /* ── Recently sent strip ── */
 .recent-section { margin-bottom: 14px; }
 .recent-label {
@@ -367,6 +592,7 @@ async function doSend(sub) {
 }
 .recent-chip:hover:not(:disabled) { transform: translateY(-2px); }
 .recent-chip.sent { opacity: 0.55; cursor: default; }
+.recent-chip.sending { opacity: 0.7; }
 .chip-avatar {
   width: 40px;
   height: 40px;
@@ -474,6 +700,10 @@ async function doSend(sub) {
   border-color: var(--amber);
 }
 .follower-row.sent { opacity: 0.6; cursor: default; }
+.follower-row.selected {
+  background: rgba(200, 130, 42, 0.12);
+  border-color: var(--amber);
+}
 .follower-row:disabled { cursor: default; }
 
 .follower-avatar {
@@ -530,10 +760,10 @@ async function doSend(sub) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
+  color: var(--amber);
   font-weight: 600;
   flex-shrink: 0;
+  background: rgba(200, 130, 42, 0.12);
 }
 .compose-email {
   font-family: 'JetBrains Mono', monospace;

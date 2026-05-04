@@ -130,6 +130,9 @@
         </div>
 
         <div class="modal-actions">
+          <button class="btn-save" :disabled="editLoading" @click="emit('share', props.editing || form)">
+            <Share2Icon :size="14" /> Share
+          </button>
           <button class="btn-save" :disabled="editLoading" @click="switchToEdit"><PencilIcon :size="14" /> {{ t.editBtn }}</button>
           <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
@@ -380,7 +383,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon } from 'lucide-vue-next'
+import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon, Share2 as Share2Icon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -398,7 +401,7 @@ const props = defineProps({
   list: { type: String, default: 'journal' },
   viewMode: { type: Boolean, default: false },
 })
-const emit  = defineEmits(['saved', 'close'])
+const emit  = defineEmits(['saved', 'close', 'share'])
 
 const { insertWhisky, updateWhisky } = useWhiskies()
 const { pendingBlob, previewUrl, compressedKb, clearPhoto, loadExisting, uploadPhoto } = usePhoto()
@@ -558,12 +561,11 @@ async function save() {
       list:         props.editing?.list || props.list,
     }
 
-    if (props.editing) {
-      await updateWhisky(props.editing.id, fields)
-    } else {
-      await insertWhisky({ id: recordId, ...fields })
-    }
-    emit('saved', fields)
+    const savedRecord = props.editing
+      ? await updateWhisky(props.editing.id, fields)
+      : await insertWhisky({ id: recordId, ...fields })
+
+    emit('saved', { ...fields, ...savedRecord })
   } catch (e) {
     toast('⚠ ' + e.message)
   } finally {
