@@ -20,9 +20,6 @@
         <span v-if="!isTrash && whisky.rating" class="wcard-rating-pill" @click.stop>
           <StarIcon :size="10" /> {{ whisky.rating }}
         </span>
-        <span v-if="!isTrash && whisky.dram_count" class="wcard-dram-pill" @click.stop>
-          <GlassWaterIcon :size="10" /> {{ whisky.dram_count }}
-        </span>
         <span v-if="isTrash" class="wcard-trash-pill">
           <Trash2Icon :size="10" /> {{ daysLeft }} {{ daysLeft === 1 ? t.trashDaySingular : t.trashDayPlural }}
         </span>

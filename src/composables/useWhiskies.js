@@ -39,8 +39,6 @@ export function useWhiskies() {
     const c = w.catalogue
     return {
       ...w,
-      dram_count: w.dram_count ?? ((w.list || 'journal') === 'journal' ? 1 : 0),
-      last_dram_at: w.last_dram_at ?? (w.list === 'journal' ? w.created_at ?? null : null),
       name:       w.name       || c.name,
       distillery: w.distillery || c.distillery,
       origin:     w.origin     || c.country,
@@ -107,9 +105,6 @@ export function useWhiskies() {
     }
     // eslint-disable-next-line no-unused-vars
     const { catalogue, abv, ...cleanFields } = fields
-    if (cleanFields.list === 'journal' && cleanFields.dram_count == null) {
-      cleanFields.dram_count = 1
-    }
     const { data, error } = await sb.from('whiskies')
       .insert({ ...cleanFields, user_id: currentUser.value.id })
       .select(WHISKY_SELECT)
@@ -195,7 +190,7 @@ export function useWhiskies() {
   }
 
   async function moveToJournal(id) {
-    const result = await updateWhisky(id, { list: 'journal', dram_count: 1 })
+    const result = await updateWhisky(id, { list: 'journal' })
     // Log as a journal_add — the whisky is now in the journal for the first time
     await logActivity({
       type:       'journal_add',
@@ -232,16 +227,6 @@ export function useWhiskies() {
       .single()
 
     if (error) { setSync('error'); throw error }
-
-    const idx = whiskies.value.findIndex(w => w.id === whisky.id)
-    if (idx >= 0) {
-      const current = whiskies.value[idx]
-      whiskies.value[idx] = {
-        ...current,
-        dram_count:   (current.dram_count || 1) + 1,
-        last_dram_at: data.tasted_at || tastedAt,
-      }
-    }
 
     await logActivity({
       type:       'dram_logged',

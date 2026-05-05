@@ -200,8 +200,8 @@
             <div class="dram-summary">
               <div class="view-label">{{ t.dramsLogged }}</div>
               <div class="view-value">
-                <PackageIcon :size="13" /> × {{ form.dram_count ?? 1 }}
-                <span v-if="form.last_dram_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(form.last_dram_at) }}</span>
+                <PackageIcon :size="13" /> × {{ dramLogs.length || 1 }}
+                <span v-if="dramLogs.length > 0 && dramLogs[0].tasted_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(dramLogs[0].tasted_at) }}</span>
               </div>
             </div>
             <button class="btn-log-dram" :disabled="dramSaving" @click="openDramLog">
@@ -615,7 +615,7 @@ const form = reactive({
   name: '', distillery: '', origin: '', region: '', type: 'scotch', age: '', abv: '',
   price: '', date: new Date().toISOString().split('T')[0],
   nose: '', palate: '', notes: '', rating: 0,
-  bottle_count: null, last_finished: null, dram_count: 1, last_dram_at: null,
+  bottle_count: null, last_finished: null,
   ...Object.fromEntries(ATTRS.map(a => [a, DEFAULTS[a]])),
 })
 
@@ -628,7 +628,6 @@ const dramForm = reactive({
 onMounted(async () => {
   if (props.editing) {
     Object.assign(form, props.editing)
-    if (form.dram_count == null) form.dram_count = 1
     loadExisting(props.editing.photo_url || null)
 
     if (props.editing.catalogue_id) {
@@ -713,8 +712,6 @@ async function saveDram() {
     })
 
     localStorage.removeItem(`dram-draft-${props.editing.id}`)
-
-    form.last_dram_at = tastedAt
 
     toast(t.value.dramLogged(form.name))
     dramLogOpen.value = false
