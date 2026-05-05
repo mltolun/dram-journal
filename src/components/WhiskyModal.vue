@@ -1,6 +1,64 @@
 <template>
   <div class="modal-backdrop open" @click.self="$emit('close')">
-    <div class="modal">
+
+      <!-- ── QUICK-LOG OVERLAY ── -->
+      <Teleport to="body">
+        <Transition name="quicklog">
+          <div v-if="quickLogOverlayOpen" class="quicklog-backdrop" @click.self="closeQuickLog">
+            <div class="quicklog-card">
+              <div class="quicklog-header">
+                <GlassWaterIcon :size="18" />
+                <span class="quicklog-title">{{ t.logNewDram }}</span>
+                <button class="quicklog-close" @click="closeQuickLog"><XIcon :size="16" /></button>
+              </div>
+
+              <div class="quicklog-whisky-name">{{ props.editing?.name }}</div>
+
+              <div class="quicklog-form">
+                <div class="quicklog-field">
+                  <label>{{ t.dramDate }}</label>
+                  <input type="date" v-model="dramForm.tasted_at">
+                </div>
+
+                <div class="quicklog-field">
+                  <label>{{ t.rating }}</label>
+                  <div class="star-picker quicklog-stars">
+                    <button
+                      v-for="n in 5"
+                      :key="n"
+                      type="button"
+                      class="star-btn"
+                      :class="{ filled: n <= dramForm.rating }"
+                      @click="dramForm.rating = dramForm.rating === n ? 0 : n"
+                      :title="`${n} star${n > 1 ? 's' : ''}`"
+                    ><StarIcon :size="18" /></button>
+                    <span v-if="dramForm.rating" class="star-clear" @click="dramForm.rating = 0"><XIcon :size="11" /></span>
+                  </div>
+                  <span v-if="previousRating" class="quicklog-prev-rating">
+                    {{ t.lastDram || 'Last' }}: <StarIcon :size="11" v-for="s in 5" :key="s" :class="{ filled: s <= previousRating }" />
+                  </span>
+                </div>
+
+                <div class="quicklog-field">
+                  <label>{{ t.dramNotes }}</label>
+                  <textarea v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder" rows="3"></textarea>
+                </div>
+              </div>
+
+              <div class="quicklog-actions">
+                <button class="btn-save quicklog-save" :disabled="dramSaving" @click="saveDramFromQuickLog">
+                  <CheckIcon v-if="!dramSaving" :size="15" /> {{ dramSaving ? t.saving : t.saveDram }}
+                </button>
+                <button class="quicklog-fill-full" @click="fillForm">
+                  {{ t.fillDetails || 'Fill in details' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
+
+      <div class="modal">
       <div class="modal-header">
         <div class="modal-title" v-if="isViewMode">
           <span>{{ editing?.name }}</span>
@@ -442,7 +500,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon, Share2 as Share2Icon, Plus as PlusIcon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
@@ -483,6 +541,14 @@ const dramLogsLoading = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
+const quickLogOverlayOpen = computed(() => quickLogMode.value && dramLogOpen.value && props.editing?.id != null)
+
+const previousRating = computed(() => {
+  if (dramLogs.value.length > 0 && dramLogs.value[0].rating) {
+    return dramLogs.value[0].rating
+  }
+  return null
+})
 
 // Price range from catalogue entry — shown in view mode as a tappable badge
 const cataloguePriceRange = computed(() => cataloguePicked.value?.price_band || null)
@@ -508,7 +574,32 @@ function switchToEdit() {
 
 function openDramLog() {
   dramLogOpen.value = true
-  if (!dramForm.tasted_at) dramForm.tasted_at = new Date().toISOString().split('T')[0]
+  if (!dramForm.tasted_at) {
+    dramForm.tasted_at = new Date().toISOString().split('T')[0]
+  }
+}
+
+function closeQuickLog() {
+  dramLogOpen.value = false
+}
+
+function fillForm() {
+  quickLogMode.value = false
+  inViewMode.value = false
+  dramLogOpen.value = false
+}
+
+function restoreDraft() {
+  if (!props.editing?.id) return
+  const raw = localStorage.getItem(`dram-draft-${props.editing.id}`)
+  if (raw) {
+    try {
+      const draft = JSON.parse(raw)
+      if (draft.tasted_at) dramForm.tasted_at = draft.tasted_at
+      if (draft.rating != null) dramForm.rating = draft.rating
+      if (draft.notes) dramForm.notes = draft.notes
+    } catch { /* ignore corrupt data */ }
+  }
 }
 
 function formatDate(dateStr) {
@@ -587,13 +678,33 @@ onMounted(async () => {
       dramLogsLoading.value = false
     }
   }
+
+  if (props.editing?.id && props.quickLog) {
+    restoreDraft()
+  }
 })
+
+watch(dramForm, (val) => {
+  if (props.editing?.id) {
+    localStorage.setItem(`dram-draft-${props.editing.id}`, JSON.stringify({
+      tasted_at: val.tasted_at,
+      rating: val.rating,
+      notes: val.notes,
+    }))
+  }
+}, { deep: true })
 
 async function saveDram() {
   if (!props.editing?.id) return
   dramSaving.value = true
   try {
-    const tastedAt = dramForm.tasted_at ? `${dramForm.tasted_at}T12:00:00.000Z` : new Date().toISOString()
+    const today = new Date().toISOString().split('T')[0]
+    const timePart = dramForm.tasted_at === today
+      ? new Date().toISOString().split('T')[1].slice(0, 8)
+      : '12:00:00'
+    const tastedAt = dramForm.tasted_at
+      ? `${dramForm.tasted_at}T${timePart}`
+      : new Date().toISOString()
     await logDram({
       whisky: props.editing,
       tastedAt,
@@ -601,7 +712,8 @@ async function saveDram() {
       notes: dramForm.notes?.trim() || null,
     })
 
-    // dram_count is incremented by logDram (and the DB trigger)
+    localStorage.removeItem(`dram-draft-${props.editing.id}`)
+
     form.last_dram_at = tastedAt
 
     toast(t.value.dramLogged(form.name))
@@ -615,6 +727,12 @@ async function saveDram() {
   } finally {
     dramSaving.value = false
   }
+}
+
+async function saveDramFromQuickLog() {
+  await saveDram()
+  quickLogMode.value = false
+  inViewMode.value = false
 }
 
 async function onPhotoSelected(file) {
@@ -1252,5 +1370,172 @@ async function save() {
   font-size: 0.85rem;
   line-height: 1;
   opacity: 0.75;
+}
+
+/* ── Quick-log overlay ── */
+.quicklog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.quicklog-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-modal);
+  border: 0.5px solid var(--border-hi);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: quicklog-in 0.2s ease;
+}
+@keyframes quicklog-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.quicklog-enter-active { transition: opacity 0.18s, transform 0.18s; }
+.quicklog-leave-active { transition: opacity 0.12s, transform 0.12s; }
+.quicklog-enter-from,
+.quicklog-leave-to { opacity: 0; transform: translateY(12px) scale(0.97); }
+
+.quicklog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px 12px;
+  color: var(--amber-light);
+}
+.quicklog-title {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.quicklog-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.quicklog-close:hover { opacity: 1; }
+
+.quicklog-whisky-name {
+  padding: 0 20px 14px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-bottom: 0.5px solid var(--border);
+  margin: 0 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quicklog-form {
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.quicklog-field label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--peat-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.quicklog-field input[type="date"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+.quicklog-field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+.quicklog-stars {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0;
+}
+.quicklog-stars .star-btn {
+  font-size: 1.6rem;
+}
+.quicklog-prev-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+.quicklog-prev-rating svg {
+  color: var(--border-hi);
+}
+.quicklog-prev-rating svg.filled {
+  color: var(--amber-light);
+}
+
+.quicklog-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px 16px;
+}
+.quicklog-save {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--amber);
+  color: #fff;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.quicklog-save:hover { background: var(--amber-light); }
+.quicklog-save:disabled { opacity: 0.5; cursor: default; }
+
+.quicklog-fill-full {
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.quicklog-fill-full:hover {
+  border-color: var(--border-hi);
+  color: var(--text-primary);
 }
 </style>

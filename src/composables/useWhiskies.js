@@ -119,8 +119,24 @@ export function useWhiskies() {
     whiskies.value.push(merged)
     setSync('ok')
 
-    // Log activity for followers — journal and wishlist entries
+    // Create an initial dram_log when adding to journal so history isn't empty
     const list = fields.list || 'journal'
+    if (list === 'journal') {
+      const tastedAt = fields.date
+        ? `${fields.date}T12:00:00`
+        : new Date().toISOString()
+      await sb.from('dram_logs').insert({
+        user_id:           currentUser.value.id,
+        whisky_id:         data.id,
+        whisky_name:       data.name,
+        whisky_distillery: data.distillery ?? null,
+        tasted_at:         tastedAt,
+        rating:            data.rating ?? null,
+        notes:             data.notes  ?? null,
+      })
+    }
+
+    // Log activity for followers — journal and wishlist entries
     if (list === 'journal' || list === 'wishlist') {
       await logActivity({
         type:       list === 'wishlist' ? 'wishlist_add' : 'journal_add',
