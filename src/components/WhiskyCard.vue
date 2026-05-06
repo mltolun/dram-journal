@@ -20,6 +20,9 @@
         <span v-if="!isTrash && whisky.rating" class="wcard-rating-pill" @click.stop>
           <StarIcon :size="10" /> {{ whisky.rating }}
         </span>
+        <span v-if="!isTrash" class="wcard-dram-pill">
+          <GlassWaterIcon :size="10" /> {{ dramCount }}
+        </span>
         <span v-if="isTrash" class="wcard-trash-pill">
           <Trash2Icon :size="10" /> {{ daysLeft }} {{ daysLeft === 1 ? t.trashDaySingular : t.trashDayPlural }}
         </span>
@@ -74,6 +77,7 @@
     </div>
 
     <span v-if="whisky.rating" class="wcard-row-rating"><StarIcon :size="10" /> {{ whisky.rating }}</span>
+    <span v-if="!isTrash" class="wcard-row-dram"><GlassWaterIcon :size="10" /> {{ dramCount }}</span>
     <span v-if="isTrash" class="wcard-trash-pill wcard-row-trash"><Trash2Icon :size="10" /> {{ daysLeft }}d</span>
 
     <div class="wcard-row-actions" @click.stop>
@@ -101,7 +105,7 @@ import { computed } from 'vue'
 import { ArrowUp as ArrowUpIcon, Columns2 as Columns2Icon, Trash2 as Trash2Icon, Share2 as Share2Icon, RotateCcw as RotateCcwIcon, Star as StarIcon, Plus as PlusIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { ATTRS } from '../lib/constants.js'
 import { useI18n } from '../composables/useI18n.js'
-import { daysUntilFlush } from '../composables/useWhiskies.js'
+import { daysUntilFlush, dramLogs } from '../composables/useWhiskies.js'
 import placeholderImg from '../assets/bottle-placeholder.jpg'
 
 const props = defineProps({ whisky: Object, selected: Boolean, selectColor: String, compact: Boolean })
@@ -112,6 +116,10 @@ const isWishlist = computed(() => props.whisky?.list === 'wishlist')
 const isTrash    = computed(() => props.whisky?.list === 'trash')
 const cardImage  = computed(() => props.whisky?.photo_url || placeholderImg)
 const daysLeft   = computed(() => daysUntilFlush(props.whisky))
+const dramCount   = computed(() => {
+  if (!props.whisky?.id) return 0
+  return dramLogs.value.filter(l => l.whisky_id === props.whisky.id).length
+})
 </script>
 
 <style scoped>
@@ -131,16 +139,18 @@ const daysLeft   = computed(() => daysUntilFlush(props.whisky))
   align-items: center;
   gap: 3px;
   letter-spacing: 0.04em;
+  line-height: 1;
 }
 .wcard-dram-pill {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   font-weight: 500;
-  color: #6ecb93;
+  color: var(--amber-light);
   display: flex;
   align-items: center;
   gap: 3px;
   letter-spacing: 0.04em;
+  line-height: 1;
 }
 .wcard-trash-pill {
   font-family: 'JetBrains Mono', monospace;
@@ -252,6 +262,19 @@ const daysLeft   = computed(() => daysUntilFlush(props.whisky))
   font-size: 0.68rem;
   font-weight: 500;
   color: var(--amber-light);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.wcard-row-dram {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--amber-light);
+  display: flex;
+  align-items: center;
+  gap: 3px;
   flex-shrink: 0;
 }
 .wcard-row-trash { flex-shrink: 0; }
