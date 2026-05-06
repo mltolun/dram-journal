@@ -4,6 +4,7 @@ import { currentUser } from './useAuth.js'
 import { useSubscriptions } from './useSubscriptions.js'
 
 export const whiskies   = ref([])
+export const dramLogs   = ref([])
 export const syncStatus = ref('ok') // 'loading' | 'saving' | 'ok' | 'error'
 
 export const journal  = computed(() => whiskies.value.filter(w => (w.list || 'journal') === 'journal'))
@@ -77,6 +78,17 @@ export function useWhiskies() {
 
     whiskies.value = all.filter(w => !(w.list === 'trash' && w.deleted_at && daysUntilFlush(w) === 0))
     setSync('ok')
+    await loadDramLogs()
+  }
+
+  async function loadDramLogs() {
+    const { data, error } = await sb
+      .from('dram_logs')
+      .select('id, user_id, whisky_id, whisky_name, whisky_distillery, tasted_at, rating, notes, created_at')
+      .eq('user_id', currentUser.value.id)
+      .order('tasted_at', { ascending: false })
+    if (error) throw error
+    dramLogs.value = data || []
   }
 
   async function insertWhisky(fields) {
@@ -276,6 +288,9 @@ export function useWhiskies() {
       notes:      notes  ?? null,
     })
 
+    // Refresh dram logs so timeline updates
+    await loadDramLogs()
+
     setSync('ok')
     return data
   }
@@ -292,5 +307,5 @@ export function useWhiskies() {
     return data || []
   }
 
-  return { whiskies, journal, wishlist, trash, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToTrash, restoreFromTrash, moveToJournal, logDram, getDramLogs }
+  return { whiskies, dramLogs, journal, wishlist, trash, syncStatus, loadWhiskies, insertWhisky, updateWhisky, deleteWhisky, moveToTrash, restoreFromTrash, moveToJournal, logDram, getDramLogs, loadDramLogs }
 }

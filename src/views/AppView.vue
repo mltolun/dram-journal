@@ -145,7 +145,7 @@
         </div>
 
         <!-- ── Timeline (journal sub-view) ── -->
-        <TimelinePanel v-if="activeList === 'journal' && viewMode === 'timeline'" :entries="filteredJournal" @open-entry="openViewModal" />
+        <TimelinePanel v-if="activeList === 'journal' && viewMode === 'timeline'" :entries="timelineEntries" @open-entry="openViewModal" />
 
         <!-- ── Community Feed ── -->
         <FeedPanel v-if="activeList === 'feed'" />
@@ -242,7 +242,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
-import { useWhiskies, journal, wishlist, trash } from '../composables/useWhiskies.js'
+import { useWhiskies, journal, wishlist, trash, dramLogs } from '../composables/useWhiskies.js'
 import { myFollowers } from '../composables/useSubscriptions.js'
 import { loadEarnedBadges, checkBadges } from '../composables/useBadges.js'
 import { usePhoto } from '../composables/usePhoto.js'
@@ -410,14 +410,31 @@ const filteredJournal = computed(() => {
     }
     return 0
   })
-  return items
-})
+    return items
+  })
 
-const activeFilterCount = computed(() =>
-  [filterCountry, filterRegion, filterDistillery, filterAge]
-    .filter(f => f.value !== '').length +
-  (sortBy.value !== 'date' || sortDir.value !== 'desc' ? 1 : 0)
-)
+  const timelineEntries = computed(() => {
+    return dramLogs.value.map(log => {
+      const whisky = whiskies.value.find(w => w.id === log.whisky_id)
+      return {
+        id: log.id,
+        whisky_id: log.whisky_id,
+        name: log.whisky_name || whisky?.name || 'Unknown',
+        distillery: log.whisky_distillery || whisky?.distillery || '',
+        photo_url: whisky?.photo_url || '',
+        rating: log.rating ?? whisky?.rating ?? null,
+        notes: log.notes ?? whisky?.notes ?? '',
+        date: log.tasted_at,
+        _whisky: whisky || { id: log.whisky_id, name: log.whisky_name }
+      }
+    })
+  })
+
+  const activeFilterCount = computed(() =>
+    [filterCountry, filterRegion, filterDistillery, filterAge]
+      .filter(f => f.value !== '').length +
+    (sortBy.value !== 'date' || sortDir.value !== 'desc' ? 1 : 0)
+  )
 
 function clearFilters() {
   filterCountry.value = filterRegion.value = filterDistillery.value = filterAge.value = ''
@@ -528,12 +545,12 @@ function openAddModal() {
   modalOpen.value = true
 }
 
-function openViewModal(w) {
-  editingWhisky.value = w
-  isViewMode.value    = true
-  quickLogMode.value  = false
-  modalOpen.value = true
-}
+  function openViewModal(entry) {
+    editingWhisky.value = entry._whisky || entry
+    isViewMode.value    = true
+    quickLogMode.value  = false
+    modalOpen.value = true
+  }
 
 function openLogModal(w) {
   editingWhisky.value = w
