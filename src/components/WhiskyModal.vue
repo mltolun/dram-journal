@@ -552,7 +552,7 @@ const dramSectionExpanded = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
-const quickLogOverlayOpen = computed(() => quickLogMode.value && dramLogOpen.value && props.editing?.id != null)
+const quickLogOverlayOpen = computed(() => props.quickLog && dramLogOpen.value && props.editing?.id != null)
 
 const previousRating = computed(() => {
   if (dramLogs.value.length > 0 && dramLogs.value[0].rating) {
@@ -595,7 +595,6 @@ function closeQuickLog() {
 }
 
 function fillForm() {
-  quickLogMode.value = false
   inViewMode.value = false
   dramLogOpen.value = false
 }
@@ -694,6 +693,16 @@ onMounted(async () => {
   }
 })
 
+watch(() => props.editing, (newVal, oldVal) => {
+  if (newVal && newVal.id !== oldVal?.id) {
+    Object.assign(form, newVal)
+    loadExisting(newVal.photo_url || null)
+    if (newVal.id && (newVal.list || props.list) === 'journal') {
+      getDramLogs(newVal.id).then(logs => dramLogs.value = logs).catch(() => dramLogs.value = [])
+    }
+  }
+}, { deep: false })
+
 watch(dramForm, (val) => {
   if (props.editing?.id) {
     localStorage.setItem(`dram-draft-${props.editing.id}`, JSON.stringify({
@@ -739,7 +748,6 @@ async function saveDram() {
 
 async function saveDramFromQuickLog() {
   await saveDram()
-  quickLogMode.value = false
   inViewMode.value = false
 }
 

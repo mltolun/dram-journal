@@ -104,7 +104,7 @@
                 :whisky="w"
                 :selected="false"
                 :select-color="null"
-                @view="openViewModal(w)"
+                @view="openViewModal"
                 @delete="doDelete(w)"
                 @share="openShareModal(w)"
                 @move="doMoveToJournal(w)"
@@ -136,7 +136,7 @@
             :selected="selected.includes(w.id)"
             :select-color="selected.includes(w.id) ? COLOR_HEX[selected.indexOf(w.id)] : null"
             :compact="viewMode === 'list'"
-            @view="openViewModal(w)"
+            @view="openViewModal"
             @toggle="toggleSelect(w.id)"
             @delete="doDelete(w)"
             @share="openShareModal(w)"
@@ -145,7 +145,7 @@
         </div>
 
         <!-- ── Timeline (journal sub-view) ── -->
-        <TimelinePanel v-if="activeList === 'journal' && viewMode === 'timeline'" :entries="timelineEntries" @open-entry="openViewModal" />
+        <TimelinePanel v-if="activeList === 'journal' && viewMode === 'timeline'" :entries="timelineEntries" @open-entry="openTimelineEntry" />
 
         <!-- ── Community Feed ── -->
         <FeedPanel v-if="activeList === 'feed'" />
@@ -205,6 +205,7 @@
 
     <WhiskyModal
       v-if="modalOpen"
+      :key="editingWhisky?.id"
       :editing="editingWhisky"
       :prefill="scanPrefill"
       :list="activeList"
@@ -279,7 +280,7 @@ import TimelinePanel       from '../components/TimelinePanel.vue'
 import FeedPanel           from '../components/FeedPanel.vue'
 
 const { getSession } = useAuth()
-const { loadWhiskies, deleteWhisky, moveToJournal, moveToTrash, restoreFromTrash } = useWhiskies()
+const { loadWhiskies, whiskies, deleteWhisky, moveToJournal, moveToTrash, restoreFromTrash } = useWhiskies()
 const { deletePhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
@@ -414,10 +415,11 @@ const filteredJournal = computed(() => {
   })
 
   const timelineEntries = computed(() => {
+    if (!dramLogs.value || !whiskies.value) return []
     return dramLogs.value.map(log => {
       const whisky = whiskies.value.find(w => w.id === log.whisky_id)
       return {
-        id: log.id,
+        id: log.whisky_id ? `${log.whisky_id}-${log.id}` : log.id,
         whisky_id: log.whisky_id,
         name: log.whisky_name || whisky?.name || 'Unknown',
         distillery: log.whisky_distillery || whisky?.distillery || '',
@@ -425,7 +427,7 @@ const filteredJournal = computed(() => {
         rating: log.rating ?? whisky?.rating ?? null,
         notes: log.notes ?? whisky?.notes ?? '',
         date: log.tasted_at,
-        _whisky: whisky || { id: log.whisky_id, name: log.whisky_name }
+        _whisky: whisky || (log.whisky_id ? { id: log.whisky_id, name: log.whisky_name } : null)
       }
     })
   })
@@ -545,11 +547,15 @@ function openAddModal() {
   modalOpen.value = true
 }
 
-  function openViewModal(entry) {
-    editingWhisky.value = entry._whisky || entry
+  function openViewModal(w) {
+    editingWhisky.value = w ? { ...w } : null
     isViewMode.value    = true
     quickLogMode.value  = false
     modalOpen.value = true
+  }
+
+  function openTimelineEntry(entry) {
+    openViewModal(entry._whisky || entry)
   }
 
 function openLogModal(w) {

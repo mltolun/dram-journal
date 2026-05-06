@@ -181,7 +181,7 @@ export function useCatalogue() {
       .eq('id', id)
       .single()
 
-    if (error) throw error
+    if (error) { console.error('getCatalogueById failed:', error.message); return null }
     setCached(itemCache, id, data)
     return data
   }

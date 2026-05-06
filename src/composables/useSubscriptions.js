@@ -30,7 +30,7 @@ export function useSubscriptions() {
       .select('*')
       .or(`follower_id.eq.${uid},following_id.eq.${uid}`)
 
-    if (error) throw error
+    if (error) { console.error('loadSubscriptions failed:', error.message); return }
 
     pendingRequests.value = data.filter(
       r => r.following_id === uid && r.status === 'pending'

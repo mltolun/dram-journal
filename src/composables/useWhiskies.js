@@ -66,7 +66,7 @@ export function useWhiskies() {
       .select(WHISKY_SELECT)
       .order('created_at', { ascending: false })
 
-    if (error) { setSync('error'); throw error }
+    if (error) { setSync('error'); console.error('loadWhiskies failed:', error.message); return }
 
     const all = (data || []).map(mergeWithCatalogue)
 
@@ -87,7 +87,7 @@ export function useWhiskies() {
       .select('id, user_id, whisky_id, whisky_name, whisky_distillery, tasted_at, rating, notes, created_at')
       .eq('user_id', currentUser.value.id)
       .order('tasted_at', { ascending: false })
-    if (error) throw error
+    if (error) { console.error('loadDramLogs failed:', error.message); return }
     dramLogs.value = data || []
   }
 

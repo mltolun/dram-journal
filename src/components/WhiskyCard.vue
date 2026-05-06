@@ -8,9 +8,9 @@
       trash: isTrash,
     }"
     :style="selectColor ? `border-color:${selectColor}` : ''"
-    @click="isTrash ? null : $emit('view')"
-  >
-    <div v-if="!isWishlist && !isTrash" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
+    @click="isTrash ? null : $emit('view', whisky)"
+   >
+     <div v-if="!isWishlist && !isTrash" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
     <img class="wcard-photo" :src="cardImage" :alt="whisky.name" loading="lazy">
 
@@ -64,9 +64,9 @@
     class="wcard-row"
     :class="{ selected, trash: isTrash }"
     :style="selectColor ? `border-left-color:${selectColor}` : ''"
-    @click="isTrash ? null : $emit('view')"
-  >
-    <span class="wcard-type wcard-row-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
+    @click="isTrash ? null : $emit('view', whisky)"
+   >
+     <span class="wcard-type wcard-row-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
 
     <div class="wcard-row-info">
       <span class="wcard-row-name">{{ whisky.name }}</span>
