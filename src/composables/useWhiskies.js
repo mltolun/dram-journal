@@ -131,10 +131,30 @@ export function useWhiskies() {
       })
     }
 
-    // Log activity for followers — journal and wishlist entries
-    if (list === 'journal' || list === 'wishlist') {
+    // Log activity for followers
+    if (list === 'wishlist') {
       await logActivity({
-        type:       list === 'wishlist' ? 'wishlist_add' : 'journal_add',
+        type:       'wishlist_add',
+        whiskyId:   data.id,
+        whiskyName: data.name,
+        distillery: data.distillery,
+        rating:     data.rating ?? null,
+        notes:      data.notes  ?? null,
+      })
+    }
+    if (list === 'journal') {
+      // Log journal_add: whisky was added to the journal
+      await logActivity({
+        type:       'journal_add',
+        whiskyId:   data.id,
+        whiskyName: data.name,
+        distillery: data.distillery,
+        rating:     data.rating ?? null,
+        notes:      data.notes  ?? null,
+      })
+      // Log dram_logged: first tasting (dram_log created above)
+      await logActivity({
+        type:       'dram_logged',
         whiskyId:   data.id,
         whiskyName: data.name,
         distillery: data.distillery,
@@ -191,9 +211,28 @@ export function useWhiskies() {
 
   async function moveToJournal(id) {
     const result = await updateWhisky(id, { list: 'journal' })
-    // Log as a journal_add — the whisky is now in the journal for the first time
+    // Create a dram_log entry — moving to journal means it's being tasted
+    const tastedAt = new Date().toISOString()
+    await sb.from('dram_logs').insert({
+      user_id:           currentUser.value.id,
+      whisky_id:         result.id,
+      whisky_name:       result.name,
+      whisky_distillery: result.distillery ?? null,
+      tasted_at:         tastedAt,
+      rating:            result.rating ?? null,
+      notes:             result.notes  ?? null,
+    })
+    // Log both: journal_add (added to journal) and dram_logged (first tasting)
     await logActivity({
       type:       'journal_add',
+      whiskyId:   result.id,
+      whiskyName: result.name,
+      distillery: result.distillery,
+      rating:     result.rating ?? null,
+      notes:      result.notes  ?? null,
+    })
+    await logActivity({
+      type:       'dram_logged',
       whiskyId:   result.id,
       whiskyName: result.name,
       distillery: result.distillery,

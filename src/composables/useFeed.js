@@ -21,27 +21,37 @@ export function useFeed() {
       if (following.length > 0) {
         const followingIds = following.map(s => s.following_id)
 
-        // Build display name map from subscription emails (available without an extra query)
-        const nameMap = new Map()
-        for (const s of following) {
-          const email = s.following_email || ''
-          const name = email.split('@')[0].replace(/[._-]+/g, ' ').trim()
-          nameMap.set(s.following_id, name || email.slice(0, 14))
-        }
-        displayNames.value = nameMap
+       // Build display name map from subscription emails (available without an extra query)
+       const nameMap = new Map()
+       for (const s of following) {
+         const email = s.following_email || ''
+         const name = email.split('@')[0].replace(/[._-]+/g, ' ').trim()
+         nameMap.set(s.following_id, name || email.slice(0, 14))
+       }
+       displayNames.value = nameMap
 
-        const { data, error } = await sb
-          .from('activity_feed')
-          .select('id, user_id, type, whisky_name, whisky_distillery, whisky_id, rating, notes, created_at')
-          .in('user_id', followingIds)
-          .order('created_at', { ascending: false })
-          .limit(200)
+       // ── Timeline: fetch tastings from dram_logs only ──────────────────────
+       // The timeline shows actual tastings (dram_logs). Other activity types
+       // (journal_add, rating, wishlist_add) are stored in activity_feed for
+       // other features (recommendations, notifications) but NOT shown in timeline.
+       const { data: dramData, error: dramError } = await sb
+         .from('dram_logs')
+         .select('id, user_id, whisky_id, whisky_name, whisky_distillery, rating, notes, tasted_at, created_at')
+         .in('user_id', followingIds)
+         .order('tasted_at', { ascending: false })
+         .limit(200)
 
-        if (error) throw error
-        console.log('[feed] raw social:', data?.length, 'error:', error)
+       if (dramError) throw dramError
 
-        // Keep each activity row so repeat drams remain visible in the feed.
-        socialItems = (data || []).map(item => ({ ...item, source: 'social' })).slice(0, 50)
+       // Timeline items: only dram_logs, tagged as social
+       socialItems = (dramData || []).map(item => ({
+         ...item,
+         source:    'social',
+         type:      'dram_logged',
+         created_at: item.tasted_at, // timeline ordered by tasting time
+       })).slice(0, 50)
+
+       console.log('[feed] timeline (dram_logs):', socialItems.length)
 
         // Batch-fetch photos from catalogue directly by name+distillery.
         // (whiskies table is RLS-protected — we cannot read other users' rows.)

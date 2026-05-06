@@ -263,7 +263,7 @@ function groupActivity(events, authorEmailMap) {
 
   return userOrder.map(uid => {
     const u = byUser[uid]
-    const typeOrder = ['rating', 'dram_logged', 'journal_add', 'entry', 'wishlist_add'].filter(t => u.byType[t])
+    const typeOrder = ['rating', 'dram_logged', 'entry', 'wishlist_add'].filter(t => u.byType[t])
     const groups = typeOrder.map(type => ({
       type,
       icon:   type === 'rating' ? 'star' : 'glass-water',

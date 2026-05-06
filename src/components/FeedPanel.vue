@@ -168,7 +168,8 @@ function verbFor(type) {
   if (type === 'rating')       return t.value.feedRated
   if (type === 'dram_logged')  return t.value.feedDramLogged
   if (type === 'wishlist_add') return t.value.feedWishlisted
-  return t.value.feedLogged // journal_add and anything else
+  if (type === 'journal_add')  return t.value.feedLogged
+  return t.value.feedDramLogged // fallback
 }
 
 function relativeTime(ts) {
