@@ -44,19 +44,19 @@
 
     <div class="wcard-actions">
       <template v-if="isTrash">
-        <button class="wcard-btn restore" @click.stop="$emit('restore')"><RotateCcwIcon :size="11" /> {{ t.trashRestore }}</button>
-        <button class="wcard-btn del" @click.stop="$emit('delete')" :title="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn restore" @click.stop="$emit('restore')" :data-tooltip="t.trashRestore"><RotateCcwIcon :size="11" /></button>
+        <button class="wcard-btn del" @click.stop="$emit('delete')" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
       </template>
       <template v-else-if="isWishlist">
-        <button class="wcard-btn" @click.stop="$emit('share')"><Share2Icon :size="11" /> {{ t.share }}</button>
-        <button class="wcard-btn" @click.stop="$emit('move')"><ArrowUpIcon :size="11" /> {{ t.moveToJournal }}</button>
-        <button class="wcard-btn del" @click.stop="$emit('delete')"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn" @click.stop="$emit('share')" :data-tooltip="t.share"><Share2Icon :size="11" /></button>
+        <button class="wcard-btn" @click.stop="$emit('move')" :data-tooltip="t.moveToJournal"><ArrowUpIcon :size="11" /></button>
+        <button class="wcard-btn del" @click.stop="$emit('delete')" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
       </template>
       <template v-else>
-        <button class="wcard-btn" @click.stop="$emit('dram')"><PlusIcon :size="11" /> {{ t.logAnotherDramShort }}</button>
-        <button class="wcard-btn" @click.stop="$emit('share')"><Share2Icon :size="11" /> {{ t.share }}</button>
-        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click.stop="$emit('toggle')"><Columns2Icon :size="11" /> Compare</button>
-        <button class="wcard-btn del" @click.stop="$emit('delete')"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn" @click.stop="$emit('dram')" :data-tooltip="t.logAnotherDramShort"><PlusIcon :size="11" /></button>
+        <button class="wcard-btn" @click.stop="$emit('share')" :data-tooltip="t.share"><Share2Icon :size="11" /></button>
+        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click.stop="$emit('toggle')" :data-tooltip="t.compare"><Columns2Icon :size="11" /></button>
+        <button class="wcard-btn del" @click.stop="$emit('delete')" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
       </template>
     </div>
   </div>
