@@ -187,26 +187,21 @@
           </div>
         </div>
 
-        <div class="modal-actions">
-          <button class="btn-save" :disabled="editLoading" @click="emit('share', props.editing || form)">
-            <Share2Icon :size="14" /> Share
-          </button>
-          <button class="btn-save" :disabled="editLoading" @click="switchToEdit"><PencilIcon :size="14" /> {{ t.editBtn }}</button>
-          <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
-        </div>
-
         <div v-if="isJournal" class="dram-history-section">
-          <div class="dram-history-header">
+          <div class="dram-history-header" @click="dramSectionExpanded = !dramSectionExpanded" style="cursor: pointer;">
             <div class="dram-summary">
               <div class="view-label">{{ t.dramsLogged }}</div>
               <div class="view-value">
-                <PackageIcon :size="13" /> × {{ dramLogs.length || 1 }}
+                <GlassWaterIcon :size="13" /> × {{ dramLogs.length || 1 }}
                 <span v-if="dramLogs.length > 0 && dramLogs[0].tasted_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(dramLogs[0].tasted_at) }}</span>
               </div>
             </div>
-            <button class="btn-log-dram" :disabled="dramSaving" @click="openDramLog">
-              <PlusIcon :size="14" /> {{ t.logAnotherDram }}
-            </button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button class="btn-log-dram" :disabled="dramSaving" @click.stop="openDramLog">
+                <PlusIcon :size="14" /> {{ t.logAnotherDram }}
+              </button>
+              <ChevronDownIcon :size="16" :style="{ transform: dramSectionExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }" />
+            </div>
           </div>
 
           <div v-if="dramLogOpen" class="dram-log-form">
@@ -243,16 +238,31 @@
             </div>
           </div>
 
-          <div v-if="dramLogs.length > 0" class="dram-log-list">
-            <div class="view-label" style="margin-bottom: 8px;">{{ t.dramHistory }}</div>
-            <div v-for="log in dramLogs" :key="log.id" class="dram-log-item">
-              <div class="dram-log-date">{{ formatDate(log.tasted_at) }}</div>
-              <div v-if="log.rating" class="dram-log-rating">
-                <StarIcon :size="11" v-for="s in 5" :key="s" :class="{ filled: s <= log.rating }" />
+          <div v-if="dramSectionExpanded && dramLogs.length > 0" class="dram-log-table">
+            <div class="dram-log-row dram-log-header-row">
+              <div class="dram-log-cell">{{ t.dramDate }}</div>
+              <div class="dram-log-cell">{{ t.rating }}</div>
+              <div class="dram-log-cell">{{ t.dramNotes }}</div>
+            </div>
+            <div v-for="log in dramLogs" :key="log.id" class="dram-log-row">
+              <div class="dram-log-cell">{{ formatDate(log.tasted_at) }}</div>
+              <div class="dram-log-cell">
+                <span v-if="log.rating">
+                  <StarIcon :size="11" v-for="s in 5" :key="s" :class="{ filled: s <= log.rating }" />
+                </span>
+                <span v-else>—</span>
               </div>
-              <div v-if="log.notes" class="dram-log-notes">{{ log.notes }}</div>
+              <div class="dram-log-cell">{{ log.notes || '—' }}</div>
             </div>
           </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-save" :disabled="editLoading" @click="emit('share', props.editing || form)">
+            <Share2Icon :size="14" /> Share
+          </button>
+          <button class="btn-save" :disabled="editLoading" @click="switchToEdit"><PencilIcon :size="14" /> {{ t.editBtn }}</button>
+          <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
         </div>
 
         <!-- Lightbox -->
@@ -501,7 +511,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon, Share2 as Share2Icon, Plus as PlusIcon } from 'lucide-vue-next'
+import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon, Share2 as Share2Icon, Plus as PlusIcon, ChevronDown as ChevronDownIcon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
@@ -535,9 +545,10 @@ const editLoading  = ref(false)  // true while fetching catalogue entry on mount
 const cataloguePicked = ref(null)
 const manualMode      = ref(false)
 const scanMode        = ref(false)
-const dramLogOpen     = ref(false)
-const dramLogs        = ref([])
-const dramLogsLoading = ref(false)
+const dramLogOpen        = ref(false)
+const dramLogs           = ref([])
+const dramLogsLoading    = ref(false)
+const dramSectionExpanded = ref(false)
 
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
@@ -989,6 +1000,10 @@ async function save() {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 8px 0;
+}
+.dram-history-header:hover {
+  opacity: 0.85;
 }
 .dram-summary {
   flex: 1;
@@ -1028,39 +1043,40 @@ async function save() {
   border-radius: 10px;
   background: rgba(200, 130, 42, 0.03);
 }
-.dram-log-list {
+.dram-log-table {
   margin-top: 12px;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
 }
-.dram-log-item {
-  padding: 10px 0;
+.dram-log-row {
+  display: grid;
+  grid-template-columns: 120px 100px 1fr;
+  gap: 8px;
+  padding: 8px 12px;
   border-bottom: 0.5px solid var(--border);
+  align-items: center;
 }
-.dram-log-item:last-child {
+.dram-log-header-row {
+  background: var(--bg-card);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--peat-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.dram-log-row:last-child {
   border-bottom: none;
 }
-.dram-log-date {
-  font-size: 0.85rem;
-  font-weight: 500;
+.dram-log-cell {
+  font-size: 0.82rem;
   color: var(--text-primary);
-  margin-bottom: 4px;
 }
-.dram-log-rating {
-  display: flex;
-  gap: 2px;
-  margin-bottom: 4px;
-}
-.dram-log-rating svg {
+.dram-log-cell svg {
   color: var(--border-hi);
 }
-.dram-log-rating svg.filled {
+.dram-log-cell svg.filled {
   color: var(--amber-light);
-}
-.dram-log-notes {
-  font-size: 0.82rem;
-  color: var(--peat-light);
-  font-style: italic;
-  line-height: 1.45;
-  white-space: pre-wrap;
 }
 .modal-actions--dram {
   margin-top: 6px;
