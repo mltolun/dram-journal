@@ -18,6 +18,7 @@
  *   node scripts/generate-flavor-profiles.js
  *
  * Optional env vars:
+ *   SINGLE_ID    — process a single whisky by ID (instead of batch)
  *   BATCH_LIMIT  — max whiskies to process per run (default: 6100 = all)
  *   SLEEP_MS     — ms to wait between calls (default: 4000 = 15 RPM)
  *   START_OFFSET — skip first N unprocessed whiskies, for manual resuming
@@ -31,6 +32,7 @@ const GEMINI_KEY           = process.env.GEMINI_KEY
 const BATCH_LIMIT          = parseInt(process.env.BATCH_LIMIT  || '6100')
 const SLEEP_MS             = parseInt(process.env.SLEEP_MS     || '4000')  // 15 RPM = 4s between calls
 const START_OFFSET         = parseInt(process.env.START_OFFSET || '0')
+const SINGLE_ID            = process.env.SINGLE_ID ? parseInt(process.env.SINGLE_ID) : null
 
 const GEMMA_MODEL = 'gemma-3-27b-it'
 const GEMMA_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMMA_MODEL}:generateContent?key=${GEMINI_KEY}`
@@ -141,7 +143,20 @@ async function main() {
   console.log(`    Offset     : ${START_OFFSET}`)
   console.log()
 
-  // Fetch whiskies to process — paginate in chunks of 1000 (Supabase row limit)
+  let whiskies = []
+
+  if (SINGLE_ID) {
+    // Single ID mode — fetch and process one specific whisky
+    console.log(`[flavor-profiles] Processing single whisky ID: ${SINGLE_ID}\n`)
+    const { data, error } = await sb
+      .from('catalogue')
+      .select('id, name, distillery, country, region, age, abv, type')
+      .eq('id', SINGLE_ID)
+      .single()
+    if (error) throw new Error(`Whisky not found: ${error.message}`)
+    whiskies = [data]
+  } else {
+    // Fetch whiskies to process — paginate in chunks of 1000 (Supabase row limit)
   const PAGE_SIZE = 1000
   let whiskies = []
   let from = START_OFFSET
@@ -162,20 +177,23 @@ async function main() {
 
   if (!whiskies.length) { console.log('[flavor-profiles] No whiskies to process.'); return }
 
-  // Get total count for progress display
-  const { count: total } = await sb
-    .from('catalogue')
-    .select('*', { count: 'exact', head: true })
+  let total = whiskies.length
+  if (!SINGLE_ID) {
+    const { count } = await sb
+      .from('catalogue')
+      .select('*', { count: 'exact', head: true })
+    total = count
+  }
 
-  console.log(`[flavor-profiles] Processing ${whiskies.length} whiskies (offset ${START_OFFSET} of ${total} total)\n`)
+  console.log(`[flavor-profiles] Processing ${whiskies.length} whiskies${SINGLE_ID ? '' : ` (offset ${START_OFFSET} of ${total} total)`}\n`)
 
   let succeeded = 0
   let failed    = 0
 
   for (let i = 0; i < whiskies.length; i++) {
     const whisky = whiskies[i]
-    const pos    = START_OFFSET + i + 1
-    process.stdout.write(`  [${pos}/${total}] ${whisky.name}… `)
+    const pos    = SINGLE_ID ? whisky.id : (START_OFFSET + i + 1)
+    process.stdout.write(`  [${pos}] ${whisky.name}… `)
 
     try {
       const prompt   = buildPrompt(whisky)
@@ -219,12 +237,16 @@ async function main() {
   console.log(`    ✗ Failed    : ${failed}`)
   console.log()
 
-  const nextOffset = START_OFFSET + whiskies.length
-  if (nextOffset < total) {
-    console.log(`▶   Next run: set START_OFFSET=${nextOffset} to continue`)
-    console.log(`    Remaining: ${total - nextOffset} whiskies`)
+  if (SINGLE_ID) {
+    console.log(`[flavor-profiles] Single ID mode complete.`)
   } else {
-    console.log('[flavor-profiles] All whiskies processed!')
+    const nextOffset = START_OFFSET + whiskies.length
+    if (nextOffset < total) {
+      console.log(`▶   Next run: set START_OFFSET=${nextOffset} to continue`)
+      console.log(`    Remaining: ${total - nextOffset} whiskies`)
+    } else {
+      console.log('[flavor-profiles] All whiskies processed!')
+    }
   }
 }
 
