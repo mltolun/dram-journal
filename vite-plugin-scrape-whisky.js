@@ -39,7 +39,7 @@ export default function scrapeWhiskyPlugin() {
           const env = {
             ...process.env,
             SUPABASE_URL:         process.env.VITE_SUPABASE_URL,
-            SUPABASE_SERVICE_KEY: process.env.VITE_SUPABASE_SERVICE_KEY,
+            SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY,
             GEMINI_KEY:            process.env.VITE_GEMINI_KEY,
           }
 

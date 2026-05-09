@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
 
+const SCRAPE_FN = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-whisky`
+
 export function useCatalogueScraper() {
   const scraping   = ref(false)
   const lastResult = ref(null)
@@ -14,9 +16,14 @@ export function useCatalogueScraper() {
     lastResult.value = null
 
     try {
-      const res = await fetch('/api/scrape-whisky', {
+      const { data: { session } } = await sb.auth.getSession()
+
+      const res = await fetch(SCRAPE_FN, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ url: url.trim() }),
       })
 
