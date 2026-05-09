@@ -1,9 +1,11 @@
+import 'dotenv/config'
+import 'dotenv/config'
 import { createClient } from '@supabase/supabase-js'
 import https from 'https'
 import http from 'http'
 import { URL } from 'url'
 
-const SUPABASE_URL         = process.env.SUPABASE_URL
+const SUPABASE_URL         = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = process.env.GEMINI_KEY
 
@@ -37,53 +39,70 @@ function httpGet(url, headers = {}) {
   })
 }
 
-function textBetween(html, start, end) {
-  const idx = html.indexOf(start)
-  if (idx === -1) return ''
-  const from = idx + start.length
-  const stop = html.indexOf(end, from)
-  return stop === -1 ? '' : html.slice(from, stop).trim()
+function attr(html, attrName) {
+  const escaped = attrName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const re = new RegExp(`<meta[^>]+\\s${escaped}=["']([^"']+)["']`, 'i')
+  const m = html.match(re)
+  return m ? m[1] : ''
 }
 
-function getMetaContent(html, property) {
-  const re = new RegExp(`<meta[^>]+(?:property|itemprop|name)=["']${property}["'][^>]+content=["']([^"']+)["']`, 'i')
+function decodeEntities(str) {
+  return str
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+}
+
+function extractFact(html, label) {
+  const re = new RegExp(`${label}[\\s\\S]{0,80}?<p[^>]*class="h3"[^>]*>([^<]+)<\\/p>`, 'i')
   const m  = html.match(re)
-  if (m) return m[1]
-  const re2 = new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|itemprop|name)=["']${property}["']`, 'i')
-  const m2 = html.match(re2)
-  return m2 ? m2[1] : ''
+  return m ? decodeEntities(m[1]).trim() : ''
+}
+
+function extractAllFacts(html) {
+  const h3s = html.match(/<p class="h3"[^>]*>([^<]+)<\/p>/g) || []
+  return h3s.map(h => decodeEntities(h.replace(/<[^>]+>/g, '').trim()))
 }
 
 async function scrape(url) {
   console.log(`[scraper] Fetching: ${url}`)
   const html = await httpGet(url)
 
-  const name      = textBetween(html, '"og:title" content="', '"') ||
-                    textBetween(html, '<title>', '</title>').split('|')[0].trim()
-  const distillery = textBetween(html, '"og:title" content="', '"')
-    ?.replace('Whisky Review:', '').replace('Whisky:', '').split('-')[0].trim() || ''
-  const description = textBetween(html, 'itemprop="description" content="', '"') ||
-                      textBetween(html, '"description" content="', '"')
-  const priceStr = textBetween(html, 'itemprop="price" content="', '"') ||
-                   textBetween(html, 'class="price"', '<').replace(/[^0-9.,]/g, '').trim()
+  const rawName = attr(html, 'property="og:title"') ||
+                  html.match(/<title>([^<]+)/)?.[1]?.split('|')[0].trim() || ''
+  const name = decodeEntities(rawName)
 
-  const abv       = textBetween(html, 'ABV:', '<').replace(/[^0-9.]/g, '') ||
-                    textBetween(html, '"abv"', '"').replace(/[^0-9.]/g, '')
-  const age       = textBetween(html, 'Age:', '<').replace(/[^0-9]/g, '') ||
-                    textBetween(html, '"age"', '"').replace(/[^0-9]/g, '')
-  const region    = textBetween(html, 'Region:', '<').trim() ||
-                    textBetween(html, '"region"', '"').trim()
-  const country   = textBetween(html, 'Country:', '<').trim() ||
-                    getMetaContent(html, 'og:locale').split('_')[1] ||
-                    textBetween(html, '"country"', '"').trim()
+  const facts = extractAllFacts(html)
+
+  const abv        = extractFact(html, 'ABV').replace('%', '') ||
+                     html.match(/ABV[\s\S]{0,60}?<p[^>]*class="h3"[^>]*>(\d+)/)?.[1] || ''
+  const country    = extractFact(html, 'Country') || ''
+  const typeStr    = extractFact(html, 'Type') || ''
+  const priceMatch = html.match(/€(\d+)/)
+  const priceStr   = priceMatch ? priceMatch[1] : ''
+
+  const rawLocale = attr(html, 'property="og:locale"')
+  const localeCountry = rawLocale ? rawLocale.split('_').pop() : ''
+  if (!country && localeCountry) {
+    const localeMap = { gb: 'United Kingdom', us: 'United States', jp: 'Japan', ie: 'Ireland' }
+    country = localeMap[localeCountry.toLowerCase()] || localeCountry
+  }
 
   let type = 'other'
-  const lower = (name + ' ' + region + ' ' + description).toLowerCase()
+  const lower = (name + ' ' + country + ' ' + typeStr).toLowerCase()
   if (lower.includes('japanese') || lower.includes('nippon') || country === 'Japan') type = 'japanese'
   else if (lower.includes('scotch') || lower.includes('speyside') || lower.includes('islay') ||
-           lower.includes('highland') || lower.includes('lowland') || region.toLowerCase().includes('scotland')) type = 'scotch'
+           lower.includes('highland') || lower.includes('lowland')) type = 'scotch'
   else if (lower.includes('bourbon') || lower.includes('tennessee') || country === 'United States') type = 'bourbon'
   else if (lower.includes('irish') || country === 'Ireland') type = 'irish'
+  else if (typeStr && typeStr.toLowerCase().includes('blended')) type = 'japanese'
+
+  const distillery = facts[1] && facts[1] !== typeStr ? facts[1] : ''
+  if (!distillery) {
+    const knownDistilleries = ['Hibiki', 'Yamazaki', 'Hakushu', 'Nikka', 'Macallan', 'Glenfiddich', 'Talisker', 'Lagavulin']
+    for (const d of knownDistilleries) {
+      if (name.includes(d)) { distillery = d; break }
+    }
+  }
 
   let price_band = null
   if (priceStr) {
@@ -93,18 +112,21 @@ async function scrape(url) {
       else if (num < 80)  price_band = 'mid-range'
       else if (num < 150) price_band = 'premium'
       else if (num < 300) price_band = 'luxury'
-      else                 price_band = 'super-premium'
+      else                price_band = 'super-premium'
     }
   }
 
+  console.log(`[scraper] Parsed: name="${name}" distillery="${distillery}" country="${country}" type="${type}" abv="${abv}" price="${priceStr}" price_band="${price_band}"`)
+  console.log(`[scraper] Facts: [${facts.join(', ')}]`)
+
   return {
-    name:        name.replace(/(Whisky Review|Whisky:|—)/g, '').trim(),
-    distillery,
-    country:     country || null,
-    region:      region  || null,
+    name:       name.replace(/(Whisky Review|Whisky:|—)/g, '').trim(),
+    distillery: distillery || null,
+    country:    country || null,
+    region:      null,
     type,
-    age:         age     ? parseInt(age) : null,
-    abv:         abv     ? parseFloat(abv) : null,
+    age:         null,
+    abv:         abv ? parseFloat(abv) : null,
     price_band,
     status:      null,
   }
@@ -122,9 +144,9 @@ async function callGemma(prompt) {
       }),
     })
     if (!res.ok) return null
-    const data  = await res.json()
-    const text  = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    if (!text)  return null
+    const data = await res.json()
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    if (!text) return null
     const match = text.match(/\{[\s\S]*\}/)
     return match ? JSON.parse(match[0]) : null
   } catch {
@@ -154,8 +176,6 @@ async function main() {
   }
 
   const data = await scrape(url)
-  console.log('[scraper] Parsed whisky:', data.name)
-  console.log('[scraper] Fields:', JSON.stringify(data, null, 2))
 
   const { data: existing } = await sb
     .from('catalogue')
@@ -172,7 +192,6 @@ async function main() {
     const parts = [data.name]
     if (data.distillery) parts.push(`by ${data.distillery}`)
     if (data.country)    parts.push(`from ${data.country}`)
-    if (data.region)     parts.push(`(${data.region})`)
     if (data.age)        parts.push(`aged ${data.age}`)
     if (data.abv)        parts.push(`at ${data.abv}%`)
     if (data.type)       parts.push(`style: ${data.type}`)
@@ -196,7 +215,6 @@ Respond ONLY with a JSON object, no markdown, no explanation:
     if (flavor) {
       Object.assign(data, parseFlavorResponse(flavor))
       data.status = true
-      console.log('[scraper] Flavor profile generated:', JSON.stringify(data, null, 2))
     }
   }
 
