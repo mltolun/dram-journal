@@ -68,7 +68,6 @@ Respond ONLY with a JSON object, no markdown, no explanation:
   "frutado": <integer 0-5, fruitiness>,
   "especiado": <integer 0-5, spiciness>
 }`
-}
 
 // ── Gemma API call ────────────────────────────────────────────────────────────
 
