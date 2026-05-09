@@ -169,7 +169,7 @@ const DAILY_CAP = 20
 // ── Model selection ───────────────────────────────────────────────────────────
 // Toggle between: 'gemma'  → Gemma 4 26B (file-upload path)
 //                 'gemini' → Gemini 3.1 Flash Lite (inline b64 path)
-const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
+const ACTIVE_MODEL = 'gemini' // 'gemma' | 'gemini'
 
 const MODEL_LABELS = {
   gemma:  'Gemma 4 26B',
