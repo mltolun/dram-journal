@@ -167,12 +167,12 @@ const cataloguePicked = ref(null)  // set when user picks from catalogue matches
 const DAILY_CAP = 20
 
 // ── Model selection ───────────────────────────────────────────────────────────
-// Toggle between: 'gemma'  → Gemma 3 27B (file-upload path)
+// Toggle between: 'gemma'  → Gemma 4 26B (file-upload path)
 //                 'gemini' → Gemini 3.1 Flash Lite (inline b64 path)
 const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
 
 const MODEL_LABELS = {
-  gemma:  'Gemma 3 27B',
+  gemma:  'Gemma 4 26B',
   gemini: 'Gemini 3.1 Flash Lite',
 }
 
@@ -321,7 +321,7 @@ async function callGemma() {
   const b64 = btoa(b64str)
 
   const { text } = await edgeCall({
-    action: 'generate-inline', model: 'gemma-3-27b-it',
+    action: 'generate-inline', model: 'gemma-4-26b-a4b-it',
     imageB64: b64, imageMime: imageMime.value, prompt: PROMPT,
   })
   return text || ''
