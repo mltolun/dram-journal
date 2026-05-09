@@ -250,5 +250,4 @@ async function main() {
   }
 }
 
-main().catch(err => { console.error('
-[error]', err.message); process.exit(1) })
+main().catch(err => { console.error('[error]', err.message); process.exit(1) })
