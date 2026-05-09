@@ -53,14 +53,31 @@ function decodeEntities(str) {
 }
 
 function extractFact(html, label) {
-  const re = new RegExp(`${label}[\\s\\S]{0,80}?<p[^>]*class="h3"[^>]*>([^<]+)<\\/p>`, 'i')
+  const re = new RegExp(`${label}[\\s\\S]{0,120}?<p[^>]*class="h3"[^>]*>([^<]+)<\\/p>`, 'i')
   const m  = html.match(re)
   return m ? decodeEntities(m[1]).trim() : ''
 }
 
+function extractSection(html, startMarker) {
+  const idx = html.indexOf(startMarker)
+  if (idx === -1) return ''
+  return html.slice(idx, idx + 3000)
+}
+
+function extractDistillery(html) {
+  const re = /Distillery[\s\S]{0,120}?<p[^>]*class="h3"[^>]*>([^<]+)<\/p>/i
+  const m = html.match(re)
+  return m ? decodeEntities(m[1]).trim() : ''
+}
+
 function extractAllFacts(html) {
-  const h3s = html.match(/<p class="h3"[^>]*>([^<]+)<\/p>/g) || []
-  return h3s.map(h => decodeEntities(h.replace(/<[^>]+>/g, '').trim()))
+  const re = /<p class="h3"[^>]*>([^<]+)<\/p>/g
+  const matches = []
+  let m
+  while ((m = re.exec(html)) !== null) {
+    matches.push(decodeEntities(m[1].trim()))
+  }
+  return matches
 }
 
 async function scrape(url) {
@@ -72,13 +89,17 @@ async function scrape(url) {
   const name = decodeEntities(rawName)
 
   const facts = extractAllFacts(html)
+  const distilleryFromFacts = facts.find((v, i) => i > 0 && v !== 'Yes' && v !== 'No' && v !== 'Single Malt' && v !== 'Blended' && v !== 'Grain')
 
-  const abv        = extractFact(html, 'ABV').replace('%', '') ||
-                     html.match(/ABV[\s\S]{0,60}?<p[^>]*class="h3"[^>]*>(\d+)/)?.[1] || ''
-  const country    = extractFact(html, 'Country') || ''
-  const typeStr    = extractFact(html, 'Type') || ''
-  const priceMatch = html.match(/€(\d+)/)
-  const priceStr   = priceMatch ? priceMatch[1] : ''
+  const abv           = extractFact(html, 'ABV').replace('%', '') ||
+                        html.match(/ABV[\s\S]{0,120}?<p[^>]*class="h3"[^>]*>(\d+)/)?.[1] || ''
+  const country       = extractFact(html, 'Country') || ''
+  const typeStr       = extractFact(html, 'Type') || ''
+  const distillery    = extractDistillery(html) || distilleryFromFacts || ''
+  const region        = extractFact(html, 'Region') || ''
+  const ageStr        = extractFact(html, 'Age') || ''
+  const priceMatch    = html.match(/€(\d+)/)
+  const priceStr      = priceMatch ? priceMatch[1] : ''
 
   const rawLocale = attr(html, 'property="og:locale"')
   const localeCountry = rawLocale ? rawLocale.split('_').pop() : ''
@@ -96,11 +117,11 @@ async function scrape(url) {
   else if (lower.includes('irish') || country === 'Ireland') type = 'irish'
   else if (typeStr && typeStr.toLowerCase().includes('blended')) type = 'japanese'
 
-  const distillery = facts[1] && facts[1] !== typeStr ? facts[1] : ''
-  if (!distillery) {
+  const distilleryRaw = distillery || null
+  if (!distilleryRaw) {
     const knownDistilleries = ['Hibiki', 'Yamazaki', 'Hakushu', 'Nikka', 'Macallan', 'Glenfiddich', 'Talisker', 'Lagavulin']
     for (const d of knownDistilleries) {
-      if (name.includes(d)) { distillery = d; break }
+      if (name.includes(d)) { distilleryRaw = d; break }
     }
   }
 
@@ -121,9 +142,13 @@ async function scrape(url) {
 
   return {
     name:       name.replace(/(Whisky Review|Whisky:|—)/g, '').trim(),
-    distillery: distillery || null,
+    distillery: distilleryRaw,
     country:    country || null,
-    region:      null,
+    region:     region || null,
+    type,
+    age:        ageStr ? parseInt(ageStr) : null,
+    abv:        abv ? parseFloat(abv) : null,
+    price_band,
     type,
     age:         null,
     abv:         abv ? parseFloat(abv) : null,

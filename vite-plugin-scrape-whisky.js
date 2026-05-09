@@ -61,7 +61,8 @@ export default function scrapeWhiskyPlugin() {
           const output = stdout + stderr
 
           if (exit === 0) {
-            const nameMatch = stdout.match(/"name"\s*:\s*"([^"]+)"/) ||
+            const nameMatch = stdout.match(/name="([^"]+)"/) ||
+                              stdout.match(/"name"\s*:\s*"([^"]+)"/) ||
                               stdout.match(/Added to catalogue:\s*"?([^"]+)"?/)
             const name = nameMatch ? nameMatch[1] : null
 
