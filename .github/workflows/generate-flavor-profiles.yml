@@ -1,8 +1,12 @@
-name: OLD Generate Flavor Profiles
+name: Generate Flavor Profiles
 
 on:
   workflow_dispatch:
     inputs:
+      single_id:
+        description: 'Process a single whisky by ID (leave empty for batch mode)'
+        required: false
+        default: ''
       start_offset:
         description: 'Skip first N whiskies (for resuming). Default: 0'
         required: false
@@ -32,6 +36,7 @@ jobs:
           SUPABASE_URL:         ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           GEMINI_KEY:           ${{ secrets.VITE_GEMINI_KEY }}
+          SINGLE_ID:            ${{ github.event.inputs.single_id }}
           BATCH_LIMIT:          ${{ github.event.inputs.batch_limit }}
           START_OFFSET:         ${{ github.event.inputs.start_offset }}
           SLEEP_MS:             2500
