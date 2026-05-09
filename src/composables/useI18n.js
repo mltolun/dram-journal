@@ -445,6 +445,17 @@ const TRANSLATIONS = {
     frAdminAccessDenied: 'Access denied',
     frAdminFilterAll: 'All',
 
+    // Catalogue scraper tool
+    scraperTitle: 'Import Whisky from URL',
+    scraperUrlPlaceholder: 'https://distilld.io/whisky/...',
+    scraperScrape: 'Scrape & Add',
+    scraperScraping: 'Scraping…',
+    scraperSuccess: 'Added to catalogue:',
+    scraperNotFound: 'Whisky not found on this page.',
+    scraperDuplicate: 'Already in catalogue:',
+    scraperError: 'Scrape failed:',
+    scraperNoAdmin: 'Admin access required.',
+
     // Stats & Badges panel
     statsAndBadges: 'Stats & Badges',
     statsTitle: 'My Dram Stats',
@@ -932,6 +943,17 @@ const TRANSLATIONS = {
     frAdminDueDateLabel: 'Fecha límite',
     frAdminAccessDenied: 'Acceso denegado',
     frAdminFilterAll: 'Todo',
+
+    // Catalogue scraper tool
+    scraperTitle: 'Importar whisky desde URL',
+    scraperUrlPlaceholder: 'https://distilld.io/whisky/...',
+    scraperScrape: 'Extraer y añadir',
+    scraperScraping: 'Extrayendo…',
+    scraperSuccess: 'Añadido al catálogo:',
+    scraperNotFound: 'Whisky no encontrado en esta página.',
+    scraperDuplicate: 'Ya existe en el catálogo:',
+    scraperError: 'Error al extraer:',
+    scraperNoAdmin: 'Se requiere acceso de administrador.',
 
     // Stats & Badges panel
     statsAndBadges: 'Estadísticas e Insignias',

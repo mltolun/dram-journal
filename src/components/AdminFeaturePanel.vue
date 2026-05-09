@@ -8,6 +8,35 @@
         <button class="subs-close" @click="$emit('close')"><XIcon :size="14" /></button>
       </div>
 
+      <!-- Scraper tool -->
+      <div class="scraper-section">
+        <div class="scraper-title">{{ t.scraperTitle }}</div>
+        <div class="scraper-form">
+          <input
+            v-model="scrapeUrlInput"
+            class="scraper-input"
+            type="url"
+            :placeholder="t.scraperUrlPlaceholder"
+            :disabled="scraping"
+            @keydown.enter="doScrape"
+          />
+          <button
+            class="scraper-btn"
+            :disabled="scraping || !scrapeUrlInput.trim()"
+            @click="doScrape"
+          >
+            <span v-if="scraping" class="scraper-spinner" />
+            <DownloadCloudIcon v-else :size="14" />
+            {{ scraping ? t.scraperScraping : t.scraperScrape }}
+          </button>
+        </div>
+        <div v-if="scrapeResult" class="scraper-result" :class="`scraper-result--${scrapeResult.type}`">
+          <span v-if="scrapeResult.type === 'success'">✓ {{ t.scraperSuccess }} <strong>{{ scrapeResult.name }}</strong></span>
+          <span v-else>ℹ {{ t.scraperDuplicate }} <strong>{{ scrapeResult.name }}</strong></span>
+        </div>
+        <div v-if="scrapeError" class="scraper-error">✗ {{ t.scraperError }} {{ scrapeError }}</div>
+      </div>
+
       <!-- Filters -->
       <div class="admin-filters">
         <button
@@ -159,14 +188,29 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
-import { X as XIcon, CheckCircle as CheckCircleIcon, Lock as LockIcon } from 'lucide-vue-next'
+import { X as XIcon, CheckCircle as CheckCircleIcon, Lock as LockIcon, DownloadCloud as DownloadCloudIcon } from 'lucide-vue-next'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
+import { useCatalogueScraper } from '../composables/useCatalogueScraper.js'
 import { currentUser } from '../composables/useAuth.js'
 import { useI18n } from '../composables/useI18n.js'
 
 const emit = defineEmits(['close'])
 const { loadAllRequests, loadAdminStatus, updateRequest, deleteRequest } = useFeatureRequests()
+const { scrapeUrl: callScrape, scraping, lastResult, lastError, clearResult } = useCatalogueScraper()
 const { t } = useI18n()
+
+const scrapeUrlInput = ref('')
+const scrapeResult     = ref(null)
+const scrapeError      = ref(null)
+
+async function doScrape() {
+  if (!scrapeUrlInput.value.trim()) return
+  scrapeResult.value = null
+  scrapeError.value  = null
+  await callScrape(scrapeUrlInput.value.trim())
+  if (lastResult.value) scrapeResult.value = lastResult.value
+  if (lastError.value)   scrapeError.value   = lastError.value
+}
 
 const STATUS_LABELS = computed(() => ({
   open:        t.value.frStatusOpen,
@@ -681,4 +725,82 @@ onMounted(async () => {
   color: var(--amber);
 }
 .access-denied-body em { color: var(--text-secondary); font-style: normal; }
+
+.scraper-section {
+  padding: 16px 24px;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+.scraper-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.scraper-form {
+  display: flex;
+  gap: 8px;
+}
+.scraper-input {
+  flex: 1;
+  background: var(--bg-input, rgba(200,130,42,0.06));
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 11px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+.scraper-input::placeholder { color: var(--peat-light); }
+.scraper-input:focus { outline: none; border-color: var(--amber); }
+.scraper-input:disabled { opacity: 0.5; }
+
+.scraper-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.scraper-btn:hover:not(:disabled) { opacity: 0.85; }
+.scraper-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.scraper-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: var(--bg);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.scraper-result {
+  margin-top: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.76rem;
+}
+.scraper-result--success { color: #1D9E75; }
+.scraper-result--duplicate { color: var(--amber-light); }
+.scraper-result strong { font-weight: 600; }
+
+.scraper-error {
+  margin-top: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: #e08888;
+}
 </style>
