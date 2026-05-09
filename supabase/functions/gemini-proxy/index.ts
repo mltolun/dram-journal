@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0'
 
 const GEMINI_KEY     = Deno.env.get('GEMINI_KEY')
+const GEMINI_BASE    = 'https://generativelanguage.googleapis.com'
 const RATE_LIMIT_CAP = 20
 
 const corsHeaders = {
@@ -44,40 +44,44 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { action, model, imageB64, imageMime, prompt } = body
+    const { model, imageB64, imageMime, prompt } = body
 
-    if (!action || !prompt) {
-      return json({ error: 'Missing required fields: action, prompt' }, 400)
+    if (!model || !prompt) {
+      return json({ error: 'Missing required fields: model, prompt' }, 400)
     }
 
-    const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-
-    const generationConfig = {
-      temperature:     0.2,
-      maxOutputTokens: 2048,
+    if (!imageB64 || !imageMime) {
+      return json({ error: 'Missing imageB64 or imageMime' }, 400)
     }
 
-    let resultText = ''
+    const url = `${GEMINI_BASE}/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`
 
-    if (action === 'generate-inline') {
-      if (!imageB64 || !imageMime) {
-        return json({ error: 'Missing imageB64 or imageMime' }, 400)
-      }
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType: imageMime, data: imageB64 } },
+            { text: prompt },
+          ],
+        }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+        },
+      }),
+    })
 
-      const binary = atob(imageB64)
-      const bytes = new Uint8Array(binary.length)
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const data = await response.json()
 
-      const modelInstance = genAI.getGenerativeModel({ model }, generationConfig)
-      const result = await modelInstance.generateContent([
-        { inlineData: { data: imageB64, mimeType: imageMime } },
-        prompt,
-      ])
-      resultText = result.response.text() || ''
-
-    } else {
-      return json({ error: `Unknown action: ${action}` }, 400)
+    if (!response.ok) {
+      console.error('Gemini API error:', { status: response.status, data })
+      return json({ error: data.error?.message || 'Gemini API error' }, response.status)
     }
+
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
     await sb.from('scan_log').insert({ user_id: user.id })
 

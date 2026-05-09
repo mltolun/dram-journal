@@ -276,22 +276,16 @@ function openCameraPickerFallback() {
 
 // ── Prompt ────────────────────────────────────────────────────────────────────
 
-const PROMPT = `You are a whisky data extraction API. Your only job is to return a JSON object.
+const PROMPT = `Extract whisky info from the bottle image. Respond ONLY with valid JSON, no other text.
 
-DO NOT write any explanation, prose, markdown, bullet points, tables, or code fences.
-DO NOT start your response with any word, sentence, or character other than {
-Your entire response must be a single JSON object that begins with { and ends with }
-
-Extract information from the bottle label image and return this exact JSON structure, with all string values filled in:
-
-{"name":"full whisky name","distillery":"distillery name","origin":"region and country e.g. Speyside, Scotland","type":"scotch","age":"age statement e.g. 12 Years Old","abv":"e.g. 46%","nose":"2-4 aroma descriptors based on your whisky knowledge","palate":"2-4 taste descriptors based on your whisky knowledge","notes":"any other label details","dulzor":2,"ahumado":1,"cuerpo":3,"frutado":2,"especiado":2}
+Required JSON fields:
+{"name":"","distillery":"","origin":"","type":"","age":"","abv":"","nose":"","palate":"","notes":"","dulzor":0,"ahumado":0,"cuerpo":0,"frutado":0,"especiado":0}
 
 Rules:
-- type must be one of: scotch, irish, bourbon, japanese, other
-- nose and palate MUST be filled using your whisky knowledge even if not on the label (Islay=smoky/peaty, Speyside=fruity/floral, Bourbon=vanilla/caramel)
-- dulzor=sweetness, ahumado=smokiness, cuerpo=body, frutado=fruitiness, especiado=spiciness — all integers 0-5
-- If the label is unreadable set name to "Unknown" and estimate the rest
-- Return only the JSON object. Nothing else. First character: { Last character: }`
+- type: scotch/irish/bourbon/japanese/other
+- dulzor/ahumado/cuerpo/frutado/especiado: integers 0-5
+- If unreadable: name="Unknown"
+- Start with { end with } - nothing else.`
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
@@ -402,11 +396,29 @@ function parseModelText(text) {
   // Primary path: find a JSON object in the response
   const match = cleaned.match(/\{[\s\S]*\}/)
   if (match) {
-    try { return JSON.parse(match[0]) } catch {
-      try { return JSON.parse(match[0] + '"}') } catch {
-        console.warn('[Scan] parseModelText: JSON parse failed on —', match[0].slice(0, 300))
-        // fall through to markdown extraction below
+    let jsonStr = match[0]
+    // Try to fix truncated JSON by completing it
+    try { return JSON.parse(jsonStr) } catch {
+      // Try adding missing closing braces
+      const openCount = (jsonStr.match(/\{/g) || []).length
+      const closeCount = (jsonStr.match(/\}/g) || []).length
+      const missing = openCount - closeCount
+      if (missing > 0) {
+        jsonStr += '}'.repeat(missing)
+        try { return JSON.parse(jsonStr) } catch { /* continue */ }
       }
+      // Try extracting partial fields
+      const fields = ['name','distillery','origin','type','age','abv','nose','palate','notes','dulzor','ahumado','cuerpo','frutado','especiado']
+      const result = {}
+      for (const f of fields) {
+        const m = jsonStr.match(new RegExp(`"${f}"\\s*:\\s*"?([^",}]*)`))
+        if (m) result[f] = m[1]
+      }
+      if (Object.keys(result).length > 0) {
+        console.warn('[Scan] parseModelText: recovered partial JSON —', result)
+        return result
+      }
+      console.warn('[Scan] parseModelText: JSON parse failed on —', jsonStr.slice(0, 300))
     }
   }
 
