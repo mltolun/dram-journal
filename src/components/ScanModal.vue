@@ -167,12 +167,12 @@ const cataloguePicked = ref(null)  // set when user picks from catalogue matches
 const DAILY_CAP = 20
 
 // ── Model selection ───────────────────────────────────────────────────────────
-// Toggle between: 'gemma'  → Gemma 4 26B (file-upload path)
+// Toggle between: 'gemma'  → Gemma 4 31B (file-upload path)
 //                 'gemini' → Gemini 3.1 Flash Lite (inline b64 path)
 const ACTIVE_MODEL = 'gemma' // 'gemma' | 'gemini'
 
 const MODEL_LABELS = {
-  gemma:  'Gemma 4 26B',
+  gemma:  'Gemma 4 31B',
   gemini: 'Gemini 3.1 Flash Lite',
 }
 
@@ -311,9 +311,7 @@ async function edgeCall(body) {
 }
 
 async function callGemma() {
-  // Step 1: upload file via Edge Function
   const binary = await imageFile.value.arrayBuffer()
-  // Avoid spread operator on large arrays — blows the call stack on mobile
   const bytes  = new Uint8Array(binary)
   let b64str   = ''
   const chunk  = 8192
@@ -322,16 +320,9 @@ async function callGemma() {
   }
   const b64 = btoa(b64str)
 
-  const { fileUri } = await edgeCall({
-    action: 'upload-file', model: 'gemma-4-26b-a4b-it',
-    imageB64: b64, imageMime: imageMime.value, prompt: PROMPT,
-  })
-  if (!fileUri) throw new Error('Upload did not return a file URI')
-
-  // Step 2: generate from uploaded file
   const { text } = await edgeCall({
-    action: 'generate-file', model: 'gemma-4-26b-a4b-it',
-    fileUri, imageMime: imageMime.value, prompt: PROMPT,
+    action: 'generate-inline', model: 'gemma-4-31b-it',
+    imageB64: b64, imageMime: imageMime.value, prompt: PROMPT,
   })
   return text || ''
 }
