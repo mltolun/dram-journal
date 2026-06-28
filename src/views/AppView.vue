@@ -416,7 +416,10 @@ const filteredJournal = computed(() => {
 
   const timelineEntries = computed(() => {
     if (!dramLogs.value || !whiskies.value) return []
-    return dramLogs.value.map(log => {
+    const filteredIds = new Set(filteredJournal.value.map(w => w.id))
+    return dramLogs.value
+      .filter(log => !log.whisky_id || filteredIds.has(log.whisky_id))
+      .map(log => {
       const whisky = whiskies.value.find(w => w.id === log.whisky_id)
       return {
         id: log.whisky_id ? `${log.whisky_id}-${log.id}` : log.id,
