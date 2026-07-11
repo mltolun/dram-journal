@@ -21,6 +21,30 @@ export function daysUntilFlush(w) {
   return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)))
 }
 
+export function mergeWithCatalogue(w) {
+  if (!w.catalogue) return w
+  const c = w.catalogue
+  return {
+    ...w,
+    name:       w.name       || c.name,
+    distillery: w.distillery || c.distillery,
+    origin:     w.origin     || c.country,
+    region:     w.region     || c.region,
+    type:       w.type       || c.type,
+    age:        w.age        || c.age,
+    abv:        w.abv        || c.abv,
+    price:      w.price      || c.price_band,
+    photo_url:  w.photo_url  || c.photo_url,
+    nose:       w.nose       || c.nose,
+    palate:     w.palate     || c.palate,
+    dulzor:     w.dulzor     ?? c.dulzor,
+    ahumado:    w.ahumado    ?? c.ahumado,
+    cuerpo:     w.cuerpo     ?? c.cuerpo,
+    frutado:    w.frutado    ?? c.frutado,
+    especiado:  w.especiado  ?? c.especiado,
+  }
+}
+
 export function useWhiskies() {
   const { logActivity } = useSubscriptions()
 
@@ -34,30 +58,6 @@ export function useWhiskies() {
       dulzor, ahumado, cuerpo, frutado, especiado
     )
   `
-
-  function mergeWithCatalogue(w) {
-    if (!w.catalogue) return w
-    const c = w.catalogue
-    return {
-      ...w,
-      name:       w.name       || c.name,
-      distillery: w.distillery || c.distillery,
-      origin:     w.origin     || c.country,
-      region:     w.region     || c.region,
-      type:       w.type       || c.type,
-      age:        w.age        || c.age,
-      abv:        w.abv        || c.abv,
-      price:      w.price      || c.price_band,
-      photo_url:  w.photo_url  || c.photo_url,
-      nose:       w.nose       || c.nose,
-      palate:     w.palate     || c.palate,
-      dulzor:     w.dulzor     ?? c.dulzor,
-      ahumado:    w.ahumado    ?? c.ahumado,
-      cuerpo:     w.cuerpo     ?? c.cuerpo,
-      frutado:    w.frutado    ?? c.frutado,
-      especiado:  w.especiado  ?? c.especiado,
-    }
-  }
 
   async function loadWhiskies() {
     setSync('loading')

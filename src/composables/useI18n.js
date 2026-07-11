@@ -33,6 +33,9 @@ function mapToSupportedLocale(langOrCountry) {
  * Only called when there is no existing 'dj_locale' in localStorage.
  * Saves the result so it only runs once.
  */
+
+export { mapToSupportedLocale }
+
 export async function detectLocale() {
   if (localStorage.getItem('dj_locale')) return  // already set by user or previous visit
 
