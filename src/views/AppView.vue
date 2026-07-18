@@ -397,8 +397,8 @@ const filteredJournal = computed(() => {
   const dir = sortDir.value === 'asc' ? 1 : -1
   items = [...items].sort((a, b) => {
     if (sortBy.value === 'date') {
-      const da = new Date(a.date || a.created_at || 0).getTime()
-      const db = new Date(b.date || b.created_at || 0).getTime()
+      const da = new Date(a.date || 0).getTime()
+      const db = new Date(b.date || 0).getTime()
       return dir * (da - db)
     }
     if (sortBy.value === 'rating') {
