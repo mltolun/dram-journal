@@ -1,9 +1,12 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import LandingView        from './views/LandingView.vue'
-import AppView            from './views/AppView.vue'
-import ShareView          from './views/ShareView.vue'
-import ResetView          from './views/ResetView.vue'
-import WishlistShareView  from './views/WishlistShareView.vue'
+import { currentUser } from './composables/useAuth.js'
+
+// Views are lazy-loaded so the landing page ships without the app bundle.
+const LandingView       = () => import('./views/LandingView.vue')
+const AppView           = () => import('./views/AppView.vue')
+const ShareView         = () => import('./views/ShareView.vue')
+const ResetView         = () => import('./views/ResetView.vue')
+const WishlistShareView = () => import('./views/WishlistShareView.vue')
 
 // We use hash history (#/) so GitHub Pages works without a 404 redirect hack
 const routes = [
@@ -17,4 +20,12 @@ const routes = [
 export const router = createRouter({
   history: createWebHashHistory(),
   routes,
+})
+
+// Logged-in users landing on the marketing page are sent straight into the app.
+router.beforeEach((to) => {
+  if (to.path === '/' && currentUser.value) {
+    return { path: '/app' }
+  }
+  return true
 })

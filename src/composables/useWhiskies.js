@@ -13,6 +13,17 @@ export const trash    = computed(() => whiskies.value.filter(w => w.list === 'tr
 
 const TRASH_TTL_DAYS = 5
 
+// Convert a `YYYY-MM-DD` picked in the user's local timezone into a UTC ISO
+// timestamp representing local noon on that date. Parsing `YYYY-MM-DDT12:00:00`
+// as local time, then normalising to UTC, avoids the naive `T12:00:00` (UTC noon)
+// that shifts entries a day for users east of UTC.
+export function localNoonISO(dateStr) {
+  if (!dateStr) return null
+  const d = new Date(`${dateStr}T12:00:00`)
+  if (isNaN(d.getTime())) return null
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString()
+}
+
 export function daysUntilFlush(w) {
   if (!w.deleted_at) return TRASH_TTL_DAYS
   const deletedAt = new Date(w.deleted_at)
@@ -65,6 +76,8 @@ export function useWhiskies() {
       .from('whiskies')
       .select(WHISKY_SELECT)
       .order('date', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     if (error) { setSync('error'); console.error('loadWhiskies failed:', error.message); return }
 
@@ -87,6 +100,8 @@ export function useWhiskies() {
       .select('id, user_id, whisky_id, whisky_name, whisky_distillery, tasted_at, rating, notes, created_at')
       .eq('user_id', currentUser.value.id)
       .order('tasted_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
     if (error) { console.error('loadDramLogs failed:', error.message); return }
     dramLogs.value = data || []
   }
@@ -130,7 +145,7 @@ export function useWhiskies() {
     const list = fields.list || 'journal'
     if (list === 'journal') {
       const tastedAt = fields.date
-        ? `${fields.date}T12:00:00`
+        ? localNoonISO(fields.date)
         : new Date().toISOString()
       await sb.from('dram_logs').insert({
         user_id:           currentUser.value.id,
@@ -180,6 +195,7 @@ export function useWhiskies() {
 
   async function updateWhisky(id, fields) {
     setSync('saving')
+    const before = whiskies.value.find(w => w.id === id)
     // eslint-disable-next-line no-unused-vars
     const { catalogue, abv, ...cleanFields } = fields
     const { data, error } = await sb.from('whiskies').update(cleanFields).eq('id', id).select(WHISKY_SELECT).single()
@@ -188,6 +204,25 @@ export function useWhiskies() {
     const idx = whiskies.value.findIndex(w => w.id === id)
     if (idx >= 0) whiskies.value[idx] = { ...whiskies.value[idx], ...merged }
     setSync('ok')
+
+    // Keep dram_logs.tasted_at in sync when the tasting date is edited, so the
+    // gallery (whiskies.date) and the timeline (dram_logs.tasted_at) never diverge.
+    if (fields.date && before?.date && before.date !== fields.date) {
+      const newTs = localNoonISO(fields.date)
+      const legacyTs = `${before.date}T12:00:00`
+      const newTsLegacy = localNoonISO(before.date)
+      let query = sb.from('dram_logs')
+        .update({ tasted_at: newTs })
+        .eq('whisky_id', id)
+        .eq('user_id', currentUser.value.id)
+      if (newTsLegacy !== legacyTs) {
+        query = query.or(`tasted_at.eq.${legacyTs},tasted_at.eq.${newTsLegacy}`)
+      } else {
+        query = query.eq('tasted_at', legacyTs)
+      }
+      const { error: dramErr } = await query
+      if (dramErr) console.error('sync dram_log date failed:', dramErr.message)
+    }
 
     // Log activity when a rating is explicitly set/changed
     if (fields.rating != null) {
@@ -302,6 +337,8 @@ export function useWhiskies() {
       .eq('whisky_id', whiskyId)
       .eq('user_id', currentUser.value.id)
       .order('tasted_at', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
 
     if (error) throw error
     return data || []

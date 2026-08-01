@@ -43,15 +43,13 @@ export function useFeed() {
 
        if (dramError) throw dramError
 
-       // Timeline items: only dram_logs, tagged as social
-       socialItems = (dramData || []).map(item => ({
-         ...item,
-         source:    'social',
-         type:      'dram_logged',
-         created_at: item.tasted_at, // timeline ordered by tasting time
-       })).slice(0, 50)
-
-       console.log('[feed] timeline (dram_logs):', socialItems.length)
+        // Timeline items: only dram_logs, tagged as social
+        socialItems = (dramData || []).map(item => ({
+          ...item,
+          source:    'social',
+          type:      'dram_logged',
+          created_at: item.tasted_at, // timeline ordered by tasting time
+        })).slice(0, 50)
 
         // Batch-fetch photos from catalogue directly by name+distillery.
         // (whiskies table is RLS-protected — we cannot read other users' rows.)
@@ -63,7 +61,7 @@ export function useFeed() {
             .from('catalogue')
             .select('name, photo_url, nose, palate, dulzor, ahumado, cuerpo, frutado, especiado')
             .in('name', names)
-          console.log('[feed] catalogue:', cData?.length, 'error:', cError?.message)
+          if (cError) console.warn('[feed] catalogue lookup failed:', cError.message)
           for (const c of (cData || [])) {
             photoMap.set(c.name, {
               photo_url: c.photo_url || null,
@@ -102,7 +100,6 @@ export function useFeed() {
         .limit(30)
 
       if (editorialError) console.warn('[feed] editorial error:', editorialError?.message)
-      console.log('[feed] editorial:', editorialData?.length)
 
       const editorialItems = (editorialData || []).map(item => ({
         ...item,
@@ -129,7 +126,6 @@ export function useFeed() {
       // Append any remaining editorial items at the end
       while (eIdx < editorialItems.length) all.push(editorialItems[eIdx++])
 
-      console.log('[feed] total items:', all.length)
       feedItems.value = all
     } catch (err) {
       console.error('useFeed loadFeed error:', err?.message)

@@ -120,7 +120,7 @@ def scrape(url):
     elif 'irish' in lower or country == 'Ireland':
         whisky_type = 'irish'
     elif type_str and 'blended' in type_str.lower():
-        whisky_type = 'japanese'
+        whisky_type = 'other'
 
     distillery_raw = distillery or None
     if not distillery_raw:

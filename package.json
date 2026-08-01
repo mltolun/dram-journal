@@ -7,7 +7,8 @@
     "build": "vitest run && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "find scripts -name '*.js' -print0 | xargs -0 -n1 node --check"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

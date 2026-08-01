@@ -19,8 +19,11 @@
         class="ac-item"
         :class="{ focused: focusIdx === i }"
         @mousedown.prevent="pick(v)"
-        v-html="highlight(v)"
-      ></div>
+      >
+        <template v-for="(seg, si) in segments(v)" :key="si">
+          <span v-if="seg.match" class="ac-item-match">{{ seg.text }}</span><template v-else>{{ seg.text }}</template>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -100,10 +103,15 @@ function onKey(e) {
   } else if (e.key === 'Escape') { open.value = false }
 }
 
-function highlight(v) {
+function segments(v) {
   const q = (props.modelValue || '').trim()
-  if (!q) return v
-  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi')
-  return v.replace(re, '<span class="ac-item-match">$1</span>')
+  if (!q) return [{ text: v, match: false }]
+  const idx = v.toLowerCase().indexOf(q.toLowerCase())
+  if (idx < 0) return [{ text: v, match: false }]
+  return [
+    { text: v.slice(0, idx), match: false },
+    { text: v.slice(idx, idx + q.length), match: true },
+    { text: v.slice(idx + q.length), match: false },
+  ]
 }
 </script>

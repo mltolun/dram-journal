@@ -214,5 +214,4 @@ async function main() {
   else console.log('[price-ranges] All whiskies priced!')
 }
 
-main().catch(err => { console.error('
-[error]', err.message); process.exit(1) })
+main().catch(err => { console.error('[error]', err.message); process.exit(1) })

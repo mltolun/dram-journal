@@ -1,7 +1,8 @@
 -- ── editorial_feed ──────────────────────────────────────────────────────────
 -- Website-curated content: news, events, awards, and announcements from the
 -- whisky world. Rows are inserted by admins or scheduled scripts.
--- All authenticated users can read; only service-role (scripts/admin) can write.
+-- Readable by anyone (public news content, no auth check); writes are
+-- service-role only (scripts/admin).
 -- Run once in the Supabase SQL editor: Database → SQL Editor → New query.
 
 CREATE TABLE IF NOT EXISTS public.editorial_feed (

@@ -201,7 +201,6 @@ async function main() {
   const userRaw = {}   // user_id → { dates[], countries Set, peaty, rated, fullFlavor }
   for (const e of allEntries ?? []) {
     const s = (userRaw[e.user_id] ??= { dates: [], countries: new Set(), peaty: 0, rated: 0, fullFlavor: 0 })
-    s.dates.push(e.created_at)
     if (e.origin) s.countries.add(e.origin)
     if ((e.ahumado   ?? 0) >= 4) s.peaty++
     if (e.rating  != null)       s.rated++
@@ -209,6 +208,10 @@ async function main() {
         (e.cuerpo    ?? 0) > 0 && (e.frutado   ?? 0) > 0 &&
         (e.especiado ?? 0) > 0)  s.fullFlavor++
   }
+  // Tasting dates come from dram_logs ONLY. Using whiskies.created_at as well
+  // used to double-count every tasting, inflating `total` (badge proximity) and
+  // `preferred_dow`. The backfill (20260506) guarantees every journal whisky has
+  // a dram_log, so this is the authoritative source.
   for (const [userId, dates] of Object.entries(dramDatesByUser)) {
     const s = (userRaw[userId] ??= { dates: [], countries: new Set(), peaty: 0, rated: 0, fullFlavor: 0 })
     s.dates.push(...dates)
@@ -303,6 +306,9 @@ async function main() {
       daysSince <= 30 ? 'lapsed'  : 'churned'
 
     // ── Update streak record for ALL users (keeps data fresh for the UI) ──
+    // Note: best_streak is a monotonic, immutable "personal best". It is never
+    // recomputed downwards (deleting/backdating entries won't reduce it) so it
+    // stays meaningful as an all-time record. Freshness relies on this daily run.
     const streakRow = {
       user_id:                   userId,
       current_streak:            streak,
@@ -400,13 +406,29 @@ async function main() {
       continue
     }
 
+    // Atomically claim the send slot so overlapping runs (daily cron + manual
+    // workflow_dispatch) can't both pass the frequency cap. Requires the
+    // claim_reengagement_slot RPC (supabase/migrations/20260801_security_and_sync.sql).
+    let claimed = true
+    const { data: claimedVal, error: claimError } = await sb
+      .rpc('claim_reengagement_slot', { p_user_id: userId })
+    if (claimError) {
+      console.warn(`     ⚠ claim_reengagement_slot unavailable (${claimError.message}) — sending without atomic cap`)
+    } else {
+      claimed = claimedVal === true
+    }
+
+    if (!claimed) {
+      skip(email, 'freq-cap (slot claimed by concurrent run)')
+      continue
+    }
+
     try {
       await sendReengagementEmail(email, emailType, payload, locale)
 
-      // Persist send state
+      // Persist send state (the slot's last_reengagement_sent_at was set by the claim)
       const update = {
         reengagement_emails_sent:  (existingRec.reengagement_emails_sent ?? 0) + 1,
-        last_reengagement_sent_at: today.toISOString(),
       }
       if (emailType === 'streak_warning') update.streak_warned_week = thisWeek
       await sb.from('user_streaks').update(update).eq('user_id', userId)
@@ -414,6 +436,10 @@ async function main() {
       console.log(`   ✉ ${emailType} → ${email} (${segment}, streak=${streak})`)
       sent++
     } catch (err) {
+      // Release the claimed slot so the user can be retried on the next run
+      if (claimed) {
+        await sb.rpc('release_reengagement_slot', { p_user_id: userId }).catch(() => {})
+      }
       console.error(`   ✗ Failed for ${email}: ${err.message}`)
       errors++
     }

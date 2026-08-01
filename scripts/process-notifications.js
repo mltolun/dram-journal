@@ -551,23 +551,20 @@ async function main() {
       }
 
       processed.push(n.id)
+
+      // Delete immediately after a successful send so a crash or workflow
+      // timeout can never re-send this email on the next run.
+      const { error: delErr } = await sb
+        .from('pending_notifications')
+        .delete()
+        .eq('id', n.id)
+
+      if (delErr) {
+        console.error(`   ⚠ Failed to delete processed row ${n.id}: ${delErr.message}`)
+      }
     } catch (err) {
       console.error(`   ✗ Failed for ${n.to_email}: ${err.message}`)
       failed.push(n.id)
-    }
-  }
-
-  // Delete successfully sent notifications
-  if (processed.length) {
-    const { error: deleteError } = await sb
-      .from('pending_notifications')
-      .delete()
-      .in('id', processed)
-
-    if (deleteError) {
-      console.error(`   ⚠ Failed to delete processed rows: ${deleteError.message}`)
-    } else {
-      console.log(`   [cleanup] Cleared ${processed.length} processed notification(s)`)
     }
   }
 

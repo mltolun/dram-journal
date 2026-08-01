@@ -722,7 +722,7 @@ async function saveDram() {
       ? new Date().toISOString().split('T')[1].slice(0, 8)
       : '12:00:00'
     const tastedAt = dramForm.tasted_at
-      ? `${dramForm.tasted_at}T${timePart}`
+      ? new Date(`${dramForm.tasted_at}T${timePart}`).toISOString()
       : new Date().toISOString()
     await logDram({
       whisky: props.editing,

@@ -59,6 +59,9 @@ Deno.serve(async (req) => {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // Bound the upstream call so a stalled Gemini request can't hold the
+      // edge worker (and the user's scan budget) open indefinitely.
+      signal: AbortSignal.timeout(30_000),
       body: JSON.stringify({
         contents: [{
           role: 'user',

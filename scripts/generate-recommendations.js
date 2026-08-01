@@ -237,14 +237,40 @@ async function fetchFollowerActivity(userId) {
 
 async function buildEmailMap(userIds) {
   if (!userIds.length) return {}
-  const { data: { users }, error } = await sb.auth.admin.listUsers({ perPage: 1000 })
-  if (error) throw new Error(`Failed to fetch users: ${error.message}`)
+  const users = await fetchAllUsers()
 
   const map = {}
   for (const u of users) {
     if (u.email && userIds.includes(u.id)) map[u.id] = u.email
   }
   return map
+}
+
+// ─── Auth user helpers ─────────────────────────────────────────────────────────
+
+/** Fetches every auth user, walking the admin API pagination (max 1000/page). */
+async function fetchAllUsers() {
+  const all = []
+  let page = 1
+  while (true) {
+    const { data: { users }, error } = await sb.auth.admin.listUsers({ page, perPage: 1000 })
+    if (error) throw new Error(`Failed to fetch users: ${error.message}`)
+    if (!users?.length) break
+    all.push(...users)
+    if (users.length < 1000) break
+    page++
+  }
+  return all
+}
+
+/** ISO week key (e.g. "2026-W31") — used as the weekly email dedupe guard. */
+function isoWeek(date) {
+  const d = new Date(date)
+  const day = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - day)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`
 }
 
 // ─── Catalogue fallback for users with few journal entries ───────────────────
@@ -307,8 +333,7 @@ async function main() {
   console.log('')
 
   // 1. Fetch all auth users to get email addresses
-  const { data: { users: allUsers }, error: usersError } = await sb.auth.admin.listUsers({ perPage: 1000 })
-  if (usersError) throw new Error(`Failed to fetch users: ${usersError.message}`)
+  const allUsers = await fetchAllUsers()
 
   const emailByUserId  = {}
   const localeByUserId = {}
@@ -319,6 +344,8 @@ async function main() {
     }
   }
   console.log(`   Fetched emails for ${Object.keys(emailByUserId).length} users`)
+
+  const thisWeek = isoWeek(new Date())
 
   // 2. Fetch all journal entries grouped by user
   const { data: allWhiskies, error: whiskiesError } = await sb
@@ -367,6 +394,19 @@ async function main() {
 
     const hasEnoughEntries = journal.length >= MIN_JOURNAL_ENTRIES
     console.log(`   ◎ User ${userId.slice(0, 8)}… — ${journal.length} journal, ${wishlist.length} wishlist${hasEnoughEntries ? '' : ' (catalogue fallback)'}`)
+
+    // Weekly dedupe guard: never email a user twice in the same ISO week, even
+    // if the cron is re-run (manual dispatch, missed job, timezone overlap).
+    const { data: existingRow, error: guardError } = await sb
+      .from('recommendations')
+      .select('sent_week')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (guardError) throw new Error(`Failed to read sent_week: ${guardError.message}`)
+    if (existingRow?.sent_week === thisWeek) {
+      console.log(`     · skip ${userEmail || userId.slice(0, 8)}… — weekly email already sent (${thisWeek})`)
+      continue
+    }
 
     try {
       let enriched
@@ -474,51 +514,60 @@ async function main() {
 
       if (upsertError) throw new Error(`Supabase upsert failed: ${upsertError.message}`)
 
-      // 7. Fetch follower activity for this user (last 7 days)
-      const followerActivity = await fetchFollowerActivity(userId)
+      // 7. Fetch follower activity — only needed when we're actually emailing
+      // (dry-runs skip it so we don't burn API calls or DB reads).
+      const followerActivity = (SEND_EMAILS && userEmail) ? await fetchFollowerActivity(userId) : []
+      let emailSent = false
 
-      // Enrich activity with catalogue photo + flavor data
-      if (followerActivity.length > 0) {
-        const actNames = [...new Set(followerActivity.map(a => a.whisky_name).filter(Boolean))]
-        if (actNames.length > 0) {
-          const { data: catRows } = await sb
-            .from('catalogue')
-            .select('name, photo_url, dulzor, ahumado, cuerpo, frutado, especiado')
-            .in('name', actNames)
-          const catMap = {}
-          for (const c of (catRows || [])) catMap[c.name] = c
-          for (const a of followerActivity) {
-            const c = catMap[a.whisky_name]
-            if (c) {
-              a.photo_url = c.photo_url ?? null
-              a.dulzor    = c.dulzor    ?? null
-              a.ahumado   = c.ahumado   ?? null
-              a.cuerpo    = c.cuerpo    ?? null
-              a.frutado   = c.frutado   ?? null
-              a.especiado = c.especiado ?? null
+      if (SEND_EMAILS && userEmail) {
+        // Enrich activity with catalogue photo + flavor data
+        if (followerActivity.length > 0) {
+          const actNames = [...new Set(followerActivity.map(a => a.whisky_name).filter(Boolean))]
+          if (actNames.length > 0) {
+            const { data: catRows } = await sb
+              .from('catalogue')
+              .select('name, photo_url, dulzor, ahumado, cuerpo, frutado, especiado')
+              .in('name', actNames)
+            const catMap = {}
+            for (const c of (catRows || [])) catMap[c.name] = c
+            for (const a of followerActivity) {
+              const c = catMap[a.whisky_name]
+              if (c) {
+                a.photo_url = c.photo_url ?? null
+                a.dulzor    = c.dulzor    ?? null
+                a.ahumado   = c.ahumado   ?? null
+                a.cuerpo    = c.cuerpo    ?? null
+                a.frutado   = c.frutado   ?? null
+                a.especiado = c.especiado ?? null
+              }
             }
           }
         }
-      }
 
-      // Build author email map for display names in the email
-      const authorIds = [...new Set(followerActivity.map(a => a.user_id))]
-      const authorEmailMap = await buildEmailMap(authorIds)
+        // Build author email map for display names in the email
+        const authorIds = [...new Set(followerActivity.map(a => a.user_id))]
+        const authorEmailMap = await buildEmailMap(authorIds)
 
-      if (followerActivity.length > 0) {
-        console.log(`     [activity] ${followerActivity.length} follower activity items`)
-      }
+        if (followerActivity.length > 0) {
+          console.log(`     [activity] ${followerActivity.length} follower activity items`)
+        }
 
-      // 8. Send combined weekly email
-      if (SEND_EMAILS && userEmail) {
+        // 8. Send combined weekly email
         try {
           await sendWeeklyEmail(userEmail, enriched, followerActivity, authorEmailMap, generatedAt, localeByUserId[userId] || 'en')
+          emailSent = true
           console.log(`     ✉ Email sent to ${userEmail}`)
         } catch (emailErr) {
           console.error(`     ⚠ Email failed for ${userEmail}: ${emailErr.message}`)
         }
       } else if (SEND_EMAILS && !userEmail) {
         console.log(`     ⚠ No email address found for user ${userId.slice(0, 8)}…`)
+      }
+
+      // Mark the week as sent ONLY once the email actually went out. A failed
+      // send leaves sent_week unset so the next run retries instead of skipping.
+      if (emailSent) {
+        await sb.from('recommendations').update({ sent_week: thisWeek }).eq('user_id', userId)
       }
 
       processed++
@@ -535,18 +584,21 @@ async function main() {
   console.log('')
   console.log(`✓ Done — ${processed} processed, ${errors} errors`)
 
-  // Clean up activity_feed rows older than 3 months — after emails have been sent.
-  const cutoff = new Date()
-  cutoff.setMonth(cutoff.getMonth() - 3)
-  const { error: cleanupError } = await sb
-    .from('activity_feed')
-    .delete()
-    .lt('created_at', cutoff.toISOString())
+  // Clean up activity_feed rows older than 3 months — only on a real (emailing)
+  // run. Dry-runs must never delete data.
+  if (SEND_EMAILS) {
+    const cutoff = new Date()
+    cutoff.setMonth(cutoff.getMonth() - 3)
+    const { error: cleanupError } = await sb
+      .from('activity_feed')
+      .delete()
+      .lt('created_at', cutoff.toISOString())
 
-  if (cleanupError) {
-    console.warn(`⚠ activity_feed cleanup failed: ${cleanupError.message}`)
-  } else {
-    console.log('[cleanup] activity_feed: rows older than 3 months cleared')
+    if (cleanupError) {
+      console.warn(`⚠ activity_feed cleanup failed: ${cleanupError.message}`)
+    } else {
+      console.log('[cleanup] activity_feed: rows older than 3 months cleared')
+    }
   }
 }
 

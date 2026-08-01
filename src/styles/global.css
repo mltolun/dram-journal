@@ -1,5 +1,4 @@
-/* ── IMPORT FONTS ── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fonts are loaded once via the <link> in index.html (preconnect included). */
 
 /* ── DEFAULT THEME (dark) ── */
 :root {

@@ -68,6 +68,7 @@ Respond ONLY with a JSON object, no markdown, no explanation:
   "frutado": <integer 0-5, fruitiness>,
   "especiado": <integer 0-5, spiciness>
 }`
+}
 
 // ── Gemma API call ────────────────────────────────────────────────────────────
 
@@ -156,22 +157,22 @@ async function main() {
     whiskies = [data]
   } else {
     // Fetch whiskies to process — paginate in chunks of 1000 (Supabase row limit)
-  const PAGE_SIZE = 1000
-  let whiskies = []
-  let from = START_OFFSET
-  while (whiskies.length < BATCH_LIMIT) {
-    const to = from + Math.min(PAGE_SIZE, BATCH_LIMIT - whiskies.length) - 1
-    const { data: page, error } = await sb
-      .from('catalogue')
-      .select('id, name, distillery, country, region, age, abv, type')
-      .is('status', null)
-      .order('id', { ascending: true })
-      .range(from, to)
-    if (error) throw new Error(`Supabase query failed: ${error.message}`)
-    if (!page?.length) break
-    whiskies = whiskies.concat(page)
-    if (page.length < PAGE_SIZE) break  // last page
-    from += PAGE_SIZE
+    const PAGE_SIZE = 1000
+    let from = START_OFFSET
+    while (whiskies.length < BATCH_LIMIT) {
+      const to = from + Math.min(PAGE_SIZE, BATCH_LIMIT - whiskies.length) - 1
+      const { data: page, error } = await sb
+        .from('catalogue')
+        .select('id, name, distillery, country, region, age, abv, type')
+        .is('status', null)
+        .order('id', { ascending: true })
+        .range(from, to)
+      if (error) throw new Error(`Supabase query failed: ${error.message}`)
+      if (!page?.length) break
+      whiskies = whiskies.concat(page)
+      if (page.length < PAGE_SIZE) break  // last page
+      from += PAGE_SIZE
+    }
   }
 
   if (!whiskies.length) { console.log('[flavor-profiles] No whiskies to process.'); return }
