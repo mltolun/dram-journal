@@ -1,7 +1,7 @@
 
 [functions.scrape-whisky]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/scrape-whisky/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -12,5 +12,5 @@ entrypoint = "./functions/scrape-whisky/index.ts"
 
 [functions.gemini-proxy]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 entrypoint = "./functions/gemini-proxy/index.ts"

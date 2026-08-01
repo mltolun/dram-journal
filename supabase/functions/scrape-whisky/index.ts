@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
     const service = createClient(
       Deno.env.get('SUPABASE_URL'),
-      Deno.env.get('SUPABASE_SERVICE_KEY'),
+      Deno.env.get('SUPABASE_SERVICE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
       { auth: { persistSession: false } }
     )
 
@@ -144,7 +144,7 @@ function extractFact(html, label) {
 }
 
 function extractDistillery(html) {
-  const re = /Distillery[\s\S]{0,120}?<p[^>]*class="h3"[^>]*>([^<]+)</p>/i
+  const re = /Distillery[\s\S]{0,120}?<p[^>]*class="h3"[^>]*>([^<]+)<\/p>/i
   const m = html.match(re)
   return m ? decodeEntities(m[1].trim()) : ''
 }
