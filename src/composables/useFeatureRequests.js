@@ -99,8 +99,6 @@ export function useFeatureRequests() {
 
     const notifiableStatuses = ['accepted', 'in_progress', 'done', 'declined']
     if (patch.status && notifiableStatuses.includes(patch.status)) {
-      console.log('[FR notify] status:', patch.status, '| user_email:', data.user_email, '| user_id:', data.user_id)
-
       if (!data.user_email) {
         console.error('[FR notify] Aborting — user_email is missing from feature request row')
       } else {
@@ -115,9 +113,7 @@ export function useFeatureRequests() {
           }),
         })
         if (notifError) {
-          console.error('[FR notify] pending_notifications insert failed:', notifError.message, notifError)
-        } else {
-          console.log('[FR notify] pending_notifications row created ✓')
+          console.error('[FR notify] pending_notifications insert failed:', notifError.message)
         }
 
         // Insert in-app inbox message for the user
@@ -134,9 +130,7 @@ export function useFeatureRequests() {
           },
         })
         if (msgError) {
-          console.error('[FR notify] direct_messages insert failed:', msgError.message, msgError)
-        } else {
-          console.log('[FR notify] direct_messages row created ✓')
+          console.error('[FR notify] direct_messages insert failed:', msgError.message)
         }
       }
     }

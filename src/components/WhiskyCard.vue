@@ -8,7 +8,12 @@
       trash: isTrash,
     }"
     :style="selectColor ? `border-color:${selectColor}` : ''"
+    :tabindex="isTrash ? -1 : 0"
+    :role="isTrash ? undefined : 'button'"
+    :aria-disabled="isTrash || undefined"
     @click="isTrash ? null : $emit('view', whisky)"
+    @keydown.enter.prevent="isTrash ? null : $emit('view', whisky)"
+    @keydown.space.prevent="isTrash ? null : $emit('view', whisky)"
    >
      <div v-if="!isWishlist && !isTrash" class="sel-ring" :style="selectColor ? `background:${selectColor};border-color:${selectColor}` : ''"></div>
 
@@ -17,8 +22,8 @@
     <div class="wcard-body">
       <div class="wcard-meta-row">
         <span class="wcard-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
-        <span v-if="!isTrash && whisky.rating" class="wcard-rating-pill" @click.stop>
-          <StarIcon :size="10" /> {{ whisky.rating }}
+        <span v-if="!isTrash && whisky.rating" class="wcard-rating-pill">
+          <StarIcon :size="10" aria-hidden="true" /> {{ whisky.rating }}
         </span>
         <span v-if="!isTrash" class="wcard-dram-pill">
           <GlassWaterIcon :size="10" /> {{ dramCount }}
@@ -44,19 +49,19 @@
 
     <div class="wcard-actions">
       <template v-if="isTrash">
-        <button class="wcard-btn restore" @click.stop="$emit('restore')" :data-tooltip="t.trashRestore"><RotateCcwIcon :size="11" /></button>
-        <button class="wcard-btn del" @click.stop="$emit('delete')" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn restore" @click.stop="$emit('restore')" :aria-label="t.trashRestore" :data-tooltip="t.trashRestore"><RotateCcwIcon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn del" @click.stop="$emit('delete')" :aria-label="t.trashDeleteNow" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" aria-hidden="true" /></button>
       </template>
       <template v-else-if="isWishlist">
-        <button class="wcard-btn" @click.stop="$emit('share')" :data-tooltip="t.share"><Share2Icon :size="11" /></button>
-        <button class="wcard-btn" @click.stop="$emit('move')" :data-tooltip="t.moveToJournal"><ArrowUpIcon :size="11" /></button>
-        <button class="wcard-btn del" @click.stop="$emit('delete')" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn" @click.stop="$emit('share')" :aria-label="t.share" :data-tooltip="t.share"><Share2Icon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn" @click.stop="$emit('move')" :aria-label="t.moveToJournal" :data-tooltip="t.moveToJournal"><ArrowUpIcon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn del" @click.stop="$emit('delete')" :aria-label="t.trashDeleteNow" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" aria-hidden="true" /></button>
       </template>
       <template v-else>
-        <button class="wcard-btn" @click.stop="$emit('dram')" :data-tooltip="t.logAnotherDramShort"><PlusIcon :size="11" /></button>
-        <button class="wcard-btn" @click.stop="$emit('share')" :data-tooltip="t.share"><Share2Icon :size="11" /></button>
-        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click.stop="$emit('toggle')" :data-tooltip="t.compare"><Columns2Icon :size="11" /></button>
-        <button class="wcard-btn del" @click.stop="$emit('delete')" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn" @click.stop="$emit('dram')" :aria-label="t.logAnotherDramShort" :data-tooltip="t.logAnotherDramShort"><PlusIcon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn" @click.stop="$emit('share')" :aria-label="t.share" :data-tooltip="t.share"><Share2Icon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click.stop="$emit('toggle')" :aria-label="t.compare" :data-tooltip="t.compare" :aria-pressed="selected"><Columns2Icon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn del" @click.stop="$emit('delete')" :aria-label="t.trashDeleteNow" :data-tooltip="t.trashDeleteNow"><Trash2Icon :size="11" aria-hidden="true" /></button>
       </template>
     </div>
   </div>
@@ -67,7 +72,12 @@
     class="wcard-row"
     :class="{ selected, trash: isTrash }"
     :style="selectColor ? `border-left-color:${selectColor}` : ''"
+    :tabindex="isTrash ? -1 : 0"
+    :role="isTrash ? undefined : 'button'"
+    :aria-disabled="isTrash || undefined"
     @click="isTrash ? null : $emit('view', whisky)"
+    @keydown.enter.prevent="isTrash ? null : $emit('view', whisky)"
+    @keydown.space.prevent="isTrash ? null : $emit('view', whisky)"
    >
      <span class="wcard-type wcard-row-type" :class="`type-${whisky.type}`">{{ t.types[whisky.type] }}</span>
 
@@ -82,19 +92,19 @@
 
     <div class="wcard-row-actions" @click.stop>
       <template v-if="isTrash">
-        <button class="wcard-btn" @click="$emit('restore')" :aria-label="t.trashRestore"><RotateCcwIcon :size="11" /></button>
-        <button class="wcard-btn del" @click="$emit('delete')" :title="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn" @click="$emit('restore')" :aria-label="t.trashRestore"><RotateCcwIcon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.trashDeleteNow"><Trash2Icon :size="11" aria-hidden="true" /></button>
       </template>
       <template v-else-if="isWishlist">
         <button class="wcard-btn" @click="$emit('share')" :aria-label="t.share"><Share2Icon :size="11" /></button>
         <button class="wcard-btn" @click="$emit('move')" :aria-label="t.moveToJournal"><ArrowUpIcon :size="11" /></button>
-        <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.delete"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
       </template>
       <template v-else>
         <button class="wcard-btn" @click="$emit('dram')" :aria-label="t.logAnotherDramShort"><PlusIcon :size="11" /></button>
         <button class="wcard-btn" @click="$emit('share')" :aria-label="t.share"><Share2Icon :size="11" /></button>
-        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click="$emit('toggle')" aria-label="Compare"><Columns2Icon :size="11" /></button>
-        <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.delete"><Trash2Icon :size="11" /></button>
+        <button class="wcard-btn" :class="{ 'compare-active': selected }" @click="$emit('toggle')" :aria-label="t.compare" :aria-pressed="selected"><Columns2Icon :size="11" aria-hidden="true" /></button>
+        <button class="wcard-btn del" @click="$emit('delete')" :aria-label="t.trashDeleteNow"><Trash2Icon :size="11" /></button>
       </template>
     </div>
   </div>
@@ -206,8 +216,14 @@ const dramCount   = computed(() => {
   gap: 4px;
 }
 .wcard-btn.restore:hover {
-  border-color: #1D9E75;
-  color: #6ecb9a;
+  border-color: var(--success);
+  color: var(--success-soft);
+}
+
+/* Larger touch targets on coarse pointers */
+@media (pointer: coarse) {
+  .wcard-btn { min-height: 40px; }
+  .wcard-row-actions .wcard-btn { width: 40px; height: 40px; }
 }
 
 /* ── Compact list row ── */

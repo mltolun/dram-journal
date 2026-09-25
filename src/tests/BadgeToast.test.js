@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 describe('BadgeToast', () => {
   beforeEach(() => {
     localStorage.setItem('dj_locale', 'en')
+    vi.resetModules()
     vi.useFakeTimers()
   })
 

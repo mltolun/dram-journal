@@ -46,7 +46,8 @@ export function usePhoto() {
   async function deletePhoto(whiskyId, userId, photoUrl) {
     const ext  = photoUrl?.match(/\.(png|jpg|jpeg)(\?|$)/i)?.[1] ?? 'jpg'
     const path = `${userId || currentUser.value.id}/${whiskyId}.${ext}`
-    await sb.storage.from('whisky-photos').remove([path])
+    const { error } = (await sb.storage.from('whisky-photos').remove([path])) ?? {}
+    if (error) console.error('Photo cleanup failed (storage object may be orphaned):', error)
   }
 
   return { pendingBlob, previewUrl, currentUrl, compressedKb, selectPhoto, clearPhoto, loadExisting, uploadPhoto, deletePhoto }

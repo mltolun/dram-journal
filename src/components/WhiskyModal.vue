@@ -1,28 +1,28 @@
 <template>
-  <div class="modal-backdrop open" @click.self="$emit('close')">
+  <div class="modal-backdrop open" ref="backdropEl" role="dialog" aria-modal="true" :aria-label="modalAriaLabel" @click.self="requestClose">
 
       <!-- ── QUICK-LOG OVERLAY ── -->
       <Teleport to="body">
         <Transition name="quicklog">
-          <div v-if="quickLogOverlayOpen" class="quicklog-backdrop" @click.self="closeQuickLog">
+          <div v-if="quickLogOverlayOpen" ref="quicklogEl" class="quicklog-backdrop" role="dialog" aria-modal="true" :aria-label="t.logNewDram" @click.self="closeQuickLog">
             <div class="quicklog-card">
               <div class="quicklog-header">
                 <GlassWaterIcon :size="18" />
                 <span class="quicklog-title">{{ t.logNewDram }}</span>
-                <button class="quicklog-close" @click="closeQuickLog"><XIcon :size="16" /></button>
+                <button class="quicklog-close" :aria-label="t.close" @click="closeQuickLog"><XIcon :size="16" /></button>
               </div>
 
               <div class="quicklog-whisky-name">{{ props.editing?.name }}</div>
 
               <div class="quicklog-form">
                 <div class="quicklog-field">
-                  <label>{{ t.dramDate }}</label>
-                  <input type="date" v-model="dramForm.tasted_at">
+                  <label for="ql-dram-date">{{ t.dramDate }}</label>
+                  <input id="ql-dram-date" type="date" v-model="dramForm.tasted_at">
                 </div>
 
                 <div class="quicklog-field">
-                  <label>{{ t.rating }}</label>
-                  <div class="star-picker quicklog-stars">
+                  <label id="ql-rating-lbl">{{ t.rating }}</label>
+                  <div class="star-picker quicklog-stars" role="group" aria-labelledby="ql-rating-lbl">
                     <button
                       v-for="n in 5"
                       :key="n"
@@ -30,9 +30,11 @@
                       class="star-btn"
                       :class="{ filled: n <= dramForm.rating }"
                       @click="dramForm.rating = dramForm.rating === n ? 0 : n"
+                      :aria-label="t.rateN(n)"
+                      :aria-pressed="dramForm.rating === n"
                       :title="`${n} star${n > 1 ? 's' : ''}`"
                     ><StarIcon :size="18" /></button>
-                    <span v-if="dramForm.rating" class="star-clear" @click="dramForm.rating = 0"><XIcon :size="11" /></span>
+                    <button v-if="dramForm.rating" type="button" class="star-clear" :aria-label="t.clearRating" @click="dramForm.rating = 0"><XIcon :size="11" /></button>
                   </div>
                   <span v-if="previousRating" class="quicklog-prev-rating">
                     {{ t.lastDram || 'Last' }}: <StarIcon :size="11" v-for="s in 5" :key="s" :class="{ filled: s <= previousRating }" />
@@ -40,8 +42,8 @@
                 </div>
 
                 <div class="quicklog-field">
-                  <label>{{ t.dramNotes }}</label>
-                  <textarea v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder" rows="3"></textarea>
+                  <label for="ql-dram-notes">{{ t.dramNotes }}</label>
+                  <textarea id="ql-dram-notes" v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder" rows="3"></textarea>
                 </div>
               </div>
 
@@ -70,17 +72,19 @@
           {{ list === 'wishlist' ? t.addToWishlist : t.addToJournal }}
         </div>
         <div class="modal-title" v-else>{{ t.edit }} <span>{{ editing.name }}</span></div>
-        <button class="modal-close" @click="$emit('close')"><XIcon :size="18" /></button>
+        <button class="modal-close" :aria-label="t.close" @click="requestClose"><XIcon :size="18" /></button>
       </div>
 
       <!-- ── VIEW MODE ── -->
-      <template v-if="isViewMode"><div style="padding: 20px 20px 20px;">
+      <template v-if="isViewMode"><div class="view-mode-body">
 
         <div :class="isJournal && form.photo_url ? 'view-layout-split' : ''">
 
           <!-- Left: photo -->
           <div v-if="isJournal && form.photo_url" class="view-photo-col">
-            <img :src="form.photo_url" class="view-photo" :alt="form.name" @click="lightboxOpen = true">
+            <button type="button" class="view-photo-btn" :aria-label="t.zoomPhoto" @click="lightboxOpen = true">
+              <img :src="form.photo_url" class="view-photo" :alt="form.name">
+            </button>
           </div>
 
           <!-- Right (or full-width if no photo): details -->
@@ -188,31 +192,37 @@
         </div>
 
         <div v-if="isJournal" class="dram-history-section">
-          <div class="dram-history-header" @click="dramSectionExpanded = !dramSectionExpanded" style="cursor: pointer;">
-            <div class="dram-summary">
-              <div class="view-label">{{ t.dramsLogged }}</div>
-              <div class="view-value">
-                <GlassWaterIcon :size="13" /> × {{ dramLogs.length || 1 }}
-                <span v-if="dramLogs.length > 0 && dramLogs[0].tasted_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(dramLogs[0].tasted_at) }}</span>
+          <div class="dram-history-header">
+            <button
+              type="button"
+              class="dram-summary-toggle"
+              :aria-expanded="dramSectionExpanded"
+              aria-controls="dram-log-history"
+              @click="dramSectionExpanded = !dramSectionExpanded"
+            >
+              <div class="dram-summary">
+                <div class="view-label">{{ t.dramsLogged }}</div>
+                <div class="view-value">
+                  <GlassWaterIcon :size="13" /> × {{ dramLogs.length || 1 }}
+                  <span v-if="dramLogs.length > 0 && dramLogs[0].tasted_at" class="view-bottle-date">· {{ t.lastDramLogged }}: {{ formatDate(dramLogs[0].tasted_at) }}</span>
+                </div>
               </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <button class="btn-log-dram" :disabled="dramSaving" @click.stop="openDramLog">
-                <PlusIcon :size="14" /> {{ t.logAnotherDram }}
-              </button>
-              <ChevronDownIcon :size="16" :style="{ transform: dramSectionExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }" />
-            </div>
+              <ChevronDownIcon :size="16" aria-hidden="true" :style="{ transform: dramSectionExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }" />
+            </button>
+            <button class="btn-log-dram" :disabled="dramSaving" @click.stop="openDramLog">
+              <PlusIcon :size="14" /> {{ t.logAnotherDram }}
+            </button>
           </div>
 
           <div v-if="dramLogOpen" class="dram-log-form">
             <div class="form-grid-2">
               <div class="form-row">
-                <label>{{ t.dramDate }}</label>
-                <input type="date" v-model="dramForm.tasted_at">
+                <label for="dl-dram-date">{{ t.dramDate }}</label>
+                <input id="dl-dram-date" type="date" v-model="dramForm.tasted_at">
               </div>
               <div class="form-row">
-                <label>{{ t.rating }}</label>
-                <div class="star-picker">
+                <label id="dl-rating-lbl">{{ t.rating }}</label>
+                <div class="star-picker" role="group" aria-labelledby="dl-rating-lbl">
                   <button
                     v-for="n in 5"
                     :key="n"
@@ -220,15 +230,17 @@
                     class="star-btn"
                     :class="{ filled: n <= dramForm.rating }"
                     @click="dramForm.rating = dramForm.rating === n ? 0 : n"
+                    :aria-label="t.rateN(n)"
+                    :aria-pressed="dramForm.rating === n"
                     :title="`${n} star${n > 1 ? 's' : ''}`"
                   ><StarIcon :size="14" /></button>
-                  <span v-if="dramForm.rating" class="star-clear" @click="dramForm.rating = 0"><XIcon :size="10" /></span>
+                  <button v-if="dramForm.rating" type="button" class="star-clear" :aria-label="t.clearRating" @click="dramForm.rating = 0"><XIcon :size="10" /></button>
                 </div>
               </div>
             </div>
             <div class="form-row">
-              <label>{{ t.dramNotes }}</label>
-              <textarea v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder" rows="2"></textarea>
+              <label for="dl-dram-notes">{{ t.dramNotes }}</label>
+              <textarea id="dl-dram-notes" v-model="dramForm.notes" :placeholder="t.dramNotesPlaceholder" rows="2"></textarea>
             </div>
             <div class="modal-actions modal-actions--dram">
               <button class="btn-save" :disabled="dramSaving" @click="saveDram">
@@ -238,7 +250,7 @@
             </div>
           </div>
 
-          <div v-if="dramSectionExpanded && dramLogs.length > 0" class="dram-log-table">
+          <div v-if="dramSectionExpanded && dramLogs.length > 0" id="dram-log-history" class="dram-log-table">
             <div class="dram-log-row dram-log-header-row">
               <div class="dram-log-cell">{{ t.dramDate }}</div>
               <div class="dram-log-cell">{{ t.rating }}</div>
@@ -259,17 +271,17 @@
 
         <div class="modal-actions">
           <button class="btn-save" :disabled="editLoading" @click="emit('share', props.editing || form)">
-            <Share2Icon :size="14" /> Share
+            <Share2Icon :size="14" /> {{ t.share }}
           </button>
           <button class="btn-save" :disabled="editLoading" @click="switchToEdit"><PencilIcon :size="14" /> {{ t.editBtn }}</button>
-          <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
+          <button class="btn-cancel" @click="requestClose">{{ t.close }}</button>
         </div>
 
         <!-- Lightbox -->
         <Teleport to="body">
-          <div v-if="lightboxOpen" class="lightbox" @click="lightboxOpen = false">
+          <div v-if="lightboxOpen" ref="lightboxEl" class="lightbox" role="dialog" :aria-label="t.zoomPhoto" aria-modal="true" @click="lightboxOpen = false">
             <div class="lightbox-inner" @click.stop>
-              <button class="lightbox-close" @click="lightboxOpen = false"><XIcon :size="16" /></button>
+              <button class="lightbox-close" :aria-label="t.close" @click="lightboxOpen = false"><XIcon :size="16" /></button>
               <img :src="form.photo_url" :alt="form.name" class="lightbox-img">
             </div>
           </div>
@@ -285,15 +297,16 @@
           <div v-if="form.distillery" class="scan-match-sub">{{ form.distillery }}</div>
         </div>
 
-        <div v-if="scanSearching" class="cs-state">{{ t.searching || 'Searching…' }}</div>
+        <div v-if="scanSearching" class="cs-state" role="status">{{ t.searching || 'Searching…' }}</div>
 
         <template v-else>
           <!-- Catalogue matches found -->
           <div v-if="scanResults.length" class="cs-results scan-results">
             <div class="scan-match-hint">{{ t.scanMatchHint || 'Select the matching bottle from the catalogue:' }}</div>
-            <div
+            <button
               v-for="item in scanResults"
               :key="item.id"
+              type="button"
               class="cs-item"
               @click="onCataloguePick(item); scanMode = false"
             >
@@ -314,11 +327,11 @@
                   <span v-if="item.abv">{{ item.abv }}</span>
                 </div>
               </div>
-              <span class="cs-arrow">›</span>
-            </div>
+              <span class="cs-arrow" aria-hidden="true">›</span>
+            </button>
           </div>
 
-          <div v-else class="cs-state cs-empty">
+          <div v-else class="cs-state cs-empty" role="status">
             {{ t.scanNoMatch || 'No catalogue match found.' }}
           </div>
 
@@ -339,14 +352,14 @@
 
       <!-- Loading catalogue entry for existing record -->
       <template v-else-if="editLoading">
-        <div class="cs-state">{{ t.searching || 'Loading…' }}</div>
+        <div class="cs-state" role="status">{{ t.searching || 'Loading…' }}</div>
       </template>
 
       <!-- ── ADD / EDIT MODE ── -->
       <template v-else>
         <div v-if="!cataloguePicked" class="form-row">
-          <label>{{ t.name }}</label>
-          <input type="text" v-model="form.name" :placeholder="t.namePlaceholder">
+          <label for="wm-name">{{ t.name }}</label>
+          <input id="wm-name" type="text" v-model="form.name" :placeholder="t.namePlaceholder">
         </div>
 
         <div v-if="isJournal && !cataloguePicked" class="form-row">
@@ -361,38 +374,38 @@
 
         <div class="form-grid-2">
           <div class="form-row">
-            <label>
+            <label for="wm-origin">
               {{ t.country }}
               <span v-if="cataloguePicked && form.origin !== (cataloguePicked.country || '')" class="override-badge">
-                yours · <button class="reset-btn" @click="form.origin = cataloguePicked.country || ''">↺</button>
+                yours · <button type="button" class="reset-btn" :aria-label="t.resetToCatalogue" @click="form.origin = cataloguePicked.country || ''">↺</button>
               </span>
             </label>
-            <input type="text" v-model="form.origin" :placeholder="t.countryPlaceholder">
+            <input id="wm-origin" type="text" v-model="form.origin" :placeholder="t.countryPlaceholder">
           </div>
           <div class="form-row">
-            <label>
+            <label for="wm-region">
               {{ t.region }}
               <span v-if="cataloguePicked && form.region !== (cataloguePicked.region || '')" class="override-badge">
-                yours · <button class="reset-btn" @click="form.region = cataloguePicked.region || ''">↺</button>
+                yours · <button type="button" class="reset-btn" :aria-label="t.resetToCatalogue" @click="form.region = cataloguePicked.region || ''">↺</button>
               </span>
             </label>
-            <Autocomplete v-model="form.region" category="origin" :placeholder="t.regionPlaceholder" />
+            <Autocomplete id="wm-region" v-model="form.region" category="origin" :placeholder="t.regionPlaceholder" />
           </div>
           <div class="form-row">
-            <label>
+            <label for="wm-age">
               {{ t.ageMaturation }}
               <span v-if="cataloguePicked && form.age !== (cataloguePicked.age || '')" class="override-badge">
-                yours · <button class="reset-btn" @click="form.age = cataloguePicked.age || ''">↺</button>
+                yours · <button type="button" class="reset-btn" :aria-label="t.resetToCatalogue" @click="form.age = cataloguePicked.age || ''">↺</button>
               </span>
             </label>
-            <input type="text" v-model="form.age" :placeholder="t.agePlaceholder">
+            <input id="wm-age" type="text" v-model="form.age" :placeholder="t.agePlaceholder">
           </div>
         </div>
 
         <div class="form-grid-2">
           <div v-if="!cataloguePicked" class="form-row">
-            <label>{{ t.style }}</label>
-            <select v-model="form.type">
+            <label for="wm-type">{{ t.style }}</label>
+            <select id="wm-type" v-model="form.type">
               <option value="scotch">{{ t.scotch }}</option>
               <option value="irish">{{ t.irish }}</option>
               <option value="bourbon">{{ t.bourbon }}</option>
@@ -401,29 +414,29 @@
             </select>
           </div>
           <div class="form-row">
-            <label>
+            <label for="wm-price">
               {{ t.price }}
               <span v-if="cataloguePicked && form.price !== (cataloguePicked.price_band || '')" class="override-badge">
-                yours · <button class="reset-btn" @click="form.price = cataloguePicked.price_band || ''">↺</button>
+                yours · <button type="button" class="reset-btn" :aria-label="t.resetToCatalogue" @click="form.price = cataloguePicked.price_band || ''">↺</button>
               </span>
             </label>
-            <input type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
+            <input id="wm-price" type="text" v-model="form.price" :placeholder="t.pricePlaceholder">
           </div>
           <div v-if="isJournal" class="form-row">
-            <label>{{ t.tastingDate }}</label>
-            <input type="date" v-model="form.date">
+            <label for="wm-date">{{ t.tastingDate }}</label>
+            <input id="wm-date" type="date" v-model="form.date">
           </div>
         </div>
 
         <!-- Bottle counter — edit mode, journal only -->
         <div v-if="isJournal && editing" class="form-grid-2">
           <div class="form-row">
-            <label>{{ t.bottleCount }}</label>
-            <input type="number" v-model.number="form.bottle_count" min="1" step="1">
+            <label for="wm-bottles">{{ t.bottleCount }}</label>
+            <input id="wm-bottles" type="number" v-model.number="form.bottle_count" min="1" step="1">
           </div>
           <div class="form-row">
-            <label>{{ t.lastFinished }}</label>
-            <input type="date" v-model="form.last_finished">
+            <label for="wm-last-finished">{{ t.lastFinished }}</label>
+            <input id="wm-last-finished" type="date" v-model="form.last_finished">
           </div>
         </div>
 
@@ -446,7 +459,7 @@
               <span v-if="cataloguePicked.abv"> · {{ cataloguePicked.abv }}</span>
             </div>
           </div>
-          <button class="catalogue-locked-change" @click="cataloguePicked = null" title="Change whisky">↩</button>
+          <button type="button" class="catalogue-locked-change" :aria-label="t.changeWhisky" :title="t.changeWhisky" @click="cataloguePicked = null">↩</button>
         </div>
 
         <!-- Tasting fields only for journal -->
@@ -462,47 +475,49 @@
               >yours</span>
               <span class="slider-val">{{ form[a] }}</span>
             </div>
-            <input type="range" min="0" max="5" step="1" v-model.number="form[a]">
+            <input type="range" min="0" max="5" step="1" v-model.number="form[a]" :aria-label="t.attrs[a]">
           </div>
           <div class="form-row">
-            <label>{{ t.nose }}
+            <label for="wm-nose">{{ t.nose }}
               <span v-if="cataloguePicked && form.nose !== cataloguePicked.nose && form.nose" class="override-badge">yours</span>
             </label>
-            <input type="text" v-model="form.nose" :placeholder="t.nosePlaceholder">
+            <input id="wm-nose" type="text" v-model="form.nose" :placeholder="t.nosePlaceholder">
           </div>
           <div class="form-row">
-            <label>{{ t.palate }}
+            <label for="wm-palate">{{ t.palate }}
               <span v-if="cataloguePicked && form.palate !== cataloguePicked.palate && form.palate" class="override-badge">yours</span>
             </label>
-            <input type="text" v-model="form.palate" :placeholder="t.palatePlaceholder">
+            <input id="wm-palate" type="text" v-model="form.palate" :placeholder="t.palatePlaceholder">
           </div>
         </template>
 
         <div v-if="isJournal" class="form-row">
-          <label>{{ t.rating }}</label>
-          <div class="star-picker">
+          <label id="wm-rating-lbl">{{ t.rating }}</label>
+          <div class="star-picker" role="group" aria-labelledby="wm-rating-lbl">
             <button
               v-for="n in 5" :key="n"
               type="button"
               class="star-btn"
               :class="{ filled: n <= form.rating }"
               @click="form.rating = form.rating === n ? 0 : n"
+              :aria-label="t.rateN(n)"
+              :aria-pressed="form.rating === n"
               :title="`${n} star${n > 1 ? 's' : ''}`"
             ><StarIcon :size="14" /></button>
-            <span v-if="form.rating" class="star-clear" @click="form.rating = 0"><XIcon :size="10" /></span>
+            <button v-if="form.rating" type="button" class="star-clear" :aria-label="t.clearRating" @click="form.rating = 0"><XIcon :size="10" /></button>
           </div>
         </div>
 
         <div class="form-row">
-          <label>{{ isJournal ? t.personalNotes : t.wishlistNotes }}</label>
-          <textarea v-model="form.notes" :placeholder="isJournal ? t.notesPlaceholder : t.wishlistNotesPlaceholder"></textarea>
+          <label for="wm-notes">{{ isJournal ? t.personalNotes : t.wishlistNotes }}</label>
+          <textarea id="wm-notes" v-model="form.notes" :placeholder="isJournal ? t.notesPlaceholder : t.wishlistNotesPlaceholder"></textarea>
         </div>
 
         <div v-if="(cataloguePicked || manualMode || editing) && !scanMode" class="modal-actions">
           <button class="btn-save" :disabled="saving" @click="save">
             <CheckIcon v-if="!saving" :size="14" /> {{ saving ? t.saving : (editing ? t.saveChanges : (isJournal ? t.addToJournalBtn : t.addToWishlistBtn)) }}
           </button>
-          <button class="btn-cancel" @click="$emit('close')">{{ t.cancel }}</button>
+          <button class="btn-cancel" @click="requestClose">{{ t.cancel }}</button>
         </div>
       </template>
     </div>
@@ -516,6 +531,7 @@ import { useWhiskies } from '../composables/useWhiskies.js'
 import { usePhoto } from '../composables/usePhoto.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
 import CatalogueSearch from './CatalogueSearch.vue'
 import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
 import { ATTRS, DEFAULTS, TYPE_LABELS } from '../lib/constants.js'
@@ -550,9 +566,46 @@ const dramLogs           = ref([])
 const dramLogsLoading    = ref(false)
 const dramSectionExpanded = ref(false)
 
+const backdropEl = ref(null)
+const quicklogEl = ref(null)
+const lightboxEl = ref(null)
+
 const isViewMode = computed(() => inViewMode.value)
 const isJournal = computed(() => (props.editing?.list || props.list) === 'journal')
 const quickLogOverlayOpen = computed(() => props.quickLog && dramLogOpen.value && props.editing?.id != null)
+
+const modalAriaLabel = computed(() =>
+  inViewMode.value
+    ? (props.editing?.name || '')
+    : (props.editing ? `${t.value.edit} ${props.editing.name}` : (props.list === 'wishlist' ? t.value.addToWishlist : t.value.addToJournal))
+)
+
+// Escape / focus handling — topmost layer wins (lightbox > quick-log > modal)
+function topOverlayEl() {
+  if (lightboxOpen.value) return lightboxEl.value
+  if (quickLogOverlayOpen.value) return quicklogEl.value
+  return backdropEl.value
+}
+function onDialogEscape() {
+  if (lightboxOpen.value) { lightboxOpen.value = false; return }
+  if (quickLogOverlayOpen.value) { closeQuickLog(); return }
+  requestClose()
+}
+useDialog(topOverlayEl, { onClose: onDialogEscape })
+
+// Snapshot of the form as loaded, so we can warn about unsaved changes
+let initialFormJson = null
+
+function isFormDirty() {
+  if (inViewMode.value) return false
+  if (!initialFormJson) return false
+  return JSON.stringify(form) !== initialFormJson
+}
+
+function requestClose() {
+  if (isFormDirty() && !window.confirm(t.value.discardChanges)) return
+  emit('close')
+}
 
 const previousRating = computed(() => {
   if (dramLogs.value.length > 0 && dramLogs.value[0].rating) {
@@ -661,8 +714,6 @@ onMounted(async () => {
       // Use name only — distillery is usually already in the scanned name
       const raw = props.prefill.name || ''
       const q   = cleanSearchQuery(raw) || raw
-      console.log('[Scan] raw query:', raw)
-      console.log('[Scan] cleaned query:', q)
       if (q.trim().length >= 2) {
         scanMode.value      = true
         scanSearching.value = true
@@ -691,6 +742,8 @@ onMounted(async () => {
   if (props.editing?.id && props.quickLog) {
     restoreDraft()
   }
+
+  initialFormJson = JSON.stringify(form)
 })
 
 watch(() => props.editing, (newVal, oldVal) => {
@@ -740,7 +793,8 @@ async function saveDram() {
     dramForm.notes = ''
     dramLogs.value = await getDramLogs(props.editing.id)
   } catch (e) {
-    toast('⚠ ' + e.message)
+    console.error('saveDram failed:', e)
+    toast('⚠ ' + t.value.saveFailed)
   } finally {
     dramSaving.value = false
   }
@@ -748,14 +802,18 @@ async function saveDram() {
 
 async function saveDramFromQuickLog() {
   await saveDram()
-  inViewMode.value = false
 }
 
 async function onPhotoSelected(file) {
-  const { blob, dataUrl, kb } = await compressImage(file, 600, 0.78)
-  pendingBlob.value  = blob
-  previewUrl.value   = dataUrl
-  compressedKb.value = kb
+  try {
+    const { blob, dataUrl, kb } = await compressImage(file, 600, 0.78)
+    pendingBlob.value  = blob
+    previewUrl.value   = dataUrl
+    compressedKb.value = kb
+  } catch (e) {
+    console.error('compressImage failed:', e)
+    toast('⚠ ' + (e?.message || t.value.photoFailed))
+  }
 }
 
 function onPhotoRemove() {
@@ -823,7 +881,8 @@ async function save() {
 
     emit('saved', { ...fields, ...savedRecord })
   } catch (e) {
-    toast('⚠ ' + e.message)
+    console.error('save failed:', e)
+    toast('⚠ ' + (e?.message || t.value.saveFailed))
   } finally {
     saving.value = false
   }
@@ -831,6 +890,35 @@ async function save() {
 </script>
 
 <style scoped>
+.view-mode-body { padding: 20px; }
+
+.view-photo-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: block;
+  cursor: zoom-in;
+}
+
+.dram-summary-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.dram-summary-toggle:hover { opacity: 0.85; }
+
 .star-picker {
   display: flex;
   align-items: center;
@@ -843,8 +931,10 @@ async function save() {
   font-size: 1.4rem;
   color: var(--border-hi);
   cursor: pointer;
-  padding: 0;
+  padding: 6px;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
   transition: color 0.12s, transform 0.12s;
 }
 .star-btn.filled {
@@ -855,12 +945,18 @@ async function save() {
   transform: scale(1.15);
 }
 .star-clear {
+  background: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: var(--peat-light);
   cursor: pointer;
   margin-left: 4px;
-  opacity: 0.6;
+  opacity: 0.8;
   transition: opacity 0.15s;
 }
 .star-clear:hover {
@@ -1142,6 +1238,12 @@ async function save() {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
 .cs-item:hover { background: var(--bg-card); }
 .cs-thumb {
@@ -1203,7 +1305,6 @@ async function save() {
   padding: 20px;
   color: var(--text-secondary);
   font-size: 0.85rem;
-  opacity: 0.6;
 }
 .cs-manual {
   display: flex;
@@ -1322,9 +1423,9 @@ async function save() {
   border-radius: 6px;
   color: var(--text-secondary);
   font-size: 1rem;
-  padding: 4px 8px;
+  padding: 8px 12px;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.8;
   transition: opacity 0.15s;
   flex-shrink: 0;
 }
@@ -1441,8 +1542,12 @@ async function save() {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
-  opacity: 0.6;
+  padding: 10px;
+  margin: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
   transition: opacity 0.15s;
 }
 .quicklog-close:hover { opacity: 1; }
@@ -1534,7 +1639,7 @@ async function save() {
   padding: 12px 16px;
   border-radius: 10px;
   background: var(--amber);
-  color: #fff;
+  color: var(--on-amber);
   border: none;
   font-size: 0.9rem;
   font-weight: 600;

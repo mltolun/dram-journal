@@ -30,35 +30,35 @@
       </div>
 
       <!-- Cascading filter bar (journal only) -->
-      <div v-if="activeList === 'journal' && filtersOpen" class="filter-bar">
-        <select v-model="filterCountry" class="filter-select">
-          <option value="">All countries</option>
+      <div v-if="activeList === 'journal' && filtersOpen" class="filter-bar" role="group" :aria-label="t.filters">
+        <select v-model="filterCountry" class="filter-select" :aria-label="t.country">
+          <option value="">{{ t.allCountries }}</option>
           <option v-for="c in availableCountries" :key="c" :value="c">{{ c }}</option>
         </select>
-        <select v-model="filterRegion" class="filter-select">
-          <option value="">All regions</option>
+        <select v-model="filterRegion" class="filter-select" :aria-label="t.region">
+          <option value="">{{ t.allRegions }}</option>
           <option v-for="r in availableRegions" :key="r" :value="r">{{ r }}</option>
         </select>
-        <select v-model="filterDistillery" class="filter-select">
-          <option value="">All distilleries</option>
+        <select v-model="filterDistillery" class="filter-select" :aria-label="t.distillery">
+          <option value="">{{ t.allDistilleries }}</option>
           <option v-for="d in availableDistilleries" :key="d" :value="d">{{ d }}</option>
         </select>
-        <select v-model="filterAge" class="filter-select">
-          <option value="">All ages</option>
+        <select v-model="filterAge" class="filter-select" :aria-label="t.ageMaturation">
+          <option value="">{{ t.allAges }}</option>
           <option v-for="a in availableAges" :key="a" :value="a">{{ a === 'NAS' ? 'NAS' : a + ' yo' }}</option>
         </select>
         <div class="filter-sort-group">
-          <select v-model="sortBy" class="filter-select">
-            <option value="date">Date</option>
-            <option value="rating">Rating</option>
-            <option value="name">Name</option>
+          <select v-model="sortBy" class="filter-select" :aria-label="t.sortBy">
+            <option value="date">{{ t.sortDate }}</option>
+            <option value="rating">{{ t.sortRating }}</option>
+            <option value="name">{{ t.sortName }}</option>
           </select>
-          <button class="btn-sort-dir" @click="sortDir = sortDir === 'desc' ? 'asc' : 'desc'" :title="sortDir === 'desc' ? 'Newest / highest first' : 'Oldest / lowest first'">
+          <button class="btn-sort-dir" @click="sortDir = sortDir === 'desc' ? 'asc' : 'desc'" :title="sortDir === 'desc' ? t.sortDescHint : t.sortAscHint" :aria-label="sortDir === 'desc' ? t.sortDescHint : t.sortAscHint">
             <ArrowDownIcon v-if="sortDir === 'desc'" :size="13" aria-hidden="true" />
             <ArrowUpIcon v-else :size="13" aria-hidden="true" />
           </button>
         </div>
-        <button v-if="activeFilterCount > 0" class="btn-clear-filters" @click="clearFilters">Clear filters</button>
+        <button v-if="activeFilterCount > 0" class="btn-clear-filters" @click="clearFilters">{{ t.clearFilters }}</button>
       </div>
 
       <!-- Grid area -->
@@ -86,7 +86,7 @@
             @click="viewMode = 'timeline'"
             :aria-pressed="viewMode === 'timeline'"
             aria-label="Timeline"
-          ><CalendarIcon :size="13" aria-hidden="true" /> Timeline</button>
+          ><CalendarIcon :size="13" aria-hidden="true" /> {{ t.timeline }}</button>
         </div>
 
         <!-- ── Wishlist: two-column layout ── -->
@@ -94,9 +94,16 @@
           <div class="wishlist-col">
             <div class="wishlist-section-lbl"><SparklesIcon :size="12" style="display:inline;vertical-align:middle;margin-right:5px;" />{{ t.wishlist }}</div>
             <div class="whisky-grid wishlist-grid">
-              <div class="empty-grid" v-if="activeItems.length === 0">
+              <div class="error-grid" v-if="syncStatus === 'error'" role="alert">
+                <div class="error-text">{{ t.loadFailed }}</div>
+                <button class="btn-retry" @click="reload">{{ t.tryAgain }}</button>
+              </div>
+              <div class="empty-grid" v-else-if="activeItems.length === 0 && syncStatus !== 'loading'">
                 <div class="empty-icon"><SparklesIcon :size="36" /></div>
                 <div class="empty-text">{{ t.emptyWishlist }}</div>
+              </div>
+              <div class="empty-grid" v-else-if="activeItems.length === 0" role="status">
+                <div class="empty-text">{{ t.loading }}</div>
               </div>
               <WhiskyCard
                 v-for="w in activeItems"
@@ -123,10 +130,21 @@
           class="whisky-grid"
           :class="{ 'list-view': viewMode === 'list' }"
         >
-          <template v-if="activeItems.length === 0">
+          <template v-if="syncStatus === 'error'">
+            <div class="error-grid" role="alert">
+              <div class="error-text">{{ t.loadFailed }}</div>
+              <button class="btn-retry" @click="reload">{{ t.tryAgain }}</button>
+            </div>
+          </template>
+          <template v-else-if="activeItems.length === 0 && syncStatus !== 'loading'">
             <div class="empty-grid">
               <div class="empty-icon"><GlassWaterIcon :size="36" /></div>
               <div class="empty-text">{{ t.emptyJournal }}</div>
+            </div>
+          </template>
+          <template v-else-if="activeItems.length === 0">
+            <div class="empty-grid" role="status">
+              <div class="empty-text">{{ t.loading }}</div>
             </div>
           </template>
           <WhiskyCard
@@ -280,7 +298,7 @@ import TimelinePanel       from '../components/TimelinePanel.vue'
 import FeedPanel           from '../components/FeedPanel.vue'
 
 const { getSession } = useAuth()
-const { loadWhiskies, whiskies, deleteWhisky, moveToJournal, moveToTrash, restoreFromTrash } = useWhiskies()
+const { loadWhiskies, whiskies, syncStatus, deleteWhisky, moveToJournal, moveToTrash, restoreFromTrash } = useWhiskies()
 const { deletePhoto } = usePhoto()
 const { toast } = useToast()
 const { t } = useI18n()
@@ -580,47 +598,75 @@ function launchShareFromPrompt() {
   sharePromptWhisky.value = null
 }
 
+async function reload() {
+  try {
+    await loadWhiskies()
+  } catch (e) {
+    console.error('reload failed:', e)
+  }
+}
+
 async function doDelete(w) {
   if (w.list === 'wishlist') {
-    if (!confirm(`Delete "${w.name}" from your wishlist?`)) return
-    await deleteWhisky(w.id)
-    if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
-    toast(t.value.deleted)
+    if (!window.confirm(t.value.confirmDeleteWishlist(w.name))) return
+    try {
+      await deleteWhisky(w.id)
+      if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
+      toast(t.value.deleted)
+    } catch (err) {
+      console.error('deleteWhisky failed:', err)
+      toast('⚠ ' + t.value.actionFailed)
+    }
     return
   }
-  if (!confirm(`Move "${w.name}" to trash?`)) return
+  if (!window.confirm(t.value.confirmMoveToTrash(w.name))) return
   try {
     await moveToTrash(w.id)
     selected.value = selected.value.filter(id => id !== w.id)
     toast(t.value.trashMoved(w.name))
   } catch (err) {
     console.error('moveToTrash failed:', err)
-    toast(`⚠ Could not move to trash: ${err.message}`)
+    toast('⚠ ' + t.value.actionFailed)
   }
 }
 
 async function doRestore(w) {
-  await restoreFromTrash(w.id)
-  toast(t.value.trashRestored(w.name))
+  try {
+    await restoreFromTrash(w.id)
+    toast(t.value.trashRestored(w.name))
+  } catch (err) {
+    console.error('restoreFromTrash failed:', err)
+    toast('⚠ ' + t.value.actionFailed)
+  }
 }
 
 async function doHardDelete(w) {
-  if (!confirm(`Permanently delete "${w.name}"? This cannot be undone.`)) return
-  await deleteWhisky(w.id)
-  if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
-  toast(t.value.deleted)
+  if (!window.confirm(t.value.confirmHardDelete(w.name))) return
+  try {
+    await deleteWhisky(w.id)
+    if (w.photo_url) deletePhoto(w.id, null, w.photo_url)
+    toast(t.value.deleted)
+  } catch (err) {
+    console.error('deleteWhisky failed:', err)
+    toast('⚠ ' + t.value.actionFailed)
+  }
 }
 
 async function doMoveToJournal(w) {
-  await moveToJournal(w.id)
-  toast(t.value.movedToJournal(w.name))
+  try {
+    await moveToJournal(w.id)
+    toast(t.value.movedToJournal(w.name))
+  } catch (err) {
+    console.error('moveToJournal failed:', err)
+    toast('⚠ ' + t.value.actionFailed)
+  }
 }
 
 function onSaved(w) {
   modalOpen.value = false
   quickLogMode.value = false
   toast(editingWhisky.value ? t.value.whiskyUpdated(w.name) : t.value.whiskyAdded(w.name))
-  if (!editingWhisky.value && (w.list || activeList.value) === 'journal') {
+  if (!editingWhisky.value && (w.list || activeList.value) === 'journal' && localStorage.getItem('dj_no_share_prompt') !== '1') {
     sharePromptWhisky.value = w
   }
 }

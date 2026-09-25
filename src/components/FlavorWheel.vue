@@ -1,56 +1,62 @@
 <template>
-  <svg viewBox="-28 -16 256 232" class="flavor-wheel" aria-hidden="true">
-    <!-- Concentric grid pentagons -->
-    <polygon
-      v-for="scale in [1, 2, 3, 4, 5]"
-      :key="scale"
-      :points="gridPoints(scale)"
-      fill="none"
-      :stroke="scale === 5 ? 'rgba(200,130,42,0.25)' : 'rgba(200,130,42,0.1)'"
-      stroke-width="0.5"
-    />
+  <div class="flavor-wheel-wrap">
+    <svg viewBox="-28 -16 256 232" class="flavor-wheel" role="img" :aria-label="wheelSummary">
+      <!-- Concentric grid pentagons -->
+      <polygon
+        v-for="scale in [1, 2, 3, 4, 5]"
+        :key="scale"
+        :points="gridPoints(scale)"
+        fill="none"
+        stroke="var(--border-hi)"
+        :stroke-opacity="scale === 5 ? 0.6 : 0.25"
+        stroke-width="0.5"
+      />
 
-    <!-- Axis lines from center to max -->
-    <line
-      v-for="axis in AXES"
-      :key="axis.key + '-line'"
-      x1="100" y1="100"
-      :x2="axisPoint(axis.angle, 5).x"
-      :y2="axisPoint(axis.angle, 5).y"
-      stroke="rgba(200,130,42,0.15)"
-      stroke-width="0.5"
-    />
+      <!-- Axis lines from center to max -->
+      <line
+        v-for="axis in AXES"
+        :key="axis.key + '-line'"
+        x1="100" y1="100"
+        :x2="axisPoint(axis.angle, 5).x"
+        :y2="axisPoint(axis.angle, 5).y"
+        stroke="var(--border-hi)"
+        stroke-opacity="0.35"
+        stroke-width="0.5"
+      />
 
-    <!-- User profile fill -->
-    <polygon
-      :points="profilePoints"
-      fill="rgba(200,130,42,0.18)"
-      stroke="var(--amber, #A8620A)"
-      stroke-width="1.5"
-      stroke-linejoin="round"
-    />
+      <!-- User profile fill -->
+      <polygon
+        :points="profilePoints"
+        fill="var(--amber)"
+        fill-opacity="0.18"
+        stroke="var(--amber)"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
 
-    <!-- Value dots -->
-    <circle
-      v-for="axis in AXES"
-      :key="axis.key + '-dot'"
-      :cx="axisPoint(axis.angle, profile[axis.key]).x"
-      :cy="axisPoint(axis.angle, profile[axis.key]).y"
-      r="3"
-      fill="var(--amber, #A8620A)"
-    />
+      <!-- Value dots -->
+      <circle
+        v-for="axis in AXES"
+        :key="axis.key + '-dot'"
+        :cx="axisPoint(axis.angle, profile[axis.key]).x"
+        :cy="axisPoint(axis.angle, profile[axis.key]).y"
+        r="3"
+        fill="var(--amber)"
+      />
 
-    <!-- Axis labels -->
-    <text
-      v-for="axis in AXES"
-      :key="axis.key + '-label'"
-      :x="labelPos(axis.angle).x"
-      :y="labelPos(axis.angle).y"
-      :text-anchor="textAnchor(axis.angle)"
-      dominant-baseline="middle"
-      class="wheel-label"
-    >{{ t.attrs[axis.key] }}</text>
-  </svg>
+      <!-- Axis labels -->
+      <text
+        v-for="axis in AXES"
+        :key="axis.key + '-label'"
+        :x="labelPos(axis.angle).x"
+        :y="labelPos(axis.angle).y"
+        :text-anchor="textAnchor(axis.angle)"
+        dominant-baseline="middle"
+        class="wheel-label"
+      >{{ t.attrs[axis.key] }}</text>
+    </svg>
+    <span class="sr-only">{{ wheelSummary }}</span>
+  </div>
 </template>
 
 <script setup>
@@ -98,6 +104,11 @@ const profilePoints = computed(() =>
   }).join(' ')
 )
 
+// Text alternative so the profile is perceivable without the graphic.
+const wheelSummary = computed(() =>
+  AXES.map(({ key }) => `${t.value.attrs[key]} ${props.profile[key] ?? 0} of 5`).join(', ')
+)
+
 function labelPos(angleDeg) {
   const rad = (angleDeg * Math.PI) / 180
   const r = R + 17
@@ -112,6 +123,9 @@ function textAnchor(angleDeg) {
 </script>
 
 <style scoped>
+.flavor-wheel-wrap {
+  width: 100%;
+}
 .flavor-wheel {
   width: 100%;
   max-width: 220px;
@@ -122,8 +136,11 @@ function textAnchor(angleDeg) {
 
 .wheel-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  fill: var(--text-secondary, #C0A882);
+  font-size: 9px;
+  fill: var(--text-secondary);
   letter-spacing: 0.03em;
+}
+@media (max-width: 480px) {
+  .wheel-label { font-size: 10px; }
 }
 </style>

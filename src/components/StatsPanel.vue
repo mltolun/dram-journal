@@ -1,13 +1,15 @@
 <template>
-  <div class="stats-overlay" @click.self="$emit('close')">
+  <div class="stats-overlay" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.statsTitle" @click.self="$emit('close')">
     <div class="stats-panel">
 
       <div class="stats-header">
-        <button class="stats-close" @click="$emit('close')" aria-label="Back">
-          <ArrowLeftIcon :size="14" /> Back
+        <button class="stats-close" :aria-label="t.close" @click="$emit('close')">
+          <ArrowLeftIcon :size="14" aria-hidden="true" /> {{ t.back }}
         </button>
         <div class="stats-title">{{ t.statsTitle }}</div>
       </div>
+
+      <div v-if="syncStatus === 'loading' || syncStatus === 'saving'" class="stats-syncing" role="status">{{ t.syncingStats }}</div>
 
       <!-- Summary row -->
       <div class="summary-row">
@@ -29,20 +31,20 @@
 
       <!-- My Rankings -->
       <div class="stats-section">
-        <div class="stats-section-label">My Rankings</div>
-        <div class="stats-section-sub">Personal scores based on your own tastings — not community or global averages.</div>
+        <div class="stats-section-label">{{ t.statsRankings }}</div>
+        <div class="stats-section-sub">{{ t.statsRankingsSub }}</div>
         <div class="rankings-summary">
           <div class="ranking-stat">
             <div class="ranking-num">{{ ratedCount }}</div>
-            <div class="ranking-lbl">Rated</div>
+            <div class="ranking-lbl">{{ t.statsRated }}</div>
           </div>
           <div class="ranking-stat">
             <div class="ranking-num">{{ avgRating }}</div>
-            <div class="ranking-lbl">Avg. Score</div>
+            <div class="ranking-lbl">{{ t.statsAvgScore }}</div>
           </div>
           <div class="ranking-stat">
             <div class="ranking-num">{{ topCountry }}</div>
-            <div class="ranking-lbl">Top Region</div>
+            <div class="ranking-lbl">{{ t.statsTopRegion }}</div>
           </div>
         </div>
       </div>
@@ -62,7 +64,7 @@
               <div class="badge-name">{{ t.badges[b.id]?.name ?? b.name }}</div>
               <div class="badge-desc">{{ t.badges[b.id]?.desc ?? b.desc }}</div>
               <template v-if="!b.earned">
-                <div class="badge-progress">
+                <div class="badge-progress" role="progressbar" :aria-label="t.badges[b.id]?.name ?? b.name" :aria-valuenow="b.current" aria-valuemin="0" :aria-valuemax="b.target">
                   <div class="badge-progress-track">
                     <div
                       class="badge-progress-fill"
@@ -104,7 +106,7 @@
             <div class="passport-list">
               <div v-for="p in group.countries" :key="p.country" class="passport-row">
                 <div class="passport-country">{{ p.country }}</div>
-                <div class="passport-bar-wrap">
+                <div class="passport-bar-wrap" role="img" :aria-label="`${p.country}: ${p.count}`">
                   <div class="passport-bar" :style="{ width: (p.count / passport[0].count * 100) + '%' }"></div>
                 </div>
                 <div class="passport-count">{{ p.count }}</div>
@@ -117,7 +119,7 @@
         <div v-else class="passport-list">
           <div v-for="p in passport" :key="p.country" class="passport-row">
             <div class="passport-country">{{ p.country }}</div>
-            <div class="passport-bar-wrap">
+            <div class="passport-bar-wrap" role="img" :aria-label="`${p.country}: ${p.count}`">
               <div
                 class="passport-bar"
                 :style="{ width: (p.count / passport[0].count * 100) + '%' }"
@@ -134,7 +136,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import {
   ArrowLeft as ArrowLeftIcon,
   Map as MapIcon,
@@ -142,12 +144,16 @@ import {
 } from 'lucide-vue-next'
 
 const BADGE_ICON_MAP = { GlassWater, Hash, Trophy, Globe, Flame, Star, FlaskConical, Users }
-import { journal } from '../composables/useWhiskies.js'
+import { journal, syncStatus } from '../composables/useWhiskies.js'
 import { useBadges } from '../composables/useBadges.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
 import FlavorWheel from './FlavorWheel.vue'
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
+
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
 
 const { badges, earnedCount, passport, flavorProfile, continentPassport } = useBadges()
 const { t } = useI18n()
@@ -412,7 +418,7 @@ function continentLabel(continent) {
   font-size: 0.58rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #1D9E75;
+  color: var(--success);
 }
 
 /* Progress bar */
@@ -462,12 +468,21 @@ function continentLabel(continent) {
 .passport-country {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
-  color: var(--text-secondary, #C0A882);
+  color: var(--text-secondary);
   width: 110px;
+  max-width: 32%;
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.stats-syncing {
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--peat-light);
+  padding: 10px 20px 0;
 }
 
 .passport-bar-wrap {

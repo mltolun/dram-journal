@@ -6,12 +6,12 @@
       <div class="l-nav-brand">The <span>Dram</span> Journal</div>
       <div class="l-nav-actions">
         <div class="l-lang-wrap">
-          <button class="l-btn-ghost l-lang-btn" @click="langOpen = !langOpen" :class="{ active: langOpen }">
+          <button ref="langBtn" class="l-btn-ghost l-lang-btn" @click="langOpen = !langOpen" :class="{ active: langOpen }" aria-haspopup="menu" :aria-expanded="langOpen" aria-label="Language">
             <GlobeIcon :size="15" />
           </button>
-          <div v-if="langOpen" class="l-lang-dropdown">
-            <button @click="setLocale('en'); langOpen = false" :class="{ selected: locale === 'en' }">English</button>
-            <button @click="setLocale('es'); langOpen = false" :class="{ selected: locale === 'es' }">Español</button>
+          <div v-if="langOpen" ref="langMenu" class="l-lang-dropdown" role="menu" @keydown="onLangKeydown">
+            <button role="menuitemradio" :aria-checked="locale === 'en'" @click="setLocale('en'); closeLang()" :class="{ selected: locale === 'en' }">English</button>
+            <button role="menuitemradio" :aria-checked="locale === 'es'" @click="setLocale('es'); closeLang()" :class="{ selected: locale === 'es' }">Español</button>
           </div>
         </div>
         <button class="l-btn-ghost l-nav-auth-btn" @click="goToApp('login')">{{ L.nav.signIn }}</button>
@@ -247,7 +247,7 @@
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { currentUser, useAuth } from '../composables/useAuth.js'
 import { useI18n, detectLocale } from '../composables/useI18n.js'
@@ -304,6 +304,48 @@ const badges       = computed(() => t.value.landing.badgesSection.items.map((ite
 const socialItems  = computed(() => t.value.landing.social.items)
 const L            = computed(() => t.value.landing)
 const langOpen     = ref(false)
+const langBtn      = ref(null)
+const langMenu     = ref(null)
+
+function closeLang() {
+  langOpen.value = false
+  langBtn.value?.focus()
+}
+
+function onLangKeydown(e) {
+  const items = [...(langMenu.value?.querySelectorAll('button') || [])]
+  const idx = items.indexOf(document.activeElement)
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    closeLang()
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    items[(idx + 1) % items.length]?.focus()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    items[(idx - 1 + items.length) % items.length]?.focus()
+  }
+}
+
+function onDocClick(e) {
+  if (langOpen.value && langMenu.value && langBtn.value &&
+      !langMenu.value.contains(e.target) && !langBtn.value.contains(e.target)) {
+    langOpen.value = false
+  }
+}
+
+function onDocKey(e) {
+  if (e.key === 'Escape' && langOpen.value) langOpen.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocClick)
+  document.addEventListener('keydown', onDocKey)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
+  document.removeEventListener('keydown', onDocKey)
+})
 </script>
 
 <style scoped>
@@ -369,7 +411,7 @@ const langOpen     = ref(false)
 
 .l-btn-ghost {
   background: none;
-  color: #9A8878;
+  color: #6E5F52;
   border: none;
   padding: 8px 14px;
   font-family: 'Inter', sans-serif;
@@ -460,7 +502,7 @@ const langOpen     = ref(false)
 
 .l-hero-sub {
   font-size: 1rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.72;
   max-width: 440px;
   margin-bottom: 32px;
@@ -475,7 +517,7 @@ const langOpen     = ref(false)
 
 .l-hero-note {
   font-size: 0.68rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.03em;
 }
@@ -511,7 +553,7 @@ const langOpen     = ref(false)
 }
 .l-mock-dist {
   font-size: 0.68rem;
-  color: #9A8878;
+  color: #6E5F52;
   margin-bottom: 14px;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -546,7 +588,7 @@ const langOpen     = ref(false)
 }
 .l-mock-bar-lbl {
   font-size: 0.58rem;
-  color: #9A8878;
+  color: #6E5F52;
   width: 60px;
   flex-shrink: 0;
   font-family: 'JetBrains Mono', monospace;
@@ -565,7 +607,7 @@ const langOpen     = ref(false)
 }
 .l-mock-bar-val {
   font-size: 0.6rem;
-  color: #9A8878;
+  color: #6E5F52;
   width: 10px;
   text-align: right;
   flex-shrink: 0;
@@ -648,7 +690,7 @@ const langOpen     = ref(false)
 }
 .l-feat-desc {
   font-size: 0.8rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.65;
   margin-bottom: 14px;
 }
@@ -681,7 +723,7 @@ const langOpen     = ref(false)
 
 .l-showcase-desc {
   font-size: 0.88rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.75;
 }
 
@@ -707,7 +749,7 @@ const langOpen     = ref(false)
 }
 .l-profile-sub {
   font-size: 0.65rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -718,7 +760,7 @@ const langOpen     = ref(false)
 }
 .l-attr-label {
   font-size: 0.6rem;
-  color: #9A8878;
+  color: #6E5F52;
   width: 68px;
   flex-shrink: 0;
   font-family: 'JetBrains Mono', monospace;
@@ -773,7 +815,7 @@ const langOpen     = ref(false)
 }
 .l-compare-desc {
   font-size: 0.88rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.7;
   max-width: 520px;
   margin: 0 auto 44px;
@@ -814,7 +856,7 @@ const langOpen     = ref(false)
 }
 .l-cmp-dist {
   font-size: 0.58rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-family: 'JetBrains Mono', monospace;
 }
 .l-cmp-hbars {
@@ -830,7 +872,7 @@ const langOpen     = ref(false)
 }
 .l-cmp-hbar-lbl {
   font-size: 0.5rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-family: 'JetBrains Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -855,7 +897,7 @@ const langOpen     = ref(false)
 .l-cmp-hcol:nth-child(3) .l-cmp-hbar-fill { background: #408060; }
 .l-cmp-hbar-val {
   font-size: 0.5rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-family: 'JetBrains Mono', monospace;
   width: 8px;
   text-align: right;
@@ -876,7 +918,7 @@ const langOpen     = ref(false)
 }
 .l-social-desc {
   font-size: 0.88rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.75;
   margin-bottom: 22px;
 }
@@ -918,7 +960,7 @@ const langOpen     = ref(false)
 }
 .l-msg-date {
   font-size: 0.6rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-family: 'JetBrains Mono', monospace;
 }
 .l-msg-from {
@@ -936,13 +978,13 @@ const langOpen     = ref(false)
 }
 .l-msg-sub {
   font-size: 0.65rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-family: 'JetBrains Mono', monospace;
   margin-bottom: 10px;
 }
 .l-msg-note {
   font-size: 0.78rem;
-  color: #9A8878;
+  color: #6E5F52;
   font-style: italic;
   line-height: 1.5;
   padding-left: 10px;
@@ -967,7 +1009,7 @@ const langOpen     = ref(false)
 }
 .l-scan-sub {
   font-size: 0.72rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.4;
 }
 
@@ -986,7 +1028,7 @@ const langOpen     = ref(false)
 }
 .l-badges-desc {
   font-size: 0.88rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.75;
   margin-top: 4px;
 }
@@ -1036,7 +1078,7 @@ const langOpen     = ref(false)
 }
 .l-bdg-desc {
   font-size: 0.7rem;
-  color: #9A8878;
+  color: #6E5F52;
   line-height: 1.4;
 }
 
@@ -1056,7 +1098,7 @@ const langOpen     = ref(false)
 }
 .l-cta-sub {
   font-size: 0.95rem;
-  color: #9A8878;
+  color: #6E5F52;
   margin-bottom: 28px;
   line-height: 1.6;
 }
@@ -1072,12 +1114,12 @@ const langOpen     = ref(false)
   font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: #9A8878;
+  color: #6E5F52;
 }
 .l-footer-brand span { color: #C87E20; }
 .l-footer-copy {
   font-size: 0.68rem;
-  color: rgba(0,0,0,0.25);
+  color: rgba(0,0,0,0.55);
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -1149,7 +1191,7 @@ const langOpen     = ref(false)
   align-items: center;
   justify-content: center;
   padding: 6px;
-  color: #9A8878;
+  color: #6E5F52;
 }
 .l-lang-btn.active { color: #C8A96A; }
 .l-lang-dropdown {

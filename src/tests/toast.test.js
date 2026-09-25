@@ -70,18 +70,24 @@ describe('useBadgeToast', () => {
     expect(badgeToastVisible.value).toBe(false)
   })
 
-  it('replaces previous badge toast and resets timer', async () => {
+  it('queues a second badge instead of dropping the first', async () => {
     const { useBadgeToast } = await import('../composables/useBadgeToast.js')
     const { badgeToast, badgeToastData, badgeToastVisible } = useBadgeToast()
     badgeToast('GlassWater', 'First Dram', 'Log your first whisky')
     vi.advanceTimersByTime(1000)
     badgeToast('Trophy', 'Century Club', '100 whiskies')
-    expect(badgeToastData.value).toEqual({ icon: 'Trophy', name: 'Century Club', desc: '100 whiskies' })
-    // Should still be visible at 4000ms from first call
-    vi.advanceTimersByTime(3000)
+    // First celebration still showing
+    expect(badgeToastData.value).toEqual({ icon: 'GlassWater', name: 'First Dram', desc: 'Log your first whisky' })
     expect(badgeToastVisible.value).toBe(true)
-    // Should hide 4000ms from second call
-    vi.advanceTimersByTime(1000)
+    // First hides at 4000ms…
+    vi.advanceTimersByTime(3000)
+    expect(badgeToastVisible.value).toBe(false)
+    // …then the queued celebration appears after a short gap
+    vi.advanceTimersByTime(350)
+    expect(badgeToastData.value).toEqual({ icon: 'Trophy', name: 'Century Club', desc: '100 whiskies' })
+    expect(badgeToastVisible.value).toBe(true)
+    // …and hides 4000ms later
+    vi.advanceTimersByTime(4000)
     expect(badgeToastVisible.value).toBe(false)
   })
 })

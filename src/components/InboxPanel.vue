@@ -1,5 +1,5 @@
 <template>
-  <div class="subs-overlay" @click.self="$emit('close')">
+  <div class="subs-overlay" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.inbox" @click.self="$emit('close')">
     <div class="subs-panel inbox-panel">
 
       <!-- Header -->
@@ -7,34 +7,38 @@
         <div class="subs-header-top">
           <div class="subs-title">
             {{ t.inbox }}
-            <span v-if="totalCount" class="inbox-unread-badge">{{ totalCount }}</span>
+            <span v-if="totalCount" class="inbox-unread-badge">{{ totalCount }}<span class="sr-only"> {{ t.unreadShort }}</span></span>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button v-if="activeTab === 'inbox' && unreadCount" class="mark-all-btn" @click="markAllRead">
+          <div class="inbox-header-actions">
+            <button v-if="activeTab === 'inbox' && unreadCount" class="mark-all-btn" @click="doMarkAllRead">
               {{ t.markAllRead }}
             </button>
-            <button class="subs-close" @click="$emit('close')"><XIcon :size="14" /></button>
+            <button class="subs-close" :aria-label="t.close" @click="$emit('close')"><XIcon :size="14" aria-hidden="true" /></button>
           </div>
         </div>
 
         <!-- Tabs -->
-        <div class="inbox-tabs">
+        <div class="inbox-tabs" role="tablist" :aria-label="t.inbox">
           <button
             class="inbox-tab"
             :class="{ active: activeTab === 'inbox' }"
+            role="tab"
+            :aria-selected="activeTab === 'inbox'"
             @click="switchTab('inbox')"
           >
-            <InboxIcon :size="12" />
-            {{ t.inboxTab || 'Received' }}
+            <InboxIcon :size="12" aria-hidden="true" />
+            {{ t.inboxTab }}
             <span v-if="unreadCount" class="tab-badge">{{ unreadCount }}</span>
           </button>
           <button
             class="inbox-tab"
             :class="{ active: activeTab === 'sent' }"
+            role="tab"
+            :aria-selected="activeTab === 'sent'"
             @click="switchTab('sent')"
           >
-            <SendIcon :size="12" />
-            {{ t.sentTab || 'Sent' }}
+            <SendIcon :size="12" aria-hidden="true" />
+            {{ t.sentTab }}
           </button>
         </div>
       </div>
@@ -73,8 +77,10 @@
                 class="follow-accept-btn"
                 @click="doAccept(req.id, req.follower_email)"
                 :disabled="actioning === req.id"
+                :aria-busy="actioning === req.id"
+                :aria-label="actioning === req.id ? t.processing : t.accept"
               >
-                {{ actioning === req.id ? '…' : t.accept }}
+                {{ actioning === req.id ? t.processing : t.accept }}
               </button>
               <button
                 class="follow-decline-btn"
@@ -87,11 +93,13 @@
           </div>
 
           <!-- ── Inbox message items ── -->
-          <div
+          <button
             v-for="msg in inbox"
             :key="`msg-${msg.id}`"
-            class="inbox-item"
+            type="button"
+            class="inbox-item inbox-item--btn"
             :class="{ unread: !msg.read }"
+            :aria-expanded="expanded === msg.id"
             @click="expand(msg)"
           >
             <div class="inbox-item-header">
@@ -111,7 +119,7 @@
                   <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
                 </template>
               </div>
-              <button class="inbox-delete" @click.stop="deleteMessage(msg.id)" title="Delete"><XIcon :size="12" /></button>
+              <button class="inbox-delete" type="button" @click.stop="confirmDelete(msg.id, false)" :aria-label="t.deleteMessage" :title="t.deleteMessage"><XIcon :size="12" aria-hidden="true" /></button>
             </div>
 
             <!-- Feature request message body -->
@@ -153,31 +161,33 @@
                   <StarIcon :size="11" /> {{ msg.whisky_payload.rating }} / 5
                 </div>
               </div>
-              <div class="inbox-expand-hint">
+              <div class="inbox-expand-hint" aria-hidden="true">
                 {{ expanded === msg.id ? t.frLess : t.frDetails }}
               </div>
             </template>
-          </div>
+          </button>
 
         </div>
       </template>
 
       <!-- ── SENT TAB ── -->
       <template v-else-if="activeTab === 'sent'">
-        <div v-if="sentLoading" class="inbox-empty">
-          <div style="opacity:0.5;font-size:0.78rem;">Loading…</div>
+        <div v-if="sentLoading" class="inbox-empty" role="status">
+          <div class="inbox-loading-txt">{{ t.loading }}</div>
         </div>
 
-        <div v-else-if="sent.length === 0" class="inbox-empty">
+        <div v-else-if="sent.length === 0" class="inbox-empty" role="status">
           <div class="empty-icon"><SendIcon :size="36" /></div>
-          <div>{{ t.sentEmpty || 'No sent messages yet.' }}</div>
+          <div>{{ t.sentEmpty }}</div>
         </div>
 
         <div v-else class="inbox-list">
-          <div
+          <button
             v-for="msg in sent"
             :key="`sent-${msg.id}`"
-            class="inbox-item"
+            type="button"
+            class="inbox-item inbox-item--btn"
+            :aria-expanded="expandedSentId === msg.id"
             @click="expandSent(msg)"
           >
             <div class="inbox-item-header">
@@ -191,7 +201,7 @@
                 <span class="inbox-dot">·</span>
                 <span class="inbox-date">{{ formatDate(msg.created_at) }}</span>
               </div>
-              <button class="inbox-delete" @click.stop="deleteSentMessage(msg.id)" title="Delete"><XIcon :size="12" /></button>
+              <button class="inbox-delete" type="button" @click.stop="confirmDelete(msg.id, true)" :aria-label="t.deleteMessage" :title="t.deleteMessage"><XIcon :size="12" aria-hidden="true" /></button>
             </div>
 
             <div class="inbox-whisky-name">{{ msg.whisky_payload?.name }}</div>
@@ -220,10 +230,10 @@
                 <StarIcon :size="11" /> {{ msg.whisky_payload.rating }} / 5
               </div>
             </div>
-            <div class="inbox-expand-hint">
+            <div class="inbox-expand-hint" aria-hidden="true">
               {{ expandedSentId === msg.id ? t.frLess : t.frDetails }}
             </div>
-          </div>
+          </button>
         </div>
       </template>
 
@@ -237,25 +247,28 @@ import { Sparkles as SparklesIcon, Settings as SettingsIcon, Check as CheckIcon,
 import { useMessages, inbox, sent, unreadCount } from '../composables/useMessages.js'
 import { useSubscriptions, pendingRequests } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
+import { useToast } from '../composables/useToast.js'
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const { loadInbox, loadSent, markRead, markAllRead, deleteMessage, deleteSentMessage } = useMessages()
 const { loadSubscriptions, acceptRequest, removeSubscription } = useSubscriptions()
 const { t } = useI18n()
+const { toast } = useToast()
+
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
 
 const ATTRS = ['dulzor', 'ahumado', 'cuerpo', 'frutado', 'especiado']
-const ATTR_LABELS = {
-  dulzor: 'Sweetness', ahumado: 'Smokiness', cuerpo: 'Body',
-  frutado: 'Fruitiness', especiado: 'Spiciness',
-}
+const ATTR_LABELS = computed(() => t.value.attrs)
 
-const FR_STATUS_LABELS = {
-  accepted:    'Accepted',
-  in_progress: 'In progress',
-  done:        'Shipped',
-  declined:    'Declined',
-}
+const FR_STATUS_LABELS = computed(() => ({
+  accepted:    t.value.frStatusAccepted,
+  in_progress: t.value.frStatusInProgress,
+  done:        t.value.frStatusDone,
+  declined:    t.value.frStatusDeclined,
+}))
 
 const FR_STATUS_ICONS = {
   accepted:    SparklesIcon,
@@ -269,6 +282,7 @@ const expanded       = ref(null)
 const expandedSentId = ref(null)
 const actioning      = ref(null)
 const sentLoading    = ref(false)
+const sentLoaded     = ref(false)
 
 // Total badge count: unread messages + pending follow requests
 const totalCount = computed(() =>
@@ -286,10 +300,14 @@ onMounted(async () => {
 
 async function switchTab(tab) {
   activeTab.value = tab
-  if (tab === 'sent' && sent.value.length === 0) {
+  if (tab === 'sent' && !sentLoaded.value) {
     sentLoading.value = true
     try {
       await loadSent()
+      sentLoaded.value = true
+    } catch (e) {
+      console.error('loadSent failed:', e)
+      toast('⚠ ' + t.value.loadFailed)
     } finally {
       sentLoading.value = false
     }
@@ -313,17 +331,47 @@ async function doAccept(id, email) {
   actioning.value = id
   try {
     await acceptRequest(id, email)
+    toast(t.value.requestAccepted(email))
+  } catch (e) {
+    console.error('acceptRequest failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
   } finally {
     actioning.value = null
   }
 }
 
 async function doDecline(id) {
+  if (!window.confirm(t.value.confirmDecline)) return
   actioning.value = id
   try {
     await removeSubscription(id)
+    toast(t.value.requestDeclined)
+  } catch (e) {
+    console.error('decline request failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
   } finally {
     actioning.value = null
+  }
+}
+
+async function doMarkAllRead() {
+  try {
+    await markAllRead()
+  } catch (e) {
+    console.error('markAllRead failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
+  }
+}
+
+async function confirmDelete(id, isSent) {
+  if (!window.confirm(t.value.confirmDeleteMessage)) return
+  try {
+    if (isSent) await deleteSentMessage(id)
+    else await deleteMessage(id)
+    toast(t.value.deleted)
+  } catch (e) {
+    console.error('delete message failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
   }
 }
 
@@ -337,7 +385,7 @@ function formatDate(iso) {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(20, 12, 4, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -385,7 +433,7 @@ function formatDate(iso) {
 
 .inbox-unread-badge {
   background: var(--amber);
-  color: #fff;
+  color: var(--on-amber);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   border-radius: 999px;
@@ -430,7 +478,7 @@ function formatDate(iso) {
 
 .tab-badge {
   background: var(--amber);
-  color: #fff;
+  color: var(--on-amber);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.52rem;
   border-radius: 999px;
@@ -444,11 +492,28 @@ function formatDate(iso) {
   color: var(--peat-light);
   font-size: 0.9rem;
   cursor: pointer;
-  padding: 4px;
+  padding: 10px;
+  margin: -6px;
   border-radius: 6px;
   transition: color 0.15s;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+.inbox-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.inbox-loading-txt {
+  opacity: 0.7;
+  font-size: 0.78rem;
+}
+.inbox-item--btn {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
 .subs-close:hover { color: var(--text-primary); }
 
@@ -494,7 +559,7 @@ function formatDate(iso) {
 }
 .inbox-item:hover { background: rgba(200,130,42,0.04); }
 .inbox-item.unread { background: rgba(200,130,42,0.06); }
-.inbox-type-pill--feature { background: rgba(29,158,117,0.15); color: #1D9E75; }
+.inbox-type-pill--feature { background: rgba(29,158,117,0.15); color: var(--success-soft); }
 .inbox-fr-status {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
@@ -503,7 +568,7 @@ function formatDate(iso) {
 }
 .inbox-fr-status--accepted    { color: var(--amber-light); }
 .inbox-fr-status--in_progress { color: var(--amber-light); }
-.inbox-fr-status--done        { color: #1D9E75; }
+.inbox-fr-status--done        { color: var(--success); }
 .inbox-fr-status--declined    { color: var(--peat-light); }
 .inbox-fr-note {
   font-size: 0.75rem;
@@ -555,7 +620,7 @@ function formatDate(iso) {
 }
 .inbox-type-pill--follow {
   background: rgba(100,180,255,0.15);
-  color: #88bef5;
+  color: var(--info);
 }
 .inbox-type-pill--whisky {
   background: rgba(200,130,42,0.15);
@@ -586,11 +651,18 @@ function formatDate(iso) {
   color: var(--peat-light);
   font-size: 0.7rem;
   cursor: pointer;
-  padding: 2px 4px;
-  opacity: 0.5;
+  padding: 10px;
+  margin: -6px;
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
   transition: opacity 0.15s;
+  flex-shrink: 0;
 }
-.inbox-delete:hover { opacity: 1; color: #E24B4A; }
+.inbox-delete:hover { opacity: 1; color: var(--danger); }
 
 /* Follow request body */
 .inbox-follow-from {
@@ -620,7 +692,7 @@ function formatDate(iso) {
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #1D9E75;
+  color: var(--success);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -641,9 +713,9 @@ function formatDate(iso) {
   transition: background 0.15s, color 0.15s;
 }
 .follow-decline-btn:hover:not(:disabled) {
-  background: rgba(226,75,74,0.08);
-  color: #e08888;
-  border-color: rgba(226,75,74,0.35);
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger);
 }
 .follow-decline-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 

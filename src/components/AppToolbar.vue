@@ -10,7 +10,7 @@
           type="search"
           :placeholder="t.searchPlaceholder"
           v-model="searchQuery"
-          aria-label="Search"
+          :aria-label="t.searchPlaceholder"
           autocomplete="off"
           spellcheck="false"
         />
@@ -23,8 +23,9 @@
           class="compare-badge compare-badge--clear"
           @click.prevent.stop="onClearSelected"
           :title="t.clearSelected"
+          :aria-label="`${selectedCount} ${t.selected} — ${t.clearSelected}`"
           type="button"
-        >{{ selectedCount }} {{ t.selected }} <XIcon :size="11" /></button>
+        >{{ selectedCount }} {{ t.selected }} <XIcon :size="11" aria-hidden="true" /></button>
 
         <button
           v-if="activeList === 'journal'"
@@ -32,7 +33,8 @@
           :class="{ ready: selectedCount >= 2, active: compareOpen }"
           :disabled="selectedCount < 2"
           @click="$emit('compare')"
-          aria-label="Compare selected whiskies"
+          :aria-label="t.compare"
+          :title="selectedCount < 2 ? t.compareNeedsTwo : undefined"
         ><Columns2Icon :size="14" aria-hidden="true" /> <span class="btn-label">{{ t.compare }}</span></button>
 
         <button
@@ -40,19 +42,22 @@
           class="btn-t btn-outline btn-filter"
           :class="{ active: filtersOpen }"
           @click="$emit('filter')"
-          aria-label="Filter journal"
-        ><SlidersHorizontalIcon :size="14" aria-hidden="true" /> <span class="btn-label">Filters</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
+          :aria-label="t.filters"
+          :aria-expanded="filtersOpen"
+        ><SlidersHorizontalIcon :size="14" aria-hidden="true" /> <span class="btn-label">{{ t.filters }}</span><span v-if="filterCount > 0" class="filter-count">{{ filterCount }}</span></button>
 
         <!-- Add Entry dropdown (desktop only) -->
         <div class="add-entry-wrap" ref="addWrap">
           <button
             class="btn-t btn-primary btn-add-desktop"
-            @click.stop="addOpen = !addOpen"
+            ref="addBtn"
+            @click.stop="toggleAddMenu"
             :aria-expanded="addOpen"
+            aria-haspopup="menu"
             :aria-label="t.addEntry"
           ><PlusIcon :size="14" aria-hidden="true" /> <span class="btn-label">{{ t.addEntry }}</span></button>
           <transition name="add-menu">
-            <div v-if="addOpen" class="add-menu" role="menu">
+            <div v-if="addOpen" class="add-menu" ref="addMenuEl" role="menu" :aria-label="t.addEntry" @keydown="onAddMenuKeydown">
               <button class="add-menu-item" @click.stop="choose('add')" role="menuitem">
                 <SearchIcon :size="14" aria-hidden="true" />
                 <span class="add-menu-label">{{ t.searchCatalogue }}</span>
@@ -71,7 +76,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from '../composables/useI18n.js'
 import { searchQuery } from '../composables/useSearch.js'
 import {
@@ -103,11 +108,37 @@ const showToolbar = computed(() =>
 
 const addOpen = ref(false)
 const addWrap = ref(null)
+const addBtn = ref(null)
+const addMenuEl = ref(null)
 
 function choose(action) {
   addOpen.value = false
   if (action === 'add') emit('add')
   else emit('scan')
+}
+
+async function toggleAddMenu() {
+  addOpen.value = !addOpen.value
+  if (addOpen.value) {
+    await nextTick()
+    addMenuEl.value?.querySelector('.add-menu-item')?.focus()
+  }
+}
+
+function onAddMenuKeydown(e) {
+  const items = [...(addMenuEl.value?.querySelectorAll('.add-menu-item') || [])]
+  const idx = items.indexOf(document.activeElement)
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    addOpen.value = false
+    addBtn.value?.focus()
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    items[(idx + 1) % items.length]?.focus()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    items[(idx - 1 + items.length) % items.length]?.focus()
+  }
 }
 
 function onClickOutside(e) {
@@ -244,6 +275,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 @media (max-width: 768px) {
   .toolbar { padding: 8px 16px; }
   .btn-label { display: none; }
-  .btn-t { padding: 7px 9px; }
+  .btn-t { padding: 7px 9px; min-height: 40px; min-width: 40px; justify-content: center; }
+  .compare-badge { min-height: 40px; }
 }
 </style>

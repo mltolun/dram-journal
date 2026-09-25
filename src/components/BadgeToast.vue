@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="badge-toast">
-      <div v-if="badgeToastVisible && badgeToastData" class="badge-toast">
+      <div v-if="badgeToastVisible && badgeToastData" class="badge-toast" role="status" aria-live="polite">
         <div class="badge-toast-label">{{ t.badgeUnlocked }}</div>
         <div class="badge-toast-icon"><component :is="BADGE_ICON_MAP[badgeToastData.icon]" :size="38" /></div>
         <div class="badge-toast-name">{{ t.badges[badgeToastData.id]?.name ?? badgeToastData.name }}</div>

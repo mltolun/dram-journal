@@ -147,7 +147,7 @@ export function useWhiskies() {
       const tastedAt = fields.date
         ? localNoonISO(fields.date)
         : new Date().toISOString()
-      await sb.from('dram_logs').insert({
+      const { error: dramErr } = await sb.from('dram_logs').insert({
         user_id:           currentUser.value.id,
         whisky_id:         data.id,
         whisky_name:       data.name,
@@ -156,6 +156,7 @@ export function useWhiskies() {
         rating:            data.rating ?? null,
         notes:             data.notes  ?? null,
       })
+      if (dramErr) console.error('initial dram_log insert failed:', dramErr.message)
     }
 
     // Log activity for followers
@@ -260,7 +261,7 @@ export function useWhiskies() {
     const result = await updateWhisky(id, { list: 'journal' })
     // Create a dram_log entry — moving to journal means it's being tasted
     const tastedAt = new Date().toISOString()
-    await sb.from('dram_logs').insert({
+    const { error: dramErr } = await sb.from('dram_logs').insert({
       user_id:           currentUser.value.id,
       whisky_id:         result.id,
       whisky_name:       result.name,
@@ -269,6 +270,7 @@ export function useWhiskies() {
       rating:            result.rating ?? null,
       notes:             result.notes  ?? null,
     })
+    if (dramErr) console.error('moveToJournal dram_log insert failed:', dramErr.message)
     // Log both: journal_add (added to journal) and dram_logged (first tasting)
     await logActivity({
       type:       'journal_add',

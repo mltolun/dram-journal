@@ -1,75 +1,78 @@
 <template>
-  <div class="subs-overlay">
+  <div class="subs-overlay" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.friendsFollowers" @click.self="$emit('close')">
     <div class="subs-panel">
 
       <div class="subs-header">
-        <button class="subs-close" @click="$emit('close')" aria-label="Back">
-          <ArrowLeftIcon :size="14" /> Back
+        <button class="subs-close" :aria-label="t.close" @click="$emit('close')">
+          <ArrowLeftIcon :size="14" aria-hidden="true" /> {{ t.back }}
         </button>
-        <div class="subs-title">Friends &amp; Followers</div>
+        <div class="subs-title">{{ t.friendsFollowers }}</div>
       </div>
 
       <!-- Follow by email -->
       <div class="subs-section">
-        <div class="subs-section-label"><SparklesIcon :size="11" style="display:inline;vertical-align:middle;margin-right:4px;" /> Follow someone</div>
+        <div class="subs-section-label"><SparklesIcon :size="11" class="subs-section-icon" /> {{ t.followSomeone }}</div>
         <div class="follow-form">
           <input
+            id="follow-email"
             v-model="emailInput"
             type="email"
-            placeholder="Enter their email address…"
+            :placeholder="t.followEmailPlaceholder"
+            :aria-label="t.followEmailPlaceholder"
+            autocomplete="email"
             class="follow-input"
             @keydown.enter="doFollow"
             :disabled="following"
           />
-          <button class="follow-btn" @click="doFollow" :disabled="following || !emailInput.trim()">
-            {{ following ? '…' : 'Send request' }}
+          <button class="follow-btn" @click="doFollow" :disabled="following || !emailInput.trim()" :aria-busy="following">
+            {{ following ? t.sending : t.sendRequest }}
           </button>
         </div>
-        <div v-if="followError" class="follow-error">{{ followError }}</div>
-        <div v-if="followSuccess" class="follow-success">{{ followSuccess }}</div>
+        <div v-if="followError" class="follow-error" role="alert">{{ followError }}</div>
+        <div v-if="followSuccess" class="follow-success" role="status">{{ followSuccess }}</div>
       </div>
 
       <!-- Pending requests (people wanting to follow me) -->
       <div class="subs-section" v-if="pendingRequests.length">
-        <div class="subs-section-label"><ClockIcon :size="12" /> Pending requests</div>
+        <div class="subs-section-label"><ClockIcon :size="12" /> {{ t.pendingRequests }}</div>
         <div class="sub-row" v-for="req in pendingRequests" :key="req.id">
           <span class="sub-email">{{ req.follower_email || req.follower_id.slice(0, 8) + '…' }}</span>
           <div class="sub-actions">
-            <button class="sub-btn sub-btn--accept" @click="doAccept(req.id, req.follower_email)">Accept</button>
-            <button class="sub-btn sub-btn--remove" @click="doRemove(req.id)">Decline</button>
+            <button class="sub-btn sub-btn--accept" :disabled="actioning === req.id" @click="doAccept(req.id, req.follower_email)">{{ actioning === req.id ? t.processing : t.accept }}</button>
+            <button class="sub-btn sub-btn--remove" :disabled="actioning === req.id" @click="doDecline(req.id)">{{ t.decline }}</button>
           </div>
         </div>
       </div>
 
       <!-- People I follow -->
       <div class="subs-section">
-        <div class="subs-section-label"><EyeIcon :size="11" style="display:inline;vertical-align:middle;margin-right:4px;" /> Following ({{ myFollowing.length }})</div>
-        <div v-if="myFollowing.length === 0" class="sub-empty">Not following anyone yet.</div>
+        <div class="subs-section-label"><EyeIcon :size="11" class="subs-section-icon" /> {{ t.followingTitle(myFollowing.length) }}</div>
+        <div v-if="myFollowing.length === 0" class="sub-empty">{{ t.notFollowingAnyone }}</div>
         <div class="sub-row" v-for="sub in myFollowing" :key="sub.id">
           <span class="sub-email">{{ sub.following_email || sub.following_id.slice(0, 8) + '…' }}</span>
-          <button class="sub-btn sub-btn--remove" @click="doRemove(sub.id)">Unfollow</button>
+          <button class="sub-btn sub-btn--remove" @click="confirmRemove(sub.id, 'unfollow')">{{ t.unfollow }}</button>
         </div>
       </div>
 
       <!-- My followers -->
       <div class="subs-section">
-        <div class="subs-section-label"><UsersIcon :size="11" style="display:inline;vertical-align:middle;margin-right:4px;" /> Followers ({{ myFollowers.length }})</div>
-        <div v-if="myFollowers.length === 0" class="sub-empty">No followers yet.</div>
+        <div class="subs-section-label"><UsersIcon :size="11" class="subs-section-icon" /> {{ t.followersTitle(myFollowers.length) }}</div>
+        <div v-if="myFollowers.length === 0" class="sub-empty">{{ t.noFollowers }}</div>
         <div class="sub-row" v-for="sub in myFollowers" :key="sub.id">
           <span class="sub-email">{{ sub.follower_email || sub.follower_id.slice(0, 8) + '…' }}</span>
-          <button class="sub-btn sub-btn--remove" @click="doRemove(sub.id)">Remove</button>
+          <button class="sub-btn sub-btn--remove" @click="confirmRemove(sub.id, 'remove')">{{ t.remove }}</button>
         </div>
       </div>
 
       <div class="subs-footer">
-        Followers receive a weekly digest of your new journal entries and ratings.
+        {{ t.digestDisclosure }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onBeforeUnmount } from 'vue'
 import { ref } from 'vue'
 import { GlassWater as GlassWaterIcon, Users as UsersIcon, Sparkles as SparklesIcon,
   ArrowLeft as ArrowLeftIcon, Eye as EyeIcon, Clock as ClockIcon } from 'lucide-vue-next'
@@ -79,19 +82,39 @@ import {
   myFollowing,
   myFollowers,
 } from '../composables/useSubscriptions.js'
+import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
+import { useToast } from '../composables/useToast.js'
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const { loadSubscriptions, requestFollowByEmail, acceptRequest, removeSubscription } = useSubscriptions()
+const { t } = useI18n()
+const { toast } = useToast()
+
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
 
 const emailInput    = ref('')
 const following     = ref(false)
 const followError   = ref('')
 const followSuccess = ref('')
+const actioning     = ref(null)
+let successTimer    = null
 
 onMounted(async () => {
   await loadSubscriptions()
 })
+
+onBeforeUnmount(() => {
+  if (successTimer) clearTimeout(successTimer)
+})
+
+function flashSuccess(msg) {
+  followSuccess.value = msg
+  if (successTimer) clearTimeout(successTimer)
+  successTimer = setTimeout(() => { followSuccess.value = '' }, 6000)
+}
 
 async function doFollow() {
   const email = emailInput.value.trim()
@@ -101,21 +124,54 @@ async function doFollow() {
   followSuccess.value = ''
   try {
     await requestFollowByEmail(email)
-    followSuccess.value = `Follow request sent to ${email}!`
+    flashSuccess(t.value.followRequestSent(email))
     emailInput.value = ''
   } catch (err) {
-    followError.value = err.message
+    console.error('requestFollowByEmail failed:', err)
+    if (err?.message === 'SELF') followError.value = t.value.cannotFollowSelf
+    else if (err?.message === 'DUPLICATE') followError.value = t.value.alreadyRequested
+    else followError.value = t.value.followRequestFailed
   } finally {
     following.value = false
   }
 }
 
 async function doAccept(id, requesterEmail) {
-  await acceptRequest(id, requesterEmail)
+  actioning.value = id
+  try {
+    await acceptRequest(id, requesterEmail)
+    toast(t.value.requestAccepted(requesterEmail))
+  } catch (e) {
+    console.error('acceptRequest failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
+  } finally {
+    actioning.value = null
+  }
 }
 
-async function doRemove(id) {
-  await removeSubscription(id)
+async function doDecline(id) {
+  if (!window.confirm(t.value.confirmDecline)) return
+  actioning.value = id
+  try {
+    await removeSubscription(id)
+    toast(t.value.requestDeclined)
+  } catch (e) {
+    console.error('decline request failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
+  } finally {
+    actioning.value = null
+  }
+}
+
+async function confirmRemove(id, kind) {
+  if (!window.confirm(kind === 'unfollow' ? t.value.confirmUnfollow : t.value.confirmRemoveFollower)) return
+  try {
+    await removeSubscription(id)
+    toast(t.value.removed)
+  } catch (e) {
+    console.error('removeSubscription failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
+  }
 }
 </script>
 
@@ -192,12 +248,13 @@ async function doRemove(id) {
   border-bottom: 0.5px solid var(--border, rgba(200,130,42,0.12));
 }
 
+.subs-section-icon { display:inline; vertical-align:middle; margin-right:4px; }
 .subs-section-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--amber, #A8620A);
+  color: var(--amber);
   margin-bottom: 12px;
 }
 
@@ -223,8 +280,8 @@ async function doRemove(id) {
 .follow-input::placeholder { color: var(--peat-light); }
 
 .follow-btn {
-  background: var(--amber, #A8620A);
-  color: var(--peat, #F8F4EE);
+  background: var(--amber);
+  color: var(--on-amber);
   border: none;
   border-radius: 8px;
   padding: 9px 16px;
@@ -239,8 +296,8 @@ async function doRemove(id) {
 .follow-btn:disabled { opacity: 0.5; cursor: default; }
 .follow-btn:not(:disabled):hover { opacity: 0.85; }
 
-.follow-error   { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #E24B4A; margin-top: 8px; }
-.follow-success { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #1D9E75; margin-top: 8px; }
+.follow-error   { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--danger); margin-top: 8px; }
+.follow-success { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--success); margin-top: 8px; }
 
 /* Rows */
 .sub-row {
@@ -284,10 +341,10 @@ async function doRemove(id) {
   white-space: nowrap;
   background: none;
 }
-.sub-btn--accept { border-color: #1D9E75; color: #1D9E75; }
+.sub-btn--accept { border-color: var(--success); color: var(--success-soft); }
 .sub-btn--accept:hover { background: rgba(29,158,117,0.1); }
-.sub-btn--remove { border-color: rgba(226,75,74,0.5); color: #E24B4A; }
-.sub-btn--remove:hover { background: rgba(226,75,74,0.1); }
+.sub-btn--remove { border-color: var(--danger); color: var(--danger); }
+.sub-btn--remove:hover { background: var(--danger-soft); }
 
 .subs-footer {
   padding: 16px 24px;

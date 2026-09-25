@@ -6,6 +6,7 @@ export const pendingRequests     = ref([])   // people who want to follow me
 export const myFollowing         = ref([])   // people I follow (accepted)
 export const myFollowers         = ref([])   // people who follow me (accepted)
 export const subscriptionsLoaded = ref(false)
+export const subscriptionsError  = ref(false)
 
 // ── Queue a notification row (non-fatal — never blocks the UI action) ─────────
 
@@ -24,13 +25,14 @@ export function useSubscriptions() {
   async function loadSubscriptions() {
     if (!currentUser.value) return
     const uid = currentUser.value.id
+    subscriptionsError.value = false
 
     const { data, error } = await sb
       .from('subscriptions')
       .select('*')
       .or(`follower_id.eq.${uid},following_id.eq.${uid}`)
 
-    if (error) { console.error('loadSubscriptions failed:', error.message); return }
+    if (error) { console.error('loadSubscriptions failed:', error.message); subscriptionsError.value = true; return }
 
     pendingRequests.value = data.filter(
       r => r.following_id === uid && r.status === 'pending'
@@ -52,12 +54,13 @@ export function useSubscriptions() {
 
     const normalized = email.trim().toLowerCase()
 
-    if (normalized === currentUser.value?.email?.toLowerCase()) throw new Error('You cannot follow yourself')
+    if (normalized === currentUser.value?.email?.toLowerCase()) throw new Error('SELF')
 
     const { data: targetId, error: rpcError } = await sb
       .rpc('get_user_id_by_email', { p_email: normalized })
 
-    if (rpcError || !targetId) throw new Error('No user found with that email address')
+    // Generic failure — do not reveal whether the email has an account.
+    if (rpcError || !targetId) throw new Error('NOT_FOUND')
 
     const { error } = await sb
       .from('subscriptions')
@@ -70,7 +73,7 @@ export function useSubscriptions() {
       })
 
     if (error) {
-      if (error.code === '23505') throw new Error('You already sent a request to this user')
+      if (error.code === '23505') throw new Error('DUPLICATE')
       throw error
     }
 

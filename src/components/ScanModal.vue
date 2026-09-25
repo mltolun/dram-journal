@@ -1,30 +1,31 @@
 <template>
-  <div class="modal-backdrop open" @click.self="$emit('close')">
+  <div class="modal-backdrop open" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.scanBottle" @click.self="$emit('close')">
     <div class="modal scan-modal">
 
       <div class="modal-header">
         <div class="modal-title">{{ t.scanBottle }}</div>
-        <button class="modal-close" @click="$emit('close')"><XIcon :size="14" /></button>
+        <button class="modal-close" :aria-label="t.close" @click="$emit('close')"><XIcon :size="14" /></button>
       </div>
 
       <!-- Step 1: pick image -->
       <div v-if="step === 'pick'">
         <div class="scan-source-panel">
           <div class="scan-source-grid">
-            <button type="button" class="scan-source-card" @click="openGallery">
+            <button type="button" class="scan-source-card" :disabled="quotaReached" @click="openGallery">
               <div class="scan-source-icon"><ImagesIcon :size="24" /></div>
               <div class="scan-source-label">{{ t.gallery }}</div>
               <div class="scan-source-copy">{{ t.photoLibraryCopy }}</div>
             </button>
 
-            <button type="button" class="scan-source-card" @click="openCamera">
+            <button type="button" class="scan-source-card" :disabled="quotaReached" @click="openCamera">
               <div class="scan-source-icon"><CameraIcon :size="24" /></div>
               <div class="scan-source-label">{{ t.takePhoto }}</div>
               <div class="scan-source-copy">{{ t.nativeCameraCopy }}</div>
             </button>
           </div>
         </div>
-        <div class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
+        <div v-if="quotaReached" class="scan-quota scan-quota--exceeded" role="alert">{{ t.dailyLimitReached(DAILY_CAP) }}</div>
+        <div v-else class="scan-quota">{{ t.scansRemaining(Math.max(0, DAILY_CAP - scansToday), DAILY_CAP) }}</div>
 
         <input ref="galleryInput" type="file" accept="image/*" style="display:none" @change="onFileChange" />
         <input ref="cameraInput" type="file" accept="image/*" capture="environment"
@@ -40,7 +41,7 @@
 
       <!-- Step 2: preview + confirm -->
       <div v-else-if="step === 'preview'">
-        <img :src="previewSrc" class="scan-preview" />
+        <img :src="previewSrc" class="scan-preview" :alt="t.scanPreviewAlt">
         <div class="scan-actions">
           <button class="btn-auth" @click="analyse">{{ t.identifyWhisky }}</button>
           <button class="btn-cancel" @click="reset">{{ t.retake }}</button>
@@ -48,10 +49,11 @@
       </div>
 
       <!-- Step 3: analysing -->
-      <div v-else-if="step === 'loading'" class="scan-loading">
-        <div class="scan-spinner"></div>
+      <div v-else-if="step === 'loading'" class="scan-loading" role="status">
+        <div class="scan-spinner" aria-hidden="true"></div>
         <div class="scan-loading-text">{{ t.analysingBottle }}</div>
-        <div class="scan-loading-sub">{{ t.isReading(MODEL_LABELS[ACTIVE_MODEL]) }}</div>
+        <div class="scan-loading-sub">{{ t.scanAnalysingSub }}</div>
+        <button class="btn-cancel scan-cancel" @click="cancelScan">{{ t.cancel }}</button>
       </div>
 
       <!-- Step 4: result -->
@@ -60,7 +62,30 @@
         <!-- Identified header -->
         <div class="scan-result-header">
           <CheckIcon :size="14" class="scan-tick" /> {{ t.whiskyIdentified }}
-          <span class="scan-model-badge">{{ MODEL_LABELS[ACTIVE_MODEL] }}</span>
+        </div>
+
+        <!-- Scanned data — always visible for review -->
+        <div v-if="Object.keys(displayResult).length" class="scan-fields">
+          <div class="scan-field" v-if="displayResult.name">
+            <span class="scan-field-lbl">{{ t.name }}</span>
+            <span class="scan-field-val">{{ displayResult.name }}</span>
+          </div>
+          <div class="scan-field" v-if="displayResult.distillery">
+            <span class="scan-field-lbl">{{ t.distillery }}</span>
+            <span class="scan-field-val">{{ displayResult.distillery }}</span>
+          </div>
+          <div class="scan-field" v-if="displayResult.origin">
+            <span class="scan-field-lbl">{{ t.country }}</span>
+            <span class="scan-field-val">{{ displayResult.origin }}</span>
+          </div>
+          <div class="scan-field" v-if="displayResult.type">
+            <span class="scan-field-lbl">{{ t.style }}</span>
+            <span class="scan-field-val">{{ t.types?.[displayResult.type] || displayResult.type }}</span>
+          </div>
+          <div class="scan-field" v-if="displayResult.age">
+            <span class="scan-field-lbl">{{ t.ageMaturation }}</span>
+            <span class="scan-field-val">{{ displayResult.age }}</span>
+          </div>
         </div>
 
         <!-- Catalogue picked — show locked card -->
@@ -73,18 +98,19 @@
             <div class="scan-picked-name">{{ cataloguePicked.name }}</div>
             <div class="scan-picked-meta">{{ cataloguePicked.distillery }} · {{ cataloguePicked.country }}</div>
           </div>
-          <button class="scan-picked-change" @click="cataloguePicked = null">↩</button>
+          <button type="button" class="scan-picked-change" :aria-label="t.changeWhisky" :title="t.changeWhisky" @click="cataloguePicked = null">↩</button>
         </div>
 
         <!-- Catalogue matches -->
         <template v-else>
-          <div v-if="catalogue.searching.value" class="scan-cat-searching">{{ t.searching || 'Searching catalogue…' }}</div>
+          <div v-if="catalogue.searching.value" class="scan-cat-searching" role="status">{{ t.searching || 'Searching catalogue…' }}</div>
           <template v-else-if="catalogue.results.value.length">
             <div class="scan-cat-hint">{{ t.scanMatchHint || 'Select the matching bottle:' }}</div>
             <div class="scan-cat-list">
-              <div
+              <button
                 v-for="item in catalogue.results.value"
                 :key="item.id"
+                type="button"
                 class="cs-item"
                 @click="cataloguePicked = item"
               >
@@ -106,8 +132,8 @@
                     <span v-if="item.abv">{{ item.abv }}</span>
                   </div>
                 </div>
-                <span class="cs-arrow">›</span>
-              </div>
+                <span class="cs-arrow" aria-hidden="true">›</span>
+              </button>
             </div>
           </template>
           <div v-else class="scan-cat-none">{{ t.scanNoMatch || 'No catalogue match — will save with scanned data.' }}</div>
@@ -123,10 +149,10 @@
       </div>
 
       <!-- Error -->
-      <div v-else-if="step === 'error'" class="scan-error">
+      <div v-else-if="step === 'error'" class="scan-error" role="alert">
         <div class="scan-error-icon"><AlertTriangleIcon :size="32" /></div>
         <div class="scan-error-msg">{{ errorMsg }}</div>
-        <button class="btn-cancel" style="margin-top:1rem" @click="reset">{{ t.tryAgain }}</button>
+        <button class="btn-cancel scan-error-retry" @click="reset">{{ t.tryAgain }}</button>
       </div>
 
     </div>
@@ -140,6 +166,7 @@ import { sb } from '../lib/supabase.js'
 import { currentUser } from '../composables/useAuth.js'
 import { compressImage } from '../utils/compressImage.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
 import { useCatalogue, cleanSearchQuery } from '../composables/useCatalogue.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import CameraCaptureModal from './CameraCaptureModal.vue'
@@ -163,6 +190,9 @@ const catalogue = useCatalogue()
 
 const saving         = ref(false)
 const cataloguePicked = ref(null)  // set when user picks from catalogue matches
+
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
 
 const DAILY_CAP = 20
 
@@ -192,19 +222,31 @@ const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-pr
 
 // ── Quota tracking ────────────────────────────────────────────────────────────
 
+const quotaReached = computed(() => scansToday.value >= DAILY_CAP)
+
 async function fetchScansToday() {
+  if (!currentUser.value?.id) return
   const today = new Date().toISOString().split('T')[0]
-  const { count } = await sb
-    .from('scan_log')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', currentUser.value.id)
-    .gte('created_at', today)
-  scansToday.value = count ?? 0
+  try {
+    const { count, error } = await sb
+      .from('scan_log')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', currentUser.value.id)
+      .gte('created_at', today)
+    if (error) throw error
+    scansToday.value = count ?? 0
+  } catch (e) {
+    console.error('[Scan] could not load daily quota:', e)
+  }
 }
 
 async function incrementScans() {
-  await sb.from('scan_log').insert({ user_id: currentUser.value.id })
-  scansToday.value += 1
+  try {
+    await sb.from('scan_log').insert({ user_id: currentUser.value.id })
+    scansToday.value += 1
+  } catch (e) {
+    console.error('[Scan] could not record scan in quota log:', e)
+  }
 }
 
 fetchScansToday()
@@ -229,6 +271,11 @@ function reset() {
   imageB64.value   = null
   result.value     = {}
   errorMsg.value   = ''
+  cataloguePicked.value = null
+}
+
+function cancelScan() {
+  step.value = 'preview'
 }
 
 // ── File loading ──────────────────────────────────────────────────────────────
@@ -251,6 +298,10 @@ function loadFile(file) {
     imageFile.value = new File([blob], 'scan.jpg', { type: 'image/jpeg' })
     imageB64.value  = dataUrl.split(',')[1]
     console.debug(`[scan] compressed to ${kb}KB`)
+  }).catch((e) => {
+    console.error('[scan] image compression failed:', e)
+    errorMsg.value = e?.message || t.value.imageProcessing
+    step.value = 'error'
   })
 
   step.value = 'preview'
@@ -341,12 +392,12 @@ function handleApiError(status, data) {
 
   // User-facing messages — simplified, no internal detail
   if (status === 400 || status === 403)
-    throw new Error('API configuration error. Please contact support.')
+    throw new Error(t.value.scanErrConfig)
   if (status === 429 || String(msg).toLowerCase().includes('quota'))
-    throw new Error('Scan limit reached. Please try again later.')
+    throw new Error(t.value.scanErrQuota)
   if (status === 503 || status === 500)
-    throw new Error('The AI model is temporarily unavailable. Please try again in a moment.')
-  throw new Error('Something went wrong. Please try again.')
+    throw new Error(t.value.scanErrModel)
+  throw new Error(t.value.scanErrGeneric)
 }
 
 // Build a multipart/related body for the file upload
@@ -381,7 +432,7 @@ function parseModelText(text) {
 
   if (!cleaned) {
     console.warn('[Scan] parseModelText: empty response from model')
-    throw new Error('Could not read the label. Try a clearer photo.')
+    throw new Error(t.value.scanErrLabel)
   }
 
   // Check for safety refusals (no JSON braces + refusal keywords)
@@ -390,7 +441,7 @@ function parseModelText(text) {
       (lc.includes('cannot') || lc.includes('sorry') || lc.includes('unable') ||
        lc.includes('i can') || lc.includes('alcohol') || lc.includes('policy'))) {
     console.warn('[Scan] parseModelText: model refusal —', cleaned.slice(0, 200))
-    throw new Error('Could not read the label. Try a clearer photo.')
+    throw new Error(t.value.scanErrLabel)
   }
 
   // Primary path: find a JSON object in the response
@@ -457,7 +508,7 @@ function parseModelText(text) {
 
   if (!recovered.name) {
     console.warn('[Scan] parseModelText: markdown extraction also failed')
-    throw new Error('Could not read the label. Try a clearer photo.')
+    throw new Error(t.value.scanErrLabel)
   }
 
   console.info('[Scan] parseModelText: recovered from markdown format —', recovered.name)
@@ -472,7 +523,7 @@ async function analyse() {
     step.value = 'error'
     return
   }
-  if (scansToday.value >= DAILY_CAP) {
+  if (quotaReached.value) {
     errorMsg.value = t.value.dailyLimitReached(DAILY_CAP)
     step.value = 'error'
     return
@@ -523,16 +574,14 @@ async function analyse() {
       stack:   e.stack,
     })
     // Show a clean message on screen — avoid exposing internal detail
-    const knownMsg = [
-      'API configuration error',
-      'Scan limit reached',
-      'temporarily unavailable',
-      'Could not read the label',
-      'Could not parse label data',
-    ].some(s => e.message?.includes(s))
-    errorMsg.value = knownMsg
-      ? e.message
-      : 'Could not identify the bottle. Try a clearer photo.'
+    const knownMsgs = [
+      t.value.scanErrConfig,
+      t.value.scanErrQuota,
+      t.value.scanErrModel,
+      t.value.scanErrGeneric,
+      t.value.scanErrLabel,
+    ]
+    errorMsg.value = knownMsgs.includes(e.message) ? e.message : t.value.scanErrIdentify
     step.value = 'error'
   }
 }
@@ -564,9 +613,10 @@ async function save() {
     })
 
     emit('close')
-    toast('✦ ' + (picked?.name || result.value.name) + ' added')
+    toast(t.value.whiskyAdded(picked?.name || result.value.name || ''))
   } catch (e) {
-    toast('⚠ ' + e.message)
+    console.error('[Scan] save failed:', e)
+    toast('⚠ ' + t.value.saveFailed)
   } finally {
     saving.value = false
   }
@@ -600,10 +650,14 @@ async function save() {
   text-align: left;
   transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
-.scan-source-card:hover {
+.scan-source-card:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: var(--amber);
   background: rgba(200,130,42,0.05);
+}
+.scan-source-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .scan-source-icon {
   width: 42px;
@@ -636,6 +690,7 @@ async function save() {
   text-align: center;
   margin-top: 0.75rem;
 }
+.scan-quota--exceeded { color: var(--danger); }
 
 .scan-preview {
   width: 100%;
@@ -670,30 +725,21 @@ async function save() {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .scan-loading-text { font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.01em; font-size: 1.1rem; }
-.scan-loading-sub  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--peat-light); }
+.scan-loading-sub  { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--peat-light); text-align: center; }
+.scan-cancel { margin-top: 0.5rem; }
 
 .scan-result-header {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #1D9E75;
+  color: var(--success);
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .scan-tick { font-size: 1rem; }
-.scan-model-badge {
-  margin-left: auto;
-  font-size: 0.52rem;
-  padding: 2px 7px;
-  border-radius: 20px;
-  background: rgba(200,130,42,0.12);
-  color: var(--amber-light);
-  letter-spacing: 0.08em;
-  border: 0.5px solid var(--border);
-}
 
 .scan-fields {
   display: flex;
@@ -750,17 +796,16 @@ async function save() {
 }
 .scan-error-icon { font-size: 2rem; opacity: 0.4; }
 .scan-error-msg  { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.08em; color: var(--peat-light); text-align: center; line-height: 1.6; }
+.scan-error-retry { margin-top: 1rem; }
 /* ── Catalogue match styles ── */
 .scan-cat-hint {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  opacity: 0.6;
   margin-bottom: 8px;
 }
 .scan-cat-none {
   font-size: 0.78rem;
   color: var(--text-secondary);
-  opacity: 0.5;
   text-align: center;
   padding: 12px 0;
   font-style: italic;
@@ -768,12 +813,11 @@ async function save() {
 .scan-cat-searching {
   font-size: 0.78rem;
   color: var(--text-secondary);
-  opacity: 0.5;
   text-align: center;
   padding: 12px 0;
 }
 .scan-cat-list {
-  max-height: 220px;
+  max-height: min(220px, 30vh);
   overflow-y: auto;
   margin-bottom: 12px;
 }
@@ -815,7 +859,6 @@ async function save() {
 .scan-picked-meta {
   font-size: 0.72rem;
   color: var(--text-secondary);
-  opacity: 0.6;
   margin-top: 2px;
 }
 .scan-picked-change {
@@ -824,10 +867,11 @@ async function save() {
   border-radius: 6px;
   color: var(--text-secondary);
   font-size: 1rem;
-  padding: 4px 8px;
+  padding: 8px 12px;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.8;
   transition: opacity 0.15s;
+  flex-shrink: 0;
 }
 .scan-picked-change:hover { opacity: 1; }
 
@@ -840,6 +884,12 @@ async function save() {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
 .cs-item:hover { background: var(--bg-card); }
 .cs-thumb {
@@ -872,10 +922,9 @@ async function save() {
   margin-top: 2px;
   font-size: 0.7rem;
   color: var(--text-secondary);
-  opacity: 0.65;
 }
-.cs-dot { opacity: 0.4; }
-.cs-sub { font-size: 0.68rem; color: var(--text-secondary); opacity: 0.5; margin-top: 1px; }
+.cs-dot { opacity: 0.6; }
+.cs-sub { font-size: 0.68rem; color: var(--text-secondary); margin-top: 1px; }
 .cs-badge {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
@@ -885,5 +934,9 @@ async function save() {
   border-radius: 20px;
 }
 .cs-arrow { color: var(--text-secondary); opacity: 0.25; font-size: 1.1rem; flex-shrink: 0; }
+
+@media (max-width: 420px) {
+  .scan-source-grid { grid-template-columns: 1fr; }
+}
 
 </style>

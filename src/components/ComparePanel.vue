@@ -1,19 +1,20 @@
 <template>
   <Teleport to="body">
-    <div class="cp-backdrop" @click.self="$emit('close')">
+    <div class="cp-backdrop" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.comparison" @click.self="$emit('close')">
       <div class="cp-overlay">
 
         <div class="cp-header">
           <span class="cp-title">{{ t.comparison }}</span>
-          <button class="cp-close" @click="$emit('close')"><XIcon :size="14" /></button>
+          <button class="cp-close" :aria-label="t.closeComparison" @click="$emit('close')"><XIcon :size="14" aria-hidden="true" /></button>
         </div>
 
-        <div class="cp-scroll">
-          <div class="cp-table" :style="{ gridTemplateColumns: `repeat(${whiskies.length}, 1fr)` }">
+        <div v-if="!whiskies || whiskies.length === 0" class="cp-empty" role="status">{{ t.compareEmpty }}</div>
+        <div v-else class="cp-scroll">
+          <div class="cp-table" role="table" :aria-label="t.comparison" :style="{ gridTemplateColumns: `repeat(${whiskies.length}, minmax(180px, 1fr))` }">
 
             <!-- ── Name / origin / badge ── -->
-            <div v-for="(w, i) in whiskies" :key="`name-${w.id}`" class="cp-cell cp-cell--top">
-              <div class="cp-name" :style="{ color: COLOR_HEX[i] }">{{ w.name }}</div>
+            <div v-for="(w, i) in whiskies" :key="`name-${w.id}`" class="cp-cell cp-cell--top" role="columnheader" :aria-label="`${i + 1} of ${whiskies.length}: ${w.name}`">
+              <div class="cp-name"><span class="cp-index" aria-hidden="true" :style="{ background: COLOR_HEX[i] }">{{ i + 1 }}</span> <span :style="{ color: COLOR_HEX[i] }">{{ w.name }}</span></div>
               <div class="cp-origin">{{ w.origin || '—' }}</div>
               <span class="cm-badge" :style="TYPE_BADGE_STYLE[w.type] || TYPE_BADGE_STYLE.other">
                 {{ t.types[w.type] }}
@@ -71,8 +72,8 @@
             <!-- ── Rating ── -->
             <div v-for="w in whiskies" :key="`rating-${w.id}`" class="cp-cell">
               <div class="cp-inline-lbl">{{ t.rating }}</div>
-              <div v-if="w.rating" class="cp-stars">
-                <span v-for="n in 5" :key="n" class="cp-star" :class="{ filled: n <= w.rating }"><StarIcon :size="10" /></span>
+              <div v-if="w.rating" class="cp-stars" role="img" :aria-label="t.ratingXof5(w.rating)">
+                <span v-for="n in 5" :key="n" class="cp-star" :class="{ filled: n <= w.rating }" aria-hidden="true"><StarIcon :size="10" /></span>
               </div>
               <div v-else class="cp-val">—</div>
             </div>
@@ -92,14 +93,18 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { ATTRS, TYPE_BADGE_STYLE, COLOR_HEX } from '../lib/constants.js'
 import { X as XIcon, Star as StarIcon } from 'lucide-vue-next'
 import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
 
 defineProps({ whiskies: Array })
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const { t } = useI18n()
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
 </script>
 
 <style scoped>
@@ -154,13 +159,14 @@ const { t } = useI18n()
   border-radius: 5px;
   color: var(--peat-light);
   font-size: 0.7rem;
-  width: 26px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s;
+  flex-shrink: 0;
 }
 .cp-close:hover {
   border-color: var(--amber);
@@ -168,8 +174,28 @@ const { t } = useI18n()
 }
 .cp-scroll {
   overflow-y: auto;
+  overflow-x: auto;
   flex: 1;
   padding: 1.4rem 1.8rem 2rem;
+}
+.cp-empty {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.cp-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--on-amber);
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-right: 6px;
+  vertical-align: 1px;
 }
 
 /* ── Grid: N equal columns, no label column ── */

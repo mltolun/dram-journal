@@ -5,31 +5,34 @@ import { currentUser } from './useAuth.js'
 export const inbox        = ref([])   // messages received
 export const sent         = ref([])   // messages sent
 export const unreadCount  = ref(0)
+export const messagesError = ref(false)
 
 export function useMessages() {
 
   async function loadInbox() {
     if (!currentUser.value) return
+    messagesError.value = false
     const { data, error } = await sb
       .from('direct_messages')
       .select('*')
       .eq('recipient_id', currentUser.value.id)
       .order('created_at', { ascending: false })
 
-    if (error) { console.error('loadInbox failed:', error.message); return }
+    if (error) { console.error('loadInbox failed:', error.message); messagesError.value = true; return }
     inbox.value       = data || []
     unreadCount.value = inbox.value.filter(m => !m.read).length
   }
 
   async function loadSent() {
     if (!currentUser.value) return
+    messagesError.value = false
     const { data, error } = await sb
       .from('direct_messages')
       .select('*')
       .eq('sender_id', currentUser.value.id)
       .order('created_at', { ascending: false })
 
-    if (error) { console.error('loadSent failed:', error.message); return }
+    if (error) { console.error('loadSent failed:', error.message); messagesError.value = true; return }
     sent.value = data || []
   }
 
@@ -49,8 +52,8 @@ export function useMessages() {
       })
     if (error) throw error
 
-    // Queue a notification email for the daily cron
-    await sb.from('pending_notifications').insert({
+    // Queue a notification email for the daily cron (best-effort)
+    const { error: notifErr } = await sb.from('pending_notifications').insert({
       type:       'direct_message',
       to_email:   recipientEmail,
       from_email: currentUser.value.email,
@@ -60,6 +63,7 @@ export function useMessages() {
         message:     message.trim() || '',
       }),
     })
+    if (notifErr) console.warn('direct_message notification queue failed:', notifErr.message)
   }
 
   async function markRead(messageId) {
@@ -77,10 +81,11 @@ export function useMessages() {
   async function markAllRead() {
     const unread = inbox.value.filter(m => !m.read).map(m => m.id)
     if (!unread.length) return
-    await sb
+    const { error } = await sb
       .from('direct_messages')
       .update({ read: true })
       .in('id', unread)
+    if (error) { console.error('markAllRead failed:', error.message); throw error }
     inbox.value.forEach(m => { m.read = true })
     unreadCount.value = 0
   }
@@ -90,7 +95,8 @@ export function useMessages() {
       .from('direct_messages')
       .delete()
       .eq('id', messageId)
-    if (error) { console.error('deleteMessage failed:', error.message); return }
+      .eq('recipient_id', currentUser.value.id)
+    if (error) { console.error('deleteMessage failed:', error.message); throw error }
     inbox.value       = inbox.value.filter(m => m.id !== messageId)
     unreadCount.value = inbox.value.filter(m => !m.read).length
   }
@@ -100,9 +106,10 @@ export function useMessages() {
       .from('direct_messages')
       .delete()
       .eq('id', messageId)
-    if (error) { console.error('deleteSentMessage failed:', error.message); return }
+      .eq('sender_id', currentUser.value.id)
+    if (error) { console.error('deleteSentMessage failed:', error.message); throw error }
     sent.value = sent.value.filter(m => m.id !== messageId)
   }
 
-  return { inbox, sent, unreadCount, loadInbox, loadSent, sendMessage, markRead, markAllRead, deleteMessage, deleteSentMessage }
+  return { inbox, sent, unreadCount, messagesError, loadInbox, loadSent, sendMessage, markRead, markAllRead, deleteMessage, deleteSentMessage }
 }

@@ -1,22 +1,23 @@
 <template>
   <div>
-    <div
-      class="photo-upload-area"
-      role="button"
-      tabindex="0"
-      @click="showSourceModal = true"
-      @keydown.enter.prevent="showSourceModal = true"
-      @keydown.space.prevent="showSourceModal = true"
-    >
-      <div v-if="!previewSrc">
-        <div style="opacity:0.3"><CameraIcon :size="22" /></div>
+    <div class="photo-upload-area" :class="{ 'has-preview': previewSrc }">
+      <button
+        v-if="!previewSrc"
+        type="button"
+        class="photo-upload-trigger"
+        :aria-label="t.addPhoto"
+        @click="showSourceModal = true"
+      >
+        <div class="photo-upload-icon" aria-hidden="true"><CameraIcon :size="22" /></div>
         <div class="photo-upload-hint">{{ t.photoUploadHint }}</div>
-      </div>
+      </button>
       <div v-else class="photo-preview-wrap">
-        <img :src="previewSrc" class="photo-preview" alt="">
-        <button class="photo-remove" @click.stop="$emit('remove')" :title="t.removePhoto"><XIcon :size="12" /></button>
-        <div v-if="kb" class="photo-upload-hint">{{ t.photoCompressed(kb) }}</div>
-        <div v-else class="photo-upload-hint">{{ t.currentPhoto }}</div>
+        <img :src="previewSrc" class="photo-preview" :alt="t.currentPhoto">
+        <button class="photo-remove" type="button" @click.stop="$emit('remove')" :aria-label="t.removePhoto" :title="t.removePhoto"><XIcon :size="14" /></button>
+        <div class="photo-preview-footer">
+          <span class="photo-upload-hint">{{ kb ? t.photoCompressed(kb) : t.currentPhoto }}</span>
+          <button class="photo-replace" type="button" @click="showSourceModal = true">{{ t.replacePhoto }}</button>
+        </div>
       </div>
     </div>
 
@@ -31,14 +32,14 @@
     />
 
     <Teleport to="body">
-      <div v-if="showSourceModal" class="photo-source-backdrop" @click.self="showSourceModal = false">
-        <div class="photo-source-modal" role="dialog" aria-modal="true" :aria-label="t.choosePhotoSource">
+      <div v-if="showSourceModal" class="photo-source-backdrop" @click.self="closeSourceModal">
+        <div class="photo-source-modal" ref="sourceModalRef" role="dialog" aria-modal="true" :aria-label="t.choosePhotoSource">
           <div class="photo-source-head">
             <div>
               <div class="photo-source-title">{{ t.addPhoto }}</div>
               <div class="photo-source-subtitle">{{ t.photoSourceSubtitle }}</div>
             </div>
-            <button type="button" class="photo-source-close" @click="showSourceModal = false" :aria-label="t.close">
+            <button type="button" class="photo-source-close" ref="sourceCloseBtn" @click="closeSourceModal" :aria-label="t.close">
               <XIcon :size="18" />
             </button>
           </div>
@@ -63,10 +64,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onBeforeUnmount, nextTick } from 'vue'
 import { X as XIcon, Camera as CameraIcon, Images as ImagesIcon } from 'lucide-vue-next'
 import CameraCaptureModal from './CameraCaptureModal.vue'
 import { useI18n } from '../composables/useI18n.js'
+import { pushDialog } from '../composables/useDialog.js'
 
 const props = defineProps({ previewSrc: String, kb: Number })
 const emit  = defineEmits(['picked', 'remove'])
@@ -75,6 +77,30 @@ const galleryInput = ref(null)
 const cameraInput = ref(null)
 const showSourceModal = ref(false)
 const showCameraModal = ref(false)
+const sourceModalRef = ref(null)
+const sourceCloseBtn = ref(null)
+
+let popDialog = null
+let previouslyFocused = null
+
+watch(showSourceModal, async (open) => {
+  if (open) {
+    previouslyFocused = document.activeElement
+    await nextTick()
+    popDialog = pushDialog(() => sourceModalRef.value, closeSourceModal)
+    sourceCloseBtn.value?.focus()
+  } else {
+    if (popDialog) { popDialog(); popDialog = null }
+    if (previouslyFocused && typeof previouslyFocused.focus === 'function') previouslyFocused.focus()
+    previouslyFocused = null
+  }
+})
+
+onBeforeUnmount(() => { if (popDialog) popDialog() })
+
+function closeSourceModal() {
+  showSourceModal.value = false
+}
 
 function onFile(e) {
   const file = e.target.files[0]
@@ -109,24 +135,40 @@ function onCapturedPhoto(file) {
 }
 </script>
 
-<style>
+<style scoped>
 .photo-upload-area {
   width: 100%;
-  border: 0.5px dashed var(--border-hi);
   border-radius: 8px;
-  padding: 1rem;
   text-align: center;
-  cursor: pointer;
   transition: all 0.2s;
   background: var(--bg-input);
 }
-.photo-upload-area:hover {
+.photo-upload-area:not(.has-preview) {
+  border: 0.5px dashed var(--border-hi);
+  padding: 0;
+}
+.photo-upload-area:not(.has-preview):hover {
   border-color: var(--amber);
   background: rgba(200,130,42,0.04);
 }
+.photo-upload-area.has-preview {
+  padding: 0.5rem;
+  border: 0.5px solid var(--border);
+}
+.photo-upload-trigger {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 1rem;
+  cursor: pointer;
+  color: var(--peat-light);
+  font: inherit;
+  display: block;
+}
+.photo-upload-icon { opacity: 0.5; display: flex; justify-content: center; }
 .photo-preview-wrap {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
 }
 .photo-preview {
@@ -144,8 +186,8 @@ function onCapturedPhoto(file) {
   border: none;
   color: #fff;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   font-size: 0.7rem;
   cursor: pointer;
   display: flex;
@@ -156,6 +198,25 @@ function onCapturedPhoto(file) {
 .photo-remove:hover {
   background: rgba(226,75,74,0.8);
 }
+.photo-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 0;
+}
+.photo-replace {
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-family: 'Inter', sans-serif;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.photo-replace:hover { border-color: var(--border-hi); color: var(--text-primary); }
 .photo-upload-hint {
   font-size: 0.68rem;
   color: var(--peat-light);

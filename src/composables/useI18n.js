@@ -281,7 +281,7 @@ const TRANSLATIONS = {
     linkCopied: '✓ Link copied',
     linkPublicDram: 'Link is public — anyone can view this dram. Logged-in users can import it.',
     generatingLink: 'Generating link…',
-    couldNotGenerateLink: '⚠ Could not generate link: ',
+    couldNotGenerateLink: '⚠ Could not generate link.',
 
     // WishlistShareModal
     shareWishlist: 'Share wishlist',
@@ -391,7 +391,6 @@ const TRANSLATIONS = {
     recsTitle: 'Weekly Recommendations',
     recsSub: 'Personalised picks based on your journal — refreshed every Monday',
     recsGenerated: 'Generated on',
-    added: 'Added',
 
     // Feature Requests panel
     frTitle: 'Feature Requests',
@@ -520,6 +519,223 @@ const TRANSLATIONS = {
       flavor_arch:      { name: 'Flavor Archaeologist',  desc: 'Complete all 5 flavor attributes on 20 entries' },
       social_butterfly: { name: 'Social Butterfly',      desc: '5 people follow your journal' },
     },
+
+    // Accessibility & shared UI
+    rateN: (n) => `Rate ${n} of 5 stars`,
+    clearRating: 'Clear rating',
+    zoomPhoto: 'Enlarge photo',
+    changeWhisky: 'Change whisky',
+    resetToCatalogue: 'Reset to catalogue value',
+    discardChanges: 'You have unsaved changes. Discard them?',
+    saveFailed: 'Could not save. Please try again.',
+    photoFailed: 'Could not process that photo.',
+    loadFailed: 'Could not load your collection. Check your connection and try again.',
+    actionFailed: 'Something went wrong. Please try again.',
+    removed: 'Removed',
+    adding: 'Adding…',
+    sending: 'Sending…',
+    processing: 'Processing…',
+    back: 'Back',
+    more: 'More',
+    moreOptions: 'More options',
+    mainNav: 'Main navigation',
+    pendingShort: 'pending',
+    unreadShort: 'unread',
+
+    // Auth
+    authTabsLabel: 'Sign in or create account',
+    signingIn: 'Signing in…',
+    creatingAccount: 'Creating account…',
+    invalidCredentials: 'Incorrect email or password.',
+    emailNotConfirmed: 'Please confirm your email first — check your inbox.',
+    userAlreadyRegistered: 'This email is already registered. Try signing in.',
+    tooManyAttempts: 'Too many attempts. Please wait a moment and try again.',
+    invalidEmail: 'That email address does not look valid.',
+    genericError: 'Something went wrong. Please try again.',
+    signOutFailed: 'Sign out failed. Please try again.',
+
+    // Password reset
+    resetTitle: 'Set your new password',
+    resetNoSession: 'This reset link is invalid or has expired. Request a new one from the sign-in screen.',
+    newPassword: 'New password',
+    confirmNewPassword: 'Confirm new password',
+    savingPassword: 'Saving…',
+    saveNewPassword: 'Save new password',
+    passwordUpdated: 'Password updated! Signing you in…',
+    passwordUpdateFailed: 'Could not update the password. The link may have expired.',
+    resetRedirectFailed: 'Password updated, but we could not sign you in automatically. Please sign in manually.',
+
+    // Header / sync
+    userMenu: 'User menu',
+    themeLabel: 'Theme',
+    syncStates: { loading: 'Loading', saving: 'Saving', ok: 'Up to date', error: 'Sync error' },
+    unreadCount: (n) => `${n} unread`,
+
+    // Toolbar / filters
+    compareNeedsTwo: 'Select at least 2 whiskies to compare',
+    filters: 'Filters',
+    sortBy: 'Sort by',
+    sortDate: 'Date',
+    sortRating: 'Rating',
+    sortName: 'Name',
+    sortDescHint: 'Newest / highest first',
+    sortAscHint: 'Oldest / lowest first',
+    allCountries: 'All countries',
+    allRegions: 'All regions',
+    allDistilleries: 'All distilleries',
+    allAges: 'All ages',
+    clearFilters: 'Clear filters',
+
+    // AppView confirms
+    confirmDeleteWishlist: (name) => `Delete "${name}" from your wishlist?`,
+    confirmMoveToTrash: (name) => `Move "${name}" to trash?`,
+    confirmHardDelete: (name) => `Permanently delete "${name}"? This cannot be undone.`,
+
+    // Timeline
+    timeline: 'Timeline',
+    timelineRange: 'Time range',
+    timelineEmpty: 'No tasting entries in this period.',
+    timeline6m: '6 months',
+    timeline12m: '12 months',
+    timelineYear: 'This year',
+    dramCount: (n) => `${n} ${n === 1 ? 'dram' : 'drams'}`,
+    ratingXof5: (n) => `${n} out of 5 stars`,
+
+    // Compare
+    closeComparison: 'Close comparison',
+    compareEmpty: 'Select at least 2 whiskies to compare.',
+
+    // Catalogue search
+    clearSearch: 'Clear search',
+    csMinChars: 'Type at least 2 characters to search.',
+    catalogueSearchFailed: 'Search failed. Check your connection and try again.',
+    scanNotThisOne: 'Not the right one?',
+    scanAddManually: 'Use scanned data',
+
+    // Autocomplete
+    acSearching: 'Searching…',
+    acNoMatches: 'No matches',
+
+    // Scan
+    scanPreviewAlt: 'Bottle preview',
+    scanAnalysingSub: 'Reading the label — you can cancel and retake.',
+    scanErrConfig: 'API configuration error. Please contact support.',
+    scanErrQuota: 'Scan limit reached. Please try again later.',
+    scanErrModel: 'The AI model is temporarily unavailable. Please try again in a moment.',
+    scanErrGeneric: 'Something went wrong. Please try again.',
+    scanErrLabel: 'Could not read the label. Try a clearer photo.',
+    scanErrIdentify: 'Could not identify the bottle. Try a clearer photo.',
+
+    // WhiskyModal leftovers
+    lastDram: 'Last',
+    fillDetails: 'Fill in details',
+
+    // ShareModal
+    shareLinkTab: 'Share link',
+    sendToFriendTab: 'Send to friend',
+    sendIntroPrefix: 'Send',
+    sendIntroSuffix: 'to friends inside the app. You can hide photo, rating or notes first.',
+    noFollowersYet: 'You do not have any followers yet. Share the public link, or ask a friend to follow you from Friends & Followers.',
+    privacyPreview: 'Privacy preview',
+    nSelected: (n) => `${n} selected`,
+    noFriendsSelected: 'No friends selected',
+    hiddenFields: 'Hidden fields',
+    presetRecent: 'Recent',
+    presetAll: 'All friends',
+    presetClear: 'Clear',
+    recentlySentTo: 'Recently sent to',
+    searchFriends: 'Search friends…',
+    noFriendsMatch: (q) => `No friends match "${q}"`,
+    sentState: 'Sent',
+    selectedState: 'Selected',
+    sendAction: 'Send',
+    messagePlaceholder: 'Add a message (optional)…',
+    sendToN: (n) => `Send to ${n} ${n === 1 ? 'friend' : 'friends'}`,
+    pickAtLeastOne: 'Pick at least one friend to send to.',
+    couldNotSendTo: (list) => `Could not send to ${list}.`,
+    couldNotSend: 'Could not send. Please try again.',
+    sentToFriends: (n) => `Sent to ${n} ${n === 1 ? 'friend' : 'friends'}!`,
+    linkCopyFailed: 'Copy failed — long-press the link to copy it manually.',
+
+    // Wishlist share
+    wishlistBottles: (n) => `${n === 1 ? 'bottle' : 'bottles'} from your wishlist. Anyone with this link can view and import them.`,
+
+    // Post-save share prompt
+    sharePromptTitle: 'Share this save?',
+    sharePromptCopy: 'Your entry is saved. Share it with friends now, or keep it private for the moment.',
+    sharePromptNote: 'You can hide notes, rating, or photo before sending.',
+    sharePromptDontAsk: "Don't ask again",
+    shareNow: 'Share now',
+    notNow: 'Not now',
+
+    // Public share views
+    shareLoadFailed: 'Could not load this page. Check your connection and try again.',
+    alreadyInCollection: 'Already in your collection',
+
+    // Wishlist share view
+    addedXofY: (a, b) => `Added ${a} of ${b} bottles — some failed, try again.`,
+
+    // Feed
+    feedLoadFailed: 'Could not load the feed. Check your connection and try again.',
+    noResultsFor: (q) => `No results for "${q}"`,
+
+    // Inbox
+    inboxTab: 'Received',
+    sentTab: 'Sent',
+    sentEmpty: 'No sent messages yet.',
+    deleteMessage: 'Delete message',
+    confirmDeleteMessage: 'Delete this message? This cannot be undone.',
+    confirmDecline: 'Decline this follow request? It will be permanently removed.',
+    requestAccepted: (email) => `Accepted follow request from ${email}`,
+    requestDeclined: 'Follow request declined.',
+
+    // Stats
+    syncingStats: 'Syncing your collection…',
+    statsRankings: 'My Rankings',
+    statsRankingsSub: 'Personal scores based on your own tastings — not community or global averages.',
+    statsRated: 'Rated',
+    statsAvgScore: 'Avg. Score',
+    statsTopRegion: 'Top Region',
+
+    // Recommendations
+    recsLoadFailed: 'Could not load recommendations.',
+    recsEmpty: 'No recommendations yet — log a few drams and check back Monday.',
+
+    // Feature requests
+    frTitleHint: 'Give it a short, descriptive name (more than 3 characters).',
+    frDescReq: 'Describe the problem in more than 10 characters.',
+    frImpactReq: 'Explain the impact in more than 5 characters.',
+    frSubmitFailed: 'Failed to submit. Please try again.',
+
+    // Admin
+    frAdminAccessDeniedBody: "Your account is not recognised as an admin. If you should have access, check the app's admin configuration and try again.",
+    frPriorityLow: 'Low',
+    frPriorityMedium: 'Medium',
+    frPriorityHigh: 'High',
+    frPriorityCritical: 'Critical',
+    frAdminDeleted: 'Request deleted.',
+    frAdminDeleting: 'Deleting…',
+    frAdminDeleteFailed: 'Could not delete. Please try again.',
+    frAdminLoadFailed: 'Could not load requests. Please try again.',
+
+    // Subscriptions
+    followSomeone: 'Follow someone',
+    followEmailPlaceholder: 'Enter their email address…',
+    sendRequest: 'Send request',
+    pendingRequests: 'Pending requests',
+    followingTitle: (n) => `Following (${n})`,
+    followersTitle: (n) => `Followers (${n})`,
+    notFollowingAnyone: 'Not following anyone yet.',
+    noFollowers: 'No followers yet.',
+    unfollow: 'Unfollow',
+    remove: 'Remove',
+    digestDisclosure: 'Followers receive a weekly digest of your new journal entries and ratings.',
+    followRequestSent: (email) => `Follow request sent to ${email}!`,
+    followRequestFailed: 'Could not send the request. If they have an account, they will receive it shortly.',
+    cannotFollowSelf: 'You cannot follow yourself.',
+    alreadyRequested: 'You already sent a request to this user.',
+    confirmUnfollow: 'Stop following this person?',
+    confirmRemoveFollower: 'Remove this follower? They will no longer see your activity.',
 
     // Landing page
     landing: {
@@ -780,7 +996,7 @@ const TRANSLATIONS = {
     linkCopied: '✓ Enlace copiado',
     linkPublicDram: 'El enlace es público — cualquiera puede ver este dram. Los usuarios registrados pueden importarlo.',
     generatingLink: 'Generando enlace…',
-    couldNotGenerateLink: '⚠ No se pudo generar el enlace: ',
+    couldNotGenerateLink: '⚠ No se pudo generar el enlace.',
 
     // WishlistShareModal
     shareWishlist: 'Compartir lista',
@@ -890,7 +1106,6 @@ const TRANSLATIONS = {
     recsTitle: 'Recomendaciones Semanales',
     recsSub: 'Selecciones personalizadas basadas en tu diario — actualizadas cada lunes',
     recsGenerated: 'Generado el',
-    added: 'Añadido',
 
     // Feature Requests panel
     frTitle: 'Solicitudes de función',
@@ -1019,6 +1234,223 @@ const TRANSLATIONS = {
       flavor_arch:      { name: 'Arqueólogo del Sabor',  desc: 'Completa los 5 atributos de sabor en 20 entradas' },
       social_butterfly: { name: 'Alma de la Fiesta',     desc: '5 personas siguen tu diario' },
     },
+
+    // Accesibilidad e interfaz compartida
+    rateN: (n) => `Puntuar ${n} de 5 estrellas`,
+    clearRating: 'Quitar puntuación',
+    zoomPhoto: 'Ampliar foto',
+    changeWhisky: 'Cambiar whisky',
+    resetToCatalogue: 'Restablecer al valor del catálogo',
+    discardChanges: 'Tienes cambios sin guardar. ¿Descartarlos?',
+    saveFailed: 'No se pudo guardar. Inténtalo de nuevo.',
+    photoFailed: 'No se pudo procesar esa foto.',
+    loadFailed: 'No se pudo cargar tu colección. Revisa tu conexión e inténtalo de nuevo.',
+    actionFailed: 'Algo salió mal. Inténtalo de nuevo.',
+    removed: 'Eliminado',
+    adding: 'Añadiendo…',
+    sending: 'Enviando…',
+    processing: 'Procesando…',
+    back: 'Atrás',
+    more: 'Más',
+    moreOptions: 'Más opciones',
+    mainNav: 'Navegación principal',
+    pendingShort: 'pendientes',
+    unreadShort: 'sin leer',
+
+    // Auth
+    authTabsLabel: 'Iniciar sesión o crear cuenta',
+    signingIn: 'Iniciando sesión…',
+    creatingAccount: 'Creando cuenta…',
+    invalidCredentials: 'Email o contraseña incorrectos.',
+    emailNotConfirmed: 'Confirma tu email primero — revisa tu bandeja.',
+    userAlreadyRegistered: 'Este email ya está registrado. Intenta iniciar sesión.',
+    tooManyAttempts: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+    invalidEmail: 'Esa dirección de email no parece válida.',
+    genericError: 'Algo salió mal. Inténtalo de nuevo.',
+    signOutFailed: 'No se pudo cerrar sesión. Inténtalo de nuevo.',
+
+    // Restablecer contraseña
+    resetTitle: 'Elige tu nueva contraseña',
+    resetNoSession: 'Este enlace no es válido o ha caducado. Pide uno nuevo desde el inicio de sesión.',
+    newPassword: 'Nueva contraseña',
+    confirmNewPassword: 'Confirmar nueva contraseña',
+    savingPassword: 'Guardando…',
+    saveNewPassword: 'Guardar nueva contraseña',
+    passwordUpdated: '¡Contraseña actualizada! Iniciando sesión…',
+    passwordUpdateFailed: 'No se pudo actualizar la contraseña. El enlace puede haber caducado.',
+    resetRedirectFailed: 'Contraseña actualizada, pero no pudimos iniciar sesión automáticamente. Inicia sesión manualmente.',
+
+    // Cabecera / sincronización
+    userMenu: 'Menú de usuario',
+    themeLabel: 'Tema',
+    syncStates: { loading: 'Cargando', saving: 'Guardando', ok: 'Al día', error: 'Error de sincronización' },
+    unreadCount: (n) => `${n} sin leer`,
+
+    // Barra / filtros
+    compareNeedsTwo: 'Selecciona al menos 2 whiskies para comparar',
+    filters: 'Filtros',
+    sortBy: 'Ordenar por',
+    sortDate: 'Fecha',
+    sortRating: 'Puntuación',
+    sortName: 'Nombre',
+    sortDescHint: 'Más recientes / mayor primero',
+    sortAscHint: 'Más antiguos / menor primero',
+    allCountries: 'Todos los países',
+    allRegions: 'Todas las regiones',
+    allDistilleries: 'Todas las destilerías',
+    allAges: 'Todas las edades',
+    clearFilters: 'Limpiar filtros',
+
+    // Confirmaciones de AppView
+    confirmDeleteWishlist: (name) => `¿Eliminar "${name}" de tu lista?`,
+    confirmMoveToTrash: (name) => `¿Mover "${name}" a la papelera?`,
+    confirmHardDelete: (name) => `¿Eliminar "${name}" para siempre? No se puede deshacer.`,
+
+    // Cronología
+    timeline: 'Cronología',
+    timelineRange: 'Rango de tiempo',
+    timelineEmpty: 'Sin catas en este periodo.',
+    timeline6m: '6 meses',
+    timeline12m: '12 meses',
+    timelineYear: 'Este año',
+    dramCount: (n) => `${n} ${n === 1 ? 'dram' : 'drams'}`,
+    ratingXof5: (n) => `${n} de 5 estrellas`,
+
+    // Comparar
+    closeComparison: 'Cerrar comparación',
+    compareEmpty: 'Selecciona al menos 2 whiskies para comparar.',
+
+    // Buscar en catálogo
+    clearSearch: 'Limpiar búsqueda',
+    csMinChars: 'Escribe al menos 2 caracteres para buscar.',
+    catalogueSearchFailed: 'La búsqueda falló. Revisa tu conexión e inténtalo de nuevo.',
+    scanNotThisOne: '¿No es el correcto?',
+    scanAddManually: 'Usar datos escaneados',
+
+    // Autocompletar
+    acSearching: 'Buscando…',
+    acNoMatches: 'Sin resultados',
+
+    // Escáner
+    scanPreviewAlt: 'Vista previa de la botella',
+    scanAnalysingSub: 'Leyendo la etiqueta — puedes cancelar y repetir.',
+    scanErrConfig: 'Error de configuración de la API. Contacta con soporte.',
+    scanErrQuota: 'Límite de escaneos alcanzado. Inténtalo más tarde.',
+    scanErrModel: 'El modelo de IA no está disponible. Inténtalo en un momento.',
+    scanErrGeneric: 'Algo salió mal. Inténtalo de nuevo.',
+    scanErrLabel: 'No se pudo leer la etiqueta. Prueba con una foto más clara.',
+    scanErrIdentify: 'No se pudo identificar la botella. Prueba con una foto más clara.',
+
+    // Restos de WhiskyModal
+    lastDram: 'Último',
+    fillDetails: 'Rellenar detalles',
+
+    // Compartir
+    shareLinkTab: 'Enlace',
+    sendToFriendTab: 'Enviar a un amigo',
+    sendIntroPrefix: 'Envía',
+    sendIntroSuffix: 'a amigos dentro de la app. Puedes ocultar foto, puntuación o notas antes.',
+    noFollowersYet: 'Aún no tienes seguidores. Comparte el enlace público o pide a un amigo que te siga desde Amigos y seguidores.',
+    privacyPreview: 'Vista de privacidad',
+    nSelected: (n) => `${n} seleccionados`,
+    noFriendsSelected: 'Ningún amigo seleccionado',
+    hiddenFields: 'Campos ocultos',
+    presetRecent: 'Recientes',
+    presetAll: 'Todos',
+    presetClear: 'Limpiar',
+    recentlySentTo: 'Enviados recientemente a',
+    searchFriends: 'Buscar amigos…',
+    noFriendsMatch: (q) => `Ningún amigo coincide con "${q}"`,
+    sentState: 'Enviado',
+    selectedState: 'Elegido',
+    sendAction: 'Enviar',
+    messagePlaceholder: 'Añade un mensaje (opcional)…',
+    sendToN: (n) => `Enviar a ${n} ${n === 1 ? 'amigo' : 'amigos'}`,
+    pickAtLeastOne: 'Elige al menos un amigo.',
+    couldNotSendTo: (list) => `No se pudo enviar a ${list}.`,
+    couldNotSend: 'No se pudo enviar. Inténtalo de nuevo.',
+    sentToFriends: (n) => `¡Enviado a ${n} ${n === 1 ? 'amigo' : 'amigos'}!`,
+    linkCopyFailed: 'No se pudo copiar — mantén pulsado el enlace para copiarlo manualmente.',
+
+    // Compartir lista
+    wishlistBottles: (n) => `${n === 1 ? 'botella' : 'botellas'} de tu lista. Cualquiera con este enlace puede verlas e importarlas.`,
+
+    // Aviso tras guardar
+    sharePromptTitle: '¿Compartir este registro?',
+    sharePromptCopy: 'Tu entrada está guardada. Compártela con amigos ahora o mantenla privada por el momento.',
+    sharePromptNote: 'Puedes ocultar notas, puntuación o foto antes de enviar.',
+    sharePromptDontAsk: 'No volver a preguntar',
+    shareNow: 'Compartir ahora',
+    notNow: 'Ahora no',
+
+    // Vistas públicas
+    shareLoadFailed: 'No se pudo cargar esta página. Revisa tu conexión e inténtalo de nuevo.',
+    alreadyInCollection: 'Ya está en tu colección',
+
+    // Vista de lista compartida
+    addedXofY: (a, b) => `Añadidas ${a} de ${b} botellas — algunas fallaron, inténtalo de nuevo.`,
+
+    // Feed
+    feedLoadFailed: 'No se pudo cargar la actividad. Revisa tu conexión e inténtalo de nuevo.',
+    noResultsFor: (q) => `Sin resultados para "${q}"`,
+
+    // Buzón
+    inboxTab: 'Recibidos',
+    sentTab: 'Enviados',
+    sentEmpty: 'Aún no hay mensajes enviados.',
+    deleteMessage: 'Eliminar mensaje',
+    confirmDeleteMessage: '¿Eliminar este mensaje? No se puede deshacer.',
+    confirmDecline: '¿Rechazar esta solicitud? Se eliminará para siempre.',
+    requestAccepted: (email) => `Solicitud de ${email} aceptada`,
+    requestDeclined: 'Solicitud rechazada.',
+
+    // Estadísticas
+    syncingStats: 'Sincronizando tu colección…',
+    statsRankings: 'Mis Clasificaciones',
+    statsRankingsSub: 'Puntuaciones personales basadas en tus propias catas — no promedios globales.',
+    statsRated: 'Valorados',
+    statsAvgScore: 'Media',
+    statsTopRegion: 'Top Región',
+
+    // Recomendaciones
+    recsLoadFailed: 'No se pudieron cargar las recomendaciones.',
+    recsEmpty: 'Sin recomendaciones aún — registra algunos drams y vuelve el lunes.',
+
+    // Solicitudes
+    frTitleHint: 'Ponle un nombre corto y descriptivo (más de 3 caracteres).',
+    frDescReq: 'Describe el problema en más de 10 caracteres.',
+    frImpactReq: 'Explica el impacto en más de 5 caracteres.',
+    frSubmitFailed: 'No se pudo enviar. Inténtalo de nuevo.',
+
+    // Admin
+    frAdminAccessDeniedBody: 'Tu cuenta no está reconocida como administradora. Si deberías tener acceso, revisa la configuración de administración e inténtalo de nuevo.',
+    frPriorityLow: 'Baja',
+    frPriorityMedium: 'Media',
+    frPriorityHigh: 'Alta',
+    frPriorityCritical: 'Crítica',
+    frAdminDeleted: 'Solicitud eliminada.',
+    frAdminDeleting: 'Eliminando…',
+    frAdminDeleteFailed: 'No se pudo eliminar. Inténtalo de nuevo.',
+    frAdminLoadFailed: 'No se pudieron cargar las solicitudes. Inténtalo de nuevo.',
+
+    // Suscripciones
+    followSomeone: 'Seguir a alguien',
+    followEmailPlaceholder: 'Escribe su email…',
+    sendRequest: 'Enviar solicitud',
+    pendingRequests: 'Solicitudes pendientes',
+    followingTitle: (n) => `Siguiendo (${n})`,
+    followersTitle: (n) => `Seguidores (${n})`,
+    notFollowingAnyone: 'Aún no sigues a nadie.',
+    noFollowers: 'Sin seguidores aún.',
+    unfollow: 'Dejar de seguir',
+    remove: 'Eliminar',
+    digestDisclosure: 'Los seguidores reciben un resumen semanal de tus nuevas catas y puntuaciones.',
+    followRequestSent: (email) => `¡Solicitud enviada a ${email}!`,
+    followRequestFailed: 'No se pudo enviar la solicitud. Si tienen cuenta, la recibirán en breve.',
+    cannotFollowSelf: 'No puedes seguirte a ti mismo.',
+    alreadyRequested: 'Ya enviaste una solicitud a este usuario.',
+    confirmUnfollow: '¿Dejar de seguir a esta persona?',
+    confirmRemoveFollower: '¿Eliminar a este seguidor? Ya no verá tu actividad.',
 
     // Landing page
     landing: {

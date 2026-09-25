@@ -1,32 +1,37 @@
 <template>
-  <div class="modal-backdrop open" @click.self="$emit('close')">
-    <div class="modal" style="max-width:420px">
+  <div class="modal-backdrop open" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.sharePromptTitle" @click.self="$emit('close')">
+    <div class="modal modal--xs">
       <div class="modal-header">
-        <div class="modal-title">{{ title }}</div>
-        <button class="modal-close" @click="$emit('close')"><XIcon :size="14" /></button>
+        <div class="modal-title">{{ t.sharePromptTitle }}</div>
+        <button class="modal-close" :aria-label="t.close" @click="$emit('close')"><XIcon :size="14" aria-hidden="true" /></button>
       </div>
 
       <div class="prompt-body">
-        <div class="prompt-icon">
+        <div class="prompt-icon" aria-hidden="true">
           <SendIcon :size="18" />
         </div>
         <p class="prompt-copy">
-          Your entry is saved. Share it with friends now, or keep it private for the moment.
+          {{ t.sharePromptCopy }}
         </p>
 
         <div class="prompt-card">
           <div class="prompt-name">{{ whisky?.name }}</div>
           <div v-if="whisky?.distillery" class="prompt-meta">{{ whisky.distillery }}</div>
           <div class="prompt-note">
-            You can hide notes, rating, or photo before sending.
+            {{ t.sharePromptNote }}
           </div>
         </div>
 
+        <label class="prompt-remember">
+          <input v-model="dontAsk" type="checkbox">
+          {{ t.sharePromptDontAsk }}
+        </label>
+
         <div class="modal-actions prompt-actions">
-          <button class="btn-save" @click="$emit('share')">
-            <SendIcon :size="14" /> Share now
+          <button class="btn-save" @click="share">
+            <SendIcon :size="14" aria-hidden="true" /> {{ t.shareNow }}
           </button>
-          <button class="btn-cancel" @click="$emit('close')">Not now</button>
+          <button class="btn-cancel" @click="dismiss">{{ t.notNow }}</button>
         </div>
       </div>
     </div>
@@ -34,16 +39,32 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue'
 import { X as XIcon, Send as SendIcon } from 'lucide-vue-next'
+import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
 
 const props = defineProps({
   whisky: { type: Object, default: null },
 })
 
-defineEmits(['share', 'close'])
+const emit = defineEmits(['share', 'close'])
 
-const title = computed(() => 'Share this save?')
+const { t } = useI18n()
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
+
+const dontAsk = ref(localStorage.getItem('dj_no_share_prompt') === '1')
+
+function dismiss() {
+  if (dontAsk.value) localStorage.setItem('dj_no_share_prompt', '1')
+  emit('close')
+}
+
+function share() {
+  if (dontAsk.value) localStorage.setItem('dj_no_share_prompt', '1')
+  emit('share')
+}
 </script>
 
 <style scoped>
@@ -75,7 +96,7 @@ const title = computed(() => 'Share this save?')
   border-radius: 10px;
   background: rgba(200, 130, 42, 0.04);
   padding: 12px 14px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .prompt-name {
@@ -94,6 +115,21 @@ const title = computed(() => 'Share this save?')
   font-size: 0.78rem;
   color: var(--peat-light);
   line-height: 1.5;
+}
+
+.prompt-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+.prompt-remember input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--amber);
 }
 
 .prompt-actions {

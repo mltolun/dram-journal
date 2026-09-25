@@ -1,88 +1,86 @@
 <template>
-  <div class="modal-backdrop open" @click.self="$emit('close')">
-    <div class="modal" style="max-width:480px">
+  <div class="modal-backdrop open" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.shareThisDram" @click.self="$emit('close')">
+    <div class="modal modal--sm">
       <div class="modal-header">
         <div class="modal-title">{{ t.shareThisDram }}</div>
-        <button class="modal-close" @click="$emit('close')"><XIcon :size="14" /></button>
+        <button class="modal-close" :aria-label="t.close" @click="$emit('close')"><XIcon :size="14" aria-hidden="true" /></button>
       </div>
 
       <!-- Tabs -->
-      <div class="share-tabs">
-        <button class="share-tab" :class="{ active: tab === 'link' }" @click="tab = 'link'">
-          <LinkIcon :size="12" /> Share link
+      <div class="share-tabs" role="tablist" :aria-label="t.shareThisDram">
+        <button class="share-tab" :class="{ active: tab === 'link' }" role="tab" :aria-selected="tab === 'link'" @click="setTab('link')">
+          <LinkIcon :size="12" aria-hidden="true" /> {{ t.shareLinkTab }}
         </button>
-        <button class="share-tab" :class="{ active: tab === 'send' }" @click="tab = 'send'">
-          <SendIcon :size="12" /> Send to friend
+        <button class="share-tab" :class="{ active: tab === 'send' }" role="tab" :aria-selected="tab === 'send'" @click="setTab('send')">
+          <SendIcon :size="12" aria-hidden="true" /> {{ t.sendToFriendTab }}
           <span v-if="myFollowers.length" class="tab-count">{{ myFollowers.length }}</span>
         </button>
       </div>
 
       <!-- Link tab -->
-      <div v-if="tab === 'link'" class="tab-body">
+      <div v-if="tab === 'link'" class="tab-body" role="tabpanel">
         <p class="share-desc">{{ t.shareDescription }}</p>
         <div class="share-link-box">
-          <input type="text" :value="shareUrl" readonly>
+          <input ref="linkInput" type="text" :value="shareUrl" readonly :aria-label="t.shareLinkTab" @focus="$event.target.select()">
           <button @click="copy">{{ t.copy }}</button>
         </div>
         <div class="share-tip">{{ tip }}</div>
       </div>
 
       <!-- Send to friend tab -->
-      <div v-else class="tab-body">
+      <div v-else class="tab-body" role="tabpanel">
         <p class="share-desc">
-          Send <strong>{{ whisky.name }}</strong> to friends inside the app.
-          You can trim the payload first so the share feels intentional, not overexposed.
+          {{ t.sendIntroPrefix }} <strong>{{ whisky.name }}</strong> {{ t.sendIntroSuffix }}
         </p>
 
         <div v-if="myFollowers.length === 0" class="share-empty">
-          You don't have any followers yet.
-          Share the public link, or invite a friend to follow you first.
+          {{ t.noFollowersYet }}
         </div>
 
         <div v-else>
           <div class="share-preview">
             <div class="share-preview-top">
-              <div class="share-preview-label">Privacy preview</div>
-              <div class="share-preview-count">{{ selectedCount ? selectedCount + ' selected' : 'No friends selected' }}</div>
+              <div class="share-preview-label">{{ t.privacyPreview }}</div>
+              <div class="share-preview-count">{{ selectedCount ? t.nSelected(selectedCount) : t.noFriendsSelected }}</div>
             </div>
             <div class="share-preview-row">
-              <span v-if="includePhoto">Photo</span>
-              <span v-if="includeRating">Rating</span>
-              <span v-if="includeNotes">Notes</span>
-              <span v-if="!includePhoto || !includeRating || !includeNotes">Hidden fields: {{ hiddenFieldsLabel }}</span>
+              <span v-if="includePhoto">{{ t.photo }}</span>
+              <span v-if="includeRating">{{ t.rating }}</span>
+              <span v-if="includeNotes">{{ t.personalNotes }}</span>
+              <span v-if="!includePhoto || !includeRating || !includeNotes">{{ t.hiddenFields }}: {{ hiddenFieldsLabel }}</span>
             </div>
           </div>
 
           <div class="audience-presets">
-            <button class="preset-btn" :class="{ active: audiencePreset === 'recent' }" @click="applyPreset('recent')">
-              Recent
+            <button class="preset-btn" :class="{ active: audiencePreset === 'recent' }" :aria-pressed="audiencePreset === 'recent'" @click="applyPreset('recent')">
+              {{ t.presetRecent }}
             </button>
-            <button class="preset-btn" :class="{ active: audiencePreset === 'all' }" @click="applyPreset('all')">
-              All friends
+            <button class="preset-btn" :class="{ active: audiencePreset === 'all' }" :aria-pressed="audiencePreset === 'all'" @click="applyPreset('all')">
+              {{ t.presetAll }}
             </button>
             <button class="preset-btn ghost" @click="applyPreset('clear')">
-              Clear
+              {{ t.presetClear }}
             </button>
           </div>
 
           <div class="privacy-toggles">
             <label class="toggle-pill">
               <input v-model="includePhoto" type="checkbox">
-              Photo
+              {{ t.photo }}
             </label>
             <label class="toggle-pill">
               <input v-model="includeRating" type="checkbox">
-              Rating
+              {{ t.rating }}
             </label>
             <label class="toggle-pill">
               <input v-model="includeNotes" type="checkbox">
-              Notes
+              {{ t.personalNotes }}
             </label>
           </div>
 
           <!-- Recently sent strip -->
           <div v-if="recentFollowers.length" class="recent-section">
-            <div class="recent-label">Recently sent to</div>
+            <div class="recent-label">{{ t.recentlySentTo }}</div>
             <div class="recent-strip">
               <button
                 v-for="sub in recentFollowers"
@@ -91,6 +89,7 @@
                 :class="{ sent: selectedRecipientIds.has(sub.follower_id) || sentTo.has(sub.follower_id), sending: sendingTo !== null }"
                 :disabled="sendingTo !== null || sentTo.has(sub.follower_id)"
                 @click="toggleRecipient(sub)"
+                :aria-label="sub.follower_email"
                 :title="sub.follower_email"
               >
                 <div class="chip-avatar" :style="{ background: avatarBg(sub.follower_email), color: avatarFg(sub.follower_email) }">
@@ -104,22 +103,23 @@
 
           <!-- Search bar -->
           <div class="search-wrap">
-            <SearchIcon :size="13" class="search-icon-inner" />
+            <SearchIcon :size="13" class="search-icon-inner" aria-hidden="true" />
             <input
               v-model="search"
               class="search-input"
               type="search"
-              placeholder="Search friends…"
+              :placeholder="t.searchFriends"
+              :aria-label="t.searchFriends"
               autocomplete="off"
               spellcheck="false"
             />
-            <button v-if="search" class="search-clear" @click="search = ''"><XIcon :size="11" /></button>
+            <button v-if="search" class="search-clear" type="button" :aria-label="t.clearSearch" @click="search = ''"><XIcon :size="11" aria-hidden="true" /></button>
           </div>
 
           <!-- Scrollable friend list -->
           <div class="follower-list" :class="{ 'follower-list--scroll': filteredFollowers.length > 4 }">
-            <div v-if="filteredFollowers.length === 0" class="search-empty">
-              No friends match "{{ search }}"
+            <div v-if="filteredFollowers.length === 0" class="search-empty" role="status">
+              {{ t.noFriendsMatch(search) }}
             </div>
             <button
               v-for="sub in filteredFollowers"
@@ -135,9 +135,9 @@
               </div>
               <span class="follower-email">{{ sub.follower_email }}</span>
               <span class="follower-action">
-                <template v-if="sentTo.has(sub.follower_id)">Sent</template>
-                <template v-else-if="selectedRecipientIds.has(sub.follower_id)">Selected</template>
-                <template v-else>Send <ArrowRightIcon :size="12" /></template>
+                <template v-if="sentTo.has(sub.follower_id)">{{ t.sentState }}</template>
+                <template v-else-if="selectedRecipientIds.has(sub.follower_id)">{{ t.selectedState }}</template>
+                <template v-else>{{ t.sendAction }} <ArrowRightIcon :size="12" aria-hidden="true" /></template>
               </span>
             </button>
           </div>
@@ -152,21 +152,22 @@
             <textarea
               v-model="message"
               class="share-message"
-              placeholder="Add a message (optional)…"
+              :placeholder="t.messagePlaceholder"
+              :aria-label="t.messagePlaceholder"
               rows="2"
               maxlength="280"
             ></textarea>
-            <button class="btn-send-confirm" @click="sendSelected" :disabled="sendingTo !== null || selectedCount === 0">
-              <SendIcon :size="13" />
-              {{ sendingTo !== null ? 'Sending…' : 'Send to ' + selectedCount + (selectedCount === 1 ? ' friend' : ' friends') }}
+            <button class="btn-send-confirm" @click="sendSelected" :disabled="sendingTo !== null || selectedCount === 0" :aria-busy="sendingTo !== null">
+              <SendIcon :size="13" aria-hidden="true" />
+              {{ sendingTo !== null ? t.sending : t.sendToN(selectedCount) }}
             </button>
           </div>
         </div>
 
-        <div v-if="sendError" class="share-tip" style="color:#E24B4A;">{{ sendError }}</div>
+        <div v-if="sendError" class="share-tip share-error-text" role="alert">{{ sendError }}</div>
       </div>
 
-      <div class="modal-actions" style="margin-top:1.2rem">
+      <div class="modal-actions modal-actions--single">
         <button class="btn-cancel" @click="$emit('close')">{{ t.close }}</button>
       </div>
     </div>
@@ -186,7 +187,9 @@ import {
 import { sb } from '../lib/supabase.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
 import { useMessages } from '../composables/useMessages.js'
+import { currentUser } from '../composables/useAuth.js'
 import { myFollowers, useSubscriptions } from '../composables/useSubscriptions.js'
 
 const RECENT_KEY = 'dram_recent_sends'
@@ -225,6 +228,9 @@ const audiencePreset = ref('recent')
 const includePhoto = ref(true)
 const includeRating = ref(true)
 const includeNotes = ref(true)
+const linkInput = ref(null)
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
 
 // ── Avatar helpers ──────────────────────────────────────────────
 function avatarIndex(email) {
@@ -334,31 +340,50 @@ const sharePayload = computed(() => {
   return payload
 })
 
-// ── Lifecycle ───────────────────────────────────────────────────
+// ── Lifecycle: create the public link lazily, only when the user opens the link tab ──
+let linkReady = false
+async function ensureShareUrl() {
+  if (linkReady) return
+  linkReady = true
+  tip.value = t.value.generatingLink
+  try {
+    const uid = currentUser.value?.id
+    let query = sb
+      .from('shared_whiskies')
+      .select('share_id')
+      .eq('payload->>id', String(props.whisky.id))
+    if (uid) query = query.eq('payload->>user_id', uid)
+    const { data: existing } = await query.maybeSingle()
+
+    let shareId
+    if (existing) {
+      shareId = existing.share_id
+    } else {
+      const { data, error } = await sb
+        .from('shared_whiskies')
+        .insert({ payload: sharePayload.value })
+        .select('share_id')
+        .single()
+      if (error) throw error
+      shareId = data.share_id
+    }
+
+    shareUrl.value = window.location.origin + window.location.pathname + '#/share/' + shareId
+    tip.value = t.value.linkPublicDram
+  } catch (e) {
+    console.error('Could not generate share link:', e)
+    tip.value = t.value.couldNotGenerateLink
+  }
+}
+
+function setTab(next) {
+  tab.value = next
+  if (next === 'link') ensureShareUrl()
+}
+
 onMounted(async () => {
   tab.value = props.initialTab || 'link'
-  tip.value = t.value.generatingLink
-  const { data: existing } = await sb
-    .from('shared_whiskies')
-    .select('share_id')
-    .eq('payload->>id', String(props.whisky.id))
-    .maybeSingle()
-
-  let shareId
-  if (existing) {
-    shareId = existing.share_id
-  } else {
-    const { data, error } = await sb
-      .from('shared_whiskies')
-      .insert({ payload: props.whisky })
-      .select('share_id')
-      .single()
-    if (error) { tip.value = t.value.couldNotGenerateLink + error.message; return }
-    shareId = data.share_id
-  }
-
-  shareUrl.value = window.location.origin + window.location.pathname + '#/share/' + shareId
-  tip.value = t.value.linkPublicDram
+  if (tab.value === 'link') ensureShareUrl()
 
   await loadSubscriptions()
 
@@ -385,14 +410,20 @@ watch(tab, next => {
 
 // ── Actions ─────────────────────────────────────────────────────
 function copy() {
+  if (!shareUrl.value) return
   navigator.clipboard.writeText(shareUrl.value)
     .then(() => toast(t.value.linkCopied))
-    .catch(() => toast(t.value.linkCopied))
+    .catch((e) => {
+      console.error('Clipboard copy failed:', e)
+      linkInput.value?.focus()
+      linkInput.value?.select()
+      toast(t.value.linkCopyFailed)
+    })
 }
 
 async function sendSelected() {
   if (!selectedCount.value) {
-    sendError.value = 'Pick at least one friend to send to.'
+    sendError.value = t.value.pickAtLeastOne
     return
   }
 
@@ -406,25 +437,27 @@ async function sendSelected() {
         sentTo.value = new Set([...sentTo.value, sub.follower_id])
         pushRecentId(sub.follower_id)
       } catch (err) {
+        console.error('sendMessage failed:', err)
         failures.push(sub.follower_email)
       }
     }
 
     const successCount = selectedRecipients.value.length - failures.length
     if (successCount > 0) {
-      toast(`Sent to ${successCount} friend${successCount === 1 ? '' : 's'}!`)
+      toast(t.value.sentToFriends(successCount))
       if (failures.length === 0) {
         emit('close')
       }
     }
 
     if (failures.length > 0) {
-      sendError.value = `Could not send to ${failures.join(', ')}.`
+      sendError.value = t.value.couldNotSendTo(failures.join(', '))
     } else {
       message.value = ''
     }
   } catch (err) {
-    sendError.value = 'Could not send: ' + err.message
+    console.error('sendSelected failed:', err)
+    sendError.value = t.value.couldNotSend
   } finally {
     sendingTo.value = null
   }
@@ -541,7 +574,7 @@ async function sendSelected() {
   transition: all 0.15s;
 }
 .preset-btn:hover { border-color: var(--amber); color: var(--text-primary); }
-.preset-btn.active { background: var(--amber); border-color: var(--amber); color: #fff; }
+.preset-btn.active { background: var(--amber); border-color: var(--amber); color: var(--on-amber); }
 .preset-btn.ghost {
   background: transparent;
 }
@@ -737,7 +770,7 @@ async function sendSelected() {
   align-items: center;
   gap: 4px;
 }
-.follower-row.sent .follower-action { color: #1D9E75; }
+.follower-row.sent .follower-action { color: var(--success); }
 
 /* ── Compose panel ── */
 .compose-panel {

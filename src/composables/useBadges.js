@@ -122,10 +122,11 @@ const earnedInDB = ref(new Set())
 
 export async function loadEarnedBadges() {
   if (!currentUser.value) return
-  const { data } = await sb
+  const { data, error } = await sb
     .from('user_badges')
     .select('badge_id')
     .eq('user_id', currentUser.value.id)
+  if (error) { console.error('loadEarnedBadges failed:', error.message); return }
   if (data) earnedInDB.value = new Set(data.map(r => r.badge_id))
 }
 

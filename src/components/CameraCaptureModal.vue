@@ -1,7 +1,7 @@
 <template>
   <Teleport v-if="modelValue" to="body">
     <div class="camera-capture-backdrop" @click.self="close">
-      <div class="camera-capture-modal" role="dialog" aria-modal="true" :aria-label="title">
+      <div class="camera-capture-modal" ref="modalRef" role="dialog" aria-modal="true" :aria-label="title">
         <div class="camera-capture-head">
           <div>
             <div class="camera-capture-title">{{ title }}</div>
@@ -10,7 +10,7 @@
               <template v-else>{{ subtitle }}</template>
             </div>
           </div>
-          <button type="button" class="camera-capture-close" @click="close" :aria-label="t.cameraCloseAria">
+          <button type="button" class="camera-capture-close" ref="closeBtn" @click="close" :aria-label="t.cameraCloseAria">
             <XIcon :size="18" />
           </button>
         </div>
@@ -20,12 +20,13 @@
             v-show="!errorMsg"
             ref="videoRef"
             class="camera-capture-video"
+            :aria-label="title"
             autoplay
             playsinline
             muted
           ></video>
-          <div v-if="!errorMsg && starting" class="camera-capture-status">{{ t.cameraOpening }}</div>
-          <div v-else-if="errorMsg" class="camera-capture-status">{{ errorMsg }}</div>
+          <div v-if="!errorMsg && starting" class="camera-capture-status" role="status">{{ t.cameraOpening }}</div>
+          <div v-else-if="errorMsg" class="camera-capture-status" role="alert">{{ errorMsg }}</div>
         </div>
 
         <div class="camera-capture-actions">
@@ -57,6 +58,7 @@
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { X as XIcon } from 'lucide-vue-next'
 import { useI18n } from '../composables/useI18n.js'
+import { pushDialog, visibleFocusables } from '../composables/useDialog.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -68,21 +70,36 @@ const emit = defineEmits(['update:modelValue', 'captured', 'fallback'])
 const { t } = useI18n()
 
 const videoRef = ref(null)
+const modalRef = ref(null)
+const closeBtn = ref(null)
 const streamRef = ref(null)
 const starting = ref(false)
 const errorMsg = ref('')
 
+let popDialog = null
+let previouslyFocused = null
+
 watch(() => props.modelValue, async (isOpen) => {
   if (isOpen) {
+    previouslyFocused = document.activeElement
     await nextTick()
+    popDialog = pushDialog(() => modalRef.value, close)
+    const focusTarget = closeBtn.value || visibleFocusables(modalRef.value || document.createElement('div'))[0]
+    if (focusTarget) focusTarget.focus()
     await startCamera()
   } else {
+    if (popDialog) { popDialog(); popDialog = null }
+    if (previouslyFocused && typeof previouslyFocused.focus === 'function') previouslyFocused.focus()
+    previouslyFocused = null
     stopCamera()
     errorMsg.value = ''
   }
 }, { immediate: true })
 
-onBeforeUnmount(stopCamera)
+onBeforeUnmount(() => {
+  if (popDialog) { popDialog(); popDialog = null }
+  stopCamera()
+})
 
 async function startCamera() {
   if (streamRef.value && videoRef.value?.srcObject) {
@@ -162,7 +179,7 @@ function capturePhoto() {
 }
 </script>
 
-<style>
+<style scoped>
 .camera-capture-backdrop {
   position: fixed;
   inset: 0;
@@ -199,8 +216,8 @@ function capturePhoto() {
   color: var(--text-muted);
 }
 .camera-capture-close {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--bg-input);
@@ -208,7 +225,10 @@ function capturePhoto() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
 }
+.camera-capture-close:hover { border-color: var(--border-hi); }
 .camera-capture-stage {
   position: relative;
   margin-top: 14px;
@@ -219,7 +239,7 @@ function capturePhoto() {
   border: 1px solid var(--border);
 }
 .camera-capture-stage.is-error {
-  background: rgba(226, 75, 74, 0.08);
+  background: var(--danger-soft);
 }
 .camera-capture-video {
   width: 100%;
@@ -252,13 +272,18 @@ function capturePhoto() {
   background: var(--bg-input);
   color: var(--text-primary);
   font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
+.camera-capture-button:hover:not(:disabled) { border-color: var(--border-hi); }
 .camera-capture-button.primary {
   border-color: transparent;
   background: var(--amber);
-  color: #1b1306;
+  color: var(--on-amber);
 }
+.camera-capture-button.primary:hover:not(:disabled) { background: var(--amber-light); }
 .camera-capture-button:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

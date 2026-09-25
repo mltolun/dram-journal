@@ -3,7 +3,7 @@
   <BadgeToast />
   <Teleport to="body">
     <Transition name="toast">
-      <div v-if="toastVisible" class="toast">{{ toastMsg }}</div>
+      <div v-if="toastVisible" class="toast" role="status" aria-live="polite">{{ toastMsg }}</div>
     </Transition>
   </Teleport>
 </template>

@@ -2,8 +2,16 @@
   <div class="feed-panel">
 
     <!-- Loading -->
-    <div v-if="feedLoading" class="feed-loading">
-      <div class="feed-spinner"></div>
+    <div v-if="feedLoading" class="feed-loading" role="status" :aria-label="t.loading">
+      <div class="feed-spinner" aria-hidden="true"></div>
+      <span class="sr-only">{{ t.loading }}</span>
+    </div>
+
+    <!-- Load failed -->
+    <div v-else-if="feedError" class="feed-empty" role="alert">
+      <div class="feed-empty-icon"><EyeIcon :size="40" /></div>
+      <div class="feed-empty-text">{{ t.feedLoadFailed }}</div>
+      <button class="feed-refresh-btn" @click="loadFeed">{{ t.tryAgain }}</button>
     </div>
 
     <!-- No follows and no editorial content -->
@@ -21,9 +29,9 @@
     </div>
 
     <!-- Has items but search filtered them all out -->
-    <div v-else-if="filteredFeed.length === 0" class="feed-empty">
+    <div v-else-if="filteredFeed.length === 0" class="feed-empty" role="status">
       <div class="feed-empty-icon"><GlassWaterIcon :size="40" /></div>
-      <div class="feed-empty-text">No results for "{{ searchQuery }}"</div>
+      <div class="feed-empty-text">{{ t.noResultsFor(searchQuery) }}</div>
     </div>
 
     <!-- Feed list: mixed social + editorial, newest first -->
@@ -82,8 +90,8 @@
                   <span class="feed-card-time">{{ relativeTime(item.created_at) }}</span>
                 </div>
                 <div v-if="item.rating" class="feed-card-rating">
-                  <StarIcon :size="11" class="feed-card-rating-star" />
-                  <span class="feed-card-rating-val">{{ item.rating }}.0</span>
+                  <StarIcon :size="11" class="feed-card-rating-star" aria-hidden="true" />
+                  <span class="feed-card-rating-val">{{ Number(item.rating).toFixed(1) }}</span>
                 </div>
               </div>
               <div class="feed-card-verb">{{ verbFor(item.type) }}</div>
@@ -119,7 +127,7 @@ import { myFollowing } from '../composables/useSubscriptions.js'
 import { useI18n } from '../composables/useI18n.js'
 import { searchQuery } from '../composables/useSearch.js'
 
-const { feedItems, feedLoading, displayNames, loadFeed } = useFeed()
+const { feedItems, feedLoading, feedError, displayNames, loadFeed } = useFeed()
 const { t, locale } = useI18n()
 
 function displayName(userId) {
@@ -585,7 +593,7 @@ onMounted(loadFeed)
 
 .feed-editorial--event .feed-editorial-icon {
   background: rgba(100, 160, 200, 0.15);
-  color: #6ab0d8;
+  color: var(--info);
 }
 
 .feed-editorial-body {
@@ -615,7 +623,7 @@ onMounted(loadFeed)
 }
 
 .feed-editorial--event .feed-editorial-type {
-  color: #6ab0d8;
+  color: var(--info);
   background: rgba(100, 160, 200, 0.12);
 }
 
@@ -656,7 +664,7 @@ onMounted(loadFeed)
 .feed-editorial-event-info {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
-  color: #6ab0d8;
+  color: var(--info);
   letter-spacing: 0.04em;
 }
 </style>

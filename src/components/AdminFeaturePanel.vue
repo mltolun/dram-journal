@@ -1,20 +1,21 @@
 <template>
-  <div class="subs-overlay" @click.self="$emit('close')">
+  <div class="subs-overlay" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.frAdminTitle" @click.self="onBackdrop">
     <div class="subs-panel admin-panel">
 
       <!-- Header -->
       <div class="subs-header">
         <div class="subs-title">{{ t.frAdminTitle }} <span class="admin-badge">{{ t.frAdminBadge }}</span></div>
-        <button class="subs-close" @click="$emit('close')"><XIcon :size="14" /></button>
+        <button class="subs-close" :aria-label="t.close" @click="$emit('close')"><XIcon :size="14" aria-hidden="true" /></button>
       </div>
 
       <!-- Filters -->
-      <div class="admin-filters">
+      <div class="admin-filters" role="group" :aria-label="t.frAdminFilterAll">
         <button
           v-for="f in FILTERS"
           :key="f.value"
           class="filter-chip"
           :class="{ active: activeFilter === f.value }"
+          :aria-pressed="activeFilter === f.value"
           @click="activeFilter = f.value"
         >
           {{ f.label }}
@@ -24,17 +25,15 @@
 
       <!-- List -->
       <div class="admin-list">
-        <div v-if="loading" class="fr-loading">{{ t.frLoading }}</div>
+        <div v-if="loading" class="fr-loading" role="status">{{ t.frLoading }}</div>
+        <div v-else-if="loadError" class="fr-empty" role="alert">
+          <div>{{ t.frAdminLoadFailed }}</div>
+        </div>
 
-        <div v-else-if="accessDenied" class="fr-empty access-denied">
+        <div v-else-if="accessDenied" class="fr-empty access-denied" role="alert">
           <div class="fr-empty-icon"><LockIcon :size="32" /></div>
           <div class="access-denied-title">{{ t.frAdminAccessDenied }}</div>
-          <div class="access-denied-body">
-            Your account (<strong>{{ currentUser?.email }}</strong>) is not recognised as an admin.<br><br>
-            Check that <code>VITE_ADMIN_EMAILS</code> in your <code>.env</code> matches exactly,
-            and that the Supabase RLS policy for <em>"Admins can read all feature requests"</em>
-            uses the same email. Then restart the dev server.
-          </div>
+          <div class="access-denied-body">{{ t.frAdminAccessDeniedBody }}</div>
         </div>
 
         <div v-else-if="filtered.length === 0" class="fr-empty">
@@ -72,9 +71,9 @@
             <div class="admin-controls">
               <!-- Status -->
               <div class="admin-control-row">
-                <label class="admin-ctrl-label">{{ t.frAdminStatusLabel }}</label>
+                <label class="admin-ctrl-label" :for="`admin-status-${req.id}`">{{ t.frAdminStatusLabel }}</label>
                 <div class="admin-select-wrap">
-                  <select v-model="drafts[req.id].status" class="admin-select">
+                  <select :id="`admin-status-${req.id}`" v-model="drafts[req.id].status" class="admin-select">
                     <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
                   </select>
                 </div>
@@ -82,22 +81,23 @@
 
               <!-- Priority -->
               <div class="admin-control-row">
-                <label class="admin-ctrl-label">{{ t.frAdminPriorityLabel }}</label>
+                <label class="admin-ctrl-label" :for="`admin-priority-${req.id}`">{{ t.frAdminPriorityLabel }}</label>
                 <div class="admin-select-wrap">
-                  <select v-model="drafts[req.id].priority" class="admin-select">
+                  <select :id="`admin-priority-${req.id}`" v-model="drafts[req.id].priority" class="admin-select">
                     <option value="">{{ t.frAdminPriorityNone }}</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
+                    <option value="low">{{ t.frPriorityLow }}</option>
+                    <option value="medium">{{ t.frPriorityMedium }}</option>
+                    <option value="high">{{ t.frPriorityHigh }}</option>
+                    <option value="critical">{{ t.frPriorityCritical }}</option>
                   </select>
                 </div>
               </div>
 
               <!-- Due date -->
               <div class="admin-control-row">
-                <label class="admin-ctrl-label">{{ t.frAdminDueDateLabel }}</label>
+                <label class="admin-ctrl-label" :for="`admin-due-${req.id}`">{{ t.frAdminDueDateLabel }}</label>
                 <input
+                  :id="`admin-due-${req.id}`"
                   type="date"
                   v-model="drafts[req.id].due_date"
                   class="admin-date-input"
@@ -106,11 +106,12 @@
 
               <!-- Admin note -->
               <div class="admin-control-row admin-control-row--col">
-                <label class="admin-ctrl-label">
+                <label class="admin-ctrl-label" :for="`admin-note-${req.id}`">
                   {{ t.frAdminNoteLabel }}
                   <span class="admin-ctrl-hint">{{ t.frAdminNoteHint }}</span>
                 </label>
                 <textarea
+                  :id="`admin-note-${req.id}`"
                   v-model="drafts[req.id].admin_note"
                   class="admin-note-input"
                   :placeholder="t.frAdminNotePlaceholder"
@@ -130,25 +131,26 @@
                 <button class="admin-delete-btn" @click="confirmDelete(req)">{{ t.frAdminDelete }}</button>
               </div>
 
-              <div v-if="saveSuccess === req.id" class="admin-save-ok">{{ t.frAdminSaved }}</div>
-              <div v-if="saveError === req.id" class="admin-save-err">{{ t.frAdminSaveFailed }}</div>
+              <div v-if="saveSuccess === req.id" class="admin-save-ok" role="status">{{ t.frAdminSaved }}</div>
+              <div v-if="saveError === req.id" class="admin-save-err" role="alert">{{ t.frAdminSaveFailed }}</div>
             </div>
           </div>
 
-          <button class="fr-expand-btn" @click="toggleExpand(req)">
+          <button class="fr-expand-btn" @click="toggleExpand(req)" :aria-expanded="expanded === req.id">
             {{ expanded === req.id ? t.frAdminCollapse : t.frAdminManage }}
           </button>
         </div>
       </div>
 
       <!-- Delete confirm modal -->
-      <div v-if="deleteTarget" class="admin-confirm-overlay" @click.self="deleteTarget = null">
+      <div v-if="deleteTarget" ref="confirmEl" class="admin-confirm-overlay" role="dialog" aria-modal="true" :aria-label="t.frAdminDeleteConfirm" @click.self="deleteTarget = null">
         <div class="admin-confirm-box">
           <div class="admin-confirm-title">{{ t.frAdminDeleteConfirm }}</div>
           <div class="admin-confirm-sub">{{ deleteTarget.title }}</div>
+          <div v-if="deleteError" class="admin-save-err" role="alert">{{ t.frAdminDeleteFailed }}</div>
           <div class="admin-confirm-actions">
-            <button class="admin-delete-confirm-btn" @click="doDelete">{{ t.frAdminDeleteYes }}</button>
-            <button class="admin-cancel-btn" @click="deleteTarget = null">{{ t.frAdminCancel }}</button>
+            <button class="admin-delete-confirm-btn" :disabled="deleting" @click="doDelete">{{ deleting ? t.frAdminDeleting : t.frAdminDeleteYes }}</button>
+            <button class="admin-cancel-btn" :disabled="deleting" @click="deleteTarget = null">{{ t.frAdminCancel }}</button>
           </div>
         </div>
       </div>
@@ -158,13 +160,43 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, reactive, watch, nextTick } from 'vue'
 import { X as XIcon, CheckCircle as CheckCircleIcon, Lock as LockIcon } from 'lucide-vue-next'
 import { useFeatureRequests, featureRequests } from '../composables/useFeatureRequests.js'
 import { currentUser } from '../composables/useAuth.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useToast } from '../composables/useToast.js'
+import { pushDialog } from '../composables/useDialog.js'
 
 const emit = defineEmits(['close'])
+
+const rootEl = ref(null)
+const confirmEl = ref(null)
+const { toast } = useToast()
+let popRoot = null
+let prevFocus = null
+
+onMounted(() => {
+  prevFocus = document.activeElement
+  popRoot = pushDialog(() => (deleteTarget.value ? confirmEl.value : rootEl.value), onEscape)
+})
+onBeforeUnmount(() => {
+  if (popRoot) popRoot()
+  if (prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus()
+})
+watch(deleteTarget, async (val) => {
+  await nextTick()
+  if (val) confirmEl.value?.querySelector('.admin-cancel-btn')?.focus()
+})
+function onEscape() {
+  if (deleteTarget.value) deleteTarget.value = null
+  else emit('close')
+}
+function onBackdrop() {
+  onEscape()
+}
+// keep plain onMounted below for data loading (merged further down)
+
 const { loadAllRequests, loadAdminStatus, updateRequest, deleteRequest } = useFeatureRequests()
 const { t } = useI18n()
 
@@ -192,6 +224,7 @@ const FILTERS = computed(() => [
 const activeFilter  = ref('all')
 const expanded      = ref(null)
 const loading       = ref(false)
+const loadError     = ref(false)
 const accessDenied  = ref(false)
 const saving        = ref(null)
 const saveSuccess   = ref(null)
@@ -261,23 +294,42 @@ function confirmDelete(req) {
   deleteTarget.value = req
 }
 
+const deleting = ref(false)
+const deleteError = ref(false)
+
 async function doDelete() {
-  if (!deleteTarget.value) return
-  await deleteRequest(deleteTarget.value.id)
-  if (expanded.value === deleteTarget.value.id) expanded.value = null
-  deleteTarget.value = null
+  if (!deleteTarget.value || deleting.value) return
+  deleting.value = true
+  deleteError.value = false
+  try {
+    await deleteRequest(deleteTarget.value.id)
+    toast(t.value.frAdminDeleted)
+    if (expanded.value === deleteTarget.value.id) expanded.value = null
+    deleteTarget.value = null
+  } catch (e) {
+    console.error('deleteRequest failed:', e)
+    deleteError.value = true
+  } finally {
+    deleting.value = false
+  }
 }
 
 onMounted(async () => {
   loading.value = true
-  const ok = await loadAdminStatus()
-  if (!ok) {
-    accessDenied.value = true
+  try {
+    const ok = await loadAdminStatus()
+    if (!ok) {
+      accessDenied.value = true
+      loading.value = false
+      return
+    }
+    await loadAllRequests()
+  } catch (e) {
+    console.error('loadAllRequests failed:', e)
+    loadError.value = true
+  } finally {
     loading.value = false
-    return
   }
-  await loadAllRequests()
-  loading.value = false
 })
 </script>
 
@@ -455,7 +507,7 @@ onMounted(async () => {
   padding: 2px 8px;
 }
 .badge--open        { background: rgba(200,130,42,0.15); color: var(--amber-light); }
-.badge--accepted    { background: rgba(100,180,255,0.15); color: #88bef5; }
+.badge--accepted    { background: rgba(100,180,255,0.15); color: var(--info); }
 .badge--in_progress { background: rgba(200,130,42,0.25); color: var(--amber); }
 .badge--done        { background: rgba(29,158,117,0.2);  color: #1D9E75; }
 .badge--declined    { background: rgba(226,75,74,0.12);  color: #e08888; }

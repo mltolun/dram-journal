@@ -5,6 +5,7 @@ import { currentUser } from './useAuth.js'
 
 export const feedItems    = ref([])
 export const feedLoading  = ref(false)
+export const feedError    = ref(false)
 export const displayNames = ref(new Map()) // userId → display name
 
 export function useFeed() {
@@ -13,7 +14,14 @@ export function useFeed() {
     if (!currentUser.value) return
 
     feedLoading.value = true
+    feedError.value = false
     try {
+      // Ensure the social graph is loaded before reading it — otherwise the
+      // social half of the feed is silently empty on first mount.
+      const { loadSubscriptions, subscriptionsLoaded } = await import('./useSubscriptions.js')
+      if (!subscriptionsLoaded.value) {
+        try { await loadSubscriptions() } catch (e) { console.error('useFeed subscriptions error:', e?.message) }
+      }
       const following = myFollowing.value
 
       // ── Social activity (from followed users) ──────────────────────────────
@@ -129,10 +137,11 @@ export function useFeed() {
       feedItems.value = all
     } catch (err) {
       console.error('useFeed loadFeed error:', err?.message)
+      feedError.value = true
     } finally {
       feedLoading.value = false
     }
   }
 
-  return { feedItems, feedLoading, displayNames, loadFeed }
+  return { feedItems, feedLoading, feedError, displayNames, loadFeed }
 }

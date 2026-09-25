@@ -15,34 +15,37 @@
 
         <!-- Avatar + dropdown -->
         <div class="avatar-wrap" ref="avatarWrap">
-          <div
+          <button
+            type="button"
             class="user-avatar"
-            :title="currentUser?.email"
-            @click="menuOpen = !menuOpen"
+            ref="avatarBtn"
+            :title="`${currentUser?.email} — ${syncLabel}`"
+            @click="toggleMenu"
             :class="{ active: menuOpen }"
-            role="button"
             :aria-expanded="menuOpen"
-            aria-label="User menu"
+            aria-haspopup="menu"
+            :aria-label="t.userMenu"
           >
-            <span class="avatar-letter">{{ avatarLetter }}</span>
-            <span class="avatar-sync-dot" :style="{ background: syncColor }"></span>
-          </div>
+            <span class="avatar-letter" aria-hidden="true">{{ avatarLetter }}</span>
+            <span class="avatar-sync-dot" :class="`sync-${syncStatus}`" aria-hidden="true"></span>
+            <span class="sr-only">{{ syncLabel }}</span>
+          </button>
 
           <transition name="menu">
-            <div class="avatar-menu" v-if="menuOpen" role="menu">
+            <div class="avatar-menu" v-if="menuOpen" ref="menuEl" role="menu" :aria-label="t.userMenu" @keydown="onMenuKeydown">
               <div class="avatar-menu-email">{{ currentUser?.email }}</div>
 
               <!-- Inbox — always in avatar menu -->
               <div class="avatar-menu-divider"></div>
               <button class="avatar-menu-item" @click="menuOpen = false; inboxOpen = true" role="menuitem">
                 <InboxIcon :size="14" aria-hidden="true" /> {{ t.inbox }}
-                <span v-if="totalInboxCount" class="menu-badge">{{ totalInboxCount }}</span>
+                <span v-if="totalInboxCount" class="menu-badge" :aria-label="t.unreadCount(totalInboxCount)">{{ totalInboxCount }}</span>
               </button>
 
               <!-- Theme picker -->
               <div class="avatar-menu-divider"></div>
-              <div class="theme-row">
-                <span class="theme-row-label">Theme</span>
+              <div class="theme-row" role="group" aria-labelledby="theme-row-label">
+                <span class="theme-row-label" id="theme-row-label">{{ t.themeLabel }}</span>
                 <div class="theme-options">
                   <button
                     v-for="th in THEMES"
@@ -96,7 +99,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useAuth, currentUser } from '../composables/useAuth.js'
 import { whiskies, syncStatus } from '../composables/useWhiskies.js'
 import { useTheme } from '../composables/useTheme.js'
@@ -132,6 +135,8 @@ const { loadInbox } = useMessages()
 
 const menuOpen   = ref(false)
 const avatarWrap = ref(null)
+const avatarBtn  = ref(null)
+const menuEl     = ref(null)
 const inboxOpen  = ref(false)
 const adminOpen  = ref(false)
 
@@ -171,9 +176,42 @@ const avatarLetter = computed(() =>
   (currentUser.value?.email?.[0] ?? '?').toUpperCase()
 )
 
-const syncColor = computed(() => ({
-  loading: '#7A6255', saving: '#E8A84C', ok: '#1D9E75', error: '#E24B4A'
-})[syncStatus.value] || '#1D9E75')
+const syncLabel = computed(() => t.value.syncStates?.[syncStatus.value] || t.value.syncStates?.ok || '')
+
+// Menu keyboard support: Escape closes, arrows cycle items, open moves focus in
+function menuItems() {
+  return [...(menuEl.value?.querySelectorAll('.avatar-menu-item, .theme-option') || [])]
+}
+
+async function toggleMenu() {
+  menuOpen.value = !menuOpen.value
+  if (menuOpen.value) {
+    await nextTick()
+    menuItems()[0]?.focus()
+  }
+}
+
+function onMenuKeydown(e) {
+  const items = menuItems()
+  const idx = items.indexOf(document.activeElement)
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    menuOpen.value = false
+    avatarBtn.value?.focus()
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    items[(idx + 1) % items.length]?.focus()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    items[(idx - 1 + items.length) % items.length]?.focus()
+  } else if (e.key === 'Home') {
+    e.preventDefault()
+    items[0]?.focus()
+  } else if (e.key === 'End') {
+    e.preventDefault()
+    items[items.length - 1]?.focus()
+  }
+}
 
 function onClickOutside(e) {
   if (avatarWrap.value && !avatarWrap.value.contains(e.target)) {
@@ -199,12 +237,27 @@ function doExport() {
 
 async function doToggleLocale() {
   toggleLocale()
-  await sb.auth.updateUser({ data: { locale: locale.value } })
+  try {
+    const { error } = await sb.auth.updateUser({ data: { locale: locale.value } })
+    if (error) console.error('Could not persist locale preference:', error)
+  } catch (e) {
+    console.error('Could not persist locale preference:', e)
+  }
 }
 
+const signingOut = ref(false)
 async function doSignOut() {
   menuOpen.value = false
-  await signOut()
+  if (signingOut.value) return
+  signingOut.value = true
+  try {
+    await signOut()
+  } catch (e) {
+    console.error('Sign out failed:', e)
+    toast('⚠ ' + (t.value.signOutFailed || 'Sign out failed'))
+  } finally {
+    signingOut.value = false
+  }
 }
 </script>
 
@@ -222,6 +275,7 @@ async function doSignOut() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  padding: 0;
   transition: background 0.2s, border-color 0.2s;
 }
 .user-avatar:hover, .user-avatar.active {
@@ -243,7 +297,11 @@ async function doSignOut() {
   border-radius: 50%;
   border: 1.5px solid var(--bg);
   transition: background 0.3s;
+  background: var(--success);
 }
+.avatar-sync-dot.sync-loading { background: var(--peat-light); }
+.avatar-sync-dot.sync-saving  { background: var(--amber-light); }
+.avatar-sync-dot.sync-error   { background: var(--danger); }
 
 /* ── Dropdown menu ── */
 .avatar-menu {
@@ -330,13 +388,13 @@ async function doSignOut() {
   text-align: left;
 }
 .avatar-menu-item:hover { background: rgba(200,130,42,0.08); color: var(--text-primary); }
-.avatar-menu-item--danger:hover { background: rgba(226,75,74,0.1); color: #e08888; }
+.avatar-menu-item--danger:hover { background: var(--danger-soft); color: var(--danger); }
 .avatar-menu-item--admin:hover { background: rgba(200,130,42,0.1); color: var(--amber-light); }
 .avatar-menu-item svg { opacity: 0.7; flex-shrink: 0; }
 .menu-badge {
   margin-left: auto;
-  background: var(--amber, #A8620A);
-  color: #fff;
+  background: var(--amber);
+  color: var(--on-amber);
   font-size: 0.55rem;
   font-weight: 600;
   border-radius: 999px;

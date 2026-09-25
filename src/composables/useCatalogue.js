@@ -54,18 +54,23 @@ export function clearCatalogueCache() {
 // ---------------------------------------------------------------------------
 
 export function useCatalogue() {
-  const results    = ref([])
-  const searching  = ref(false)
+  const results     = ref([])
+  const searching   = ref(false)
+  const searchError = ref(false)
   let   debounceTimer = null
+  let   searchSeq = 0   // stale-response guard: only the latest search may write results
 
   async function search(query) {
     if (!currentUser.value) { results.value = []; return }
     if (!query || query.trim().length < 2) {
       results.value = []
+      searchError.value = false
       return
     }
 
+    const seq = ++searchSeq
     searching.value = true
+    searchError.value = false
     try {
       const q        = query.trim()
       const cacheKey = q.toLowerCase()
@@ -73,23 +78,21 @@ export function useCatalogue() {
       // Return cached results immediately if still fresh
       const cached = getCached(queryCache, cacheKey)
       if (cached) {
-        console.log('[Catalogue] cache hit:', cacheKey)
-        results.value = cached
+        if (seq === searchSeq) results.value = cached
         return
       }
 
       // Strategy 1: search the full query as-is (works for short precise queries)
-      console.log('[Catalogue] searching exact:', q)
-      const { data: exact } = await sb
+      const { data: exact, error: exactErr } = await sb
         .from('catalogue')
         .select('id, name, distillery, country, region, type, age, abv, price_band, photo_url, nose, palate, dulzor, ahumado, cuerpo, frutado, especiado')
         .or(`name.ilike.%${q}%,distillery.ilike.%${q}%`)
         .order('name', { ascending: true })
         .limit(20)
+      if (exactErr) throw exactErr
 
       // Strategy 2: search with noise words stripped (works for verbose scan results)
       const cleaned = cleanSearchQuery(q)
-      console.log('[Catalogue] cleaned for fuzzy:', cleaned)
       let fuzzy = []
       if (cleaned && cleaned !== q.toLowerCase()) {
         const words = cleaned.split(' ').filter(Boolean)
@@ -98,12 +101,13 @@ export function useCatalogue() {
           const orFilter = words
             .map(w => `name.ilike.%${w}%`)
             .join(',')
-          const { data: fuzzyData } = await sb
+          const { data: fuzzyData, error: fuzzyErr } = await sb
             .from('catalogue')
             .select('id, name, distillery, country, region, type, age, abv, price_band, photo_url, nose, palate, dulzor, ahumado, cuerpo, frutado, especiado')
             .or(orFilter)
             .order('name', { ascending: true })
             .limit(20)
+          if (fuzzyErr) throw fuzzyErr
           fuzzy = fuzzyData || []
         }
       }
@@ -118,23 +122,20 @@ export function useCatalogue() {
         }
       }
 
-      console.log('[Catalogue] exact results:', exact?.length, '| fuzzy results:', fuzzy.length)
-      console.log('[Catalogue] merged total:', merged.length, merged.slice(0,3).map(r => r.name))
-
       // Strategy 3: if still no results, try each word independently against name+distillery
       let fallback = []
       if (merged.length === 0) {
         const allWords = q.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2)
         for (const word of allWords.slice(0, 3)) {
-          const { data: wordData } = await sb
+          const { data: wordData, error: wordErr } = await sb
             .from('catalogue')
             .select('id, name, distillery, country, region, type, age, abv, price_band, photo_url, nose, palate, dulzor, ahumado, cuerpo, frutado, especiado')
             .or(`name.ilike.%${word}%,distillery.ilike.%${word}%`)
             .order('name', { ascending: true })
             .limit(20)
+          if (wordErr) throw wordErr
           if (wordData?.length) { fallback = wordData; break }
         }
-        console.log('[Catalogue] fallback results:', fallback.length)
       }
 
       const final = merged.length > 0 ? merged : fallback
@@ -153,12 +154,15 @@ export function useCatalogue() {
       for (const item of finalSlice) setCached(itemCache, item.id, item)
 
       setCached(queryCache, cacheKey, finalSlice)
-      results.value = finalSlice
+      if (seq === searchSeq) results.value = finalSlice
     } catch (err) {
       console.error('Catalogue search error:', err)
-      results.value = []
+      if (seq === searchSeq) {
+        results.value = []
+        searchError.value = true
+      }
     } finally {
-      searching.value = false
+      if (seq === searchSeq) searching.value = false
     }
   }
 
@@ -170,10 +174,7 @@ export function useCatalogue() {
   async function getById(id) {
     // Check item cache before hitting the network
     const cached = getCached(itemCache, id)
-    if (cached) {
-      console.log('[Catalogue] getById cache hit:', id)
-      return cached
-    }
+    if (cached) return cached
 
     const { data, error } = await sb
       .from('catalogue')
@@ -187,9 +188,11 @@ export function useCatalogue() {
   }
 
   function clear() {
+    searchSeq++          // invalidate in-flight searches
     results.value = []
+    searchError.value = false
     clearTimeout(debounceTimer)
   }
 
-  return { results, searching, debouncedSearch, search, getById, clear }
+  return { results, searching, searchError, debouncedSearch, search, getById, clear }
 }

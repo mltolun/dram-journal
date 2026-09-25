@@ -1,13 +1,14 @@
 <template>
-  <div v-if="loading" class="share-error">
+  <div v-if="loading" class="share-error" role="status">
     <div class="share-error-icon"><SparklesIcon :size="36" /></div>
     <div class="share-error-txt">{{ t.loading }}</div>
   </div>
 
-  <div v-else-if="!items.length" class="share-error">
+  <div v-else-if="loadError || !items.length" class="share-error">
     <div class="share-error-icon"><SparklesIcon :size="36" /></div>
-    <div class="share-error-txt">{{ t.wishlistNotFound }}</div>
-    <RouterLink to="/" style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
+    <div class="share-error-txt">{{ loadError ? t.shareLoadFailed : t.wishlistNotFound }}</div>
+    <button v-if="loadError" class="btn-retry" @click="load">{{ t.tryAgain }}</button>
+    <RouterLink to="/" class="share-back-link">{{ t.backToJournal }}</RouterLink>
   </div>
 
   <div v-else>
@@ -36,10 +37,11 @@
           <div v-if="currentUser" class="wl-card-action">
             <button
               class="wcard-btn"
-              :disabled="importedIds.has(item.id)"
+              :disabled="importedIds.has(item.id) || importingId === item.id"
+              :aria-busy="importingId === item.id"
               @click="doImportOne(item)"
             >
-              {{ importedIds.has(item.id) ? t.added : t.addToMyWishlistOne }}
+              {{ importedIds.has(item.id) ? t.added : (importingId === item.id ? t.importing : t.addToMyWishlistOne) }}
             </button>
           </div>
         </div>
@@ -75,7 +77,9 @@ const { t } = useI18n()
 
 const items = ref([])
 const loading = ref(true)
+const loadError = ref(false)
 const importing = ref(false)
+const importingId = ref(null)
 const importedIds = ref(new Set())
 const sharedAt = ref(null)
 
@@ -93,27 +97,44 @@ const sharedDate = computed(() => {
 
 onMounted(async () => {
   await getSession()
-  const { data, error } = await sb
-    .from('shared_wishlists')
-    .select('payload')
-    .eq('share_id', route.params.id)
-    .single()
-  if (!error && data?.payload) {
-    items.value = data.payload.items ?? []
-    sharedAt.value = data.payload.shared_at ?? null
-  }
-  loading.value = false
+  await load()
 })
 
+async function load() {
+  loading.value = true
+  loadError.value = false
+  try {
+    const { data, error } = await sb
+      .from('shared_wishlists')
+      .select('payload')
+      .eq('share_id', route.params.id)
+      .single()
+    if (error) throw error
+    if (data?.payload) {
+      items.value = data.payload.items ?? []
+      sharedAt.value = data.payload.shared_at ?? null
+    }
+  } catch (e) {
+    console.error('WishlistShareView load failed:', e)
+    loadError.value = true
+  } finally {
+    loading.value = false
+  }
+}
+
 async function doImportOne(item) {
-  if (!currentUser.value) return
+  if (!currentUser.value || importedIds.value.has(item.id) || importingId.value) return
+  importingId.value = item.id
   const { id, user_id, created_at, ...fields } = item
   try {
     await insertWhisky({ id: Date.now(), ...fields, list: 'wishlist' })
     importedIds.value = new Set([...importedIds.value, item.id])
     toast(t.value.addedToWishlist(item.name))
   } catch (e) {
-    toast(t.value.importFailed + e.message)
+    console.error('WishlistShareView import failed:', e)
+    toast(t.value.importFailed)
+  } finally {
+    importingId.value = null
   }
 }
 
@@ -121,20 +142,25 @@ async function doImportAll() {
   if (!currentUser.value) return
   importing.value = true
   let added = 0
-  try {
-    for (const item of items.value) {
-      if (importedIds.value.has(item.id)) continue
-      const { id, user_id, created_at, ...fields } = item
-      await insertWhisky({ id: Date.now() + added, ...fields, list: 'wishlist' })
+  let failed = 0
+  for (const item of items.value) {
+    if (importedIds.value.has(item.id)) continue
+    const { id, user_id, created_at, ...fields } = item
+    try {
+      await insertWhisky({ id: Date.now() + added + failed, ...fields, list: 'wishlist' })
       importedIds.value = new Set([...importedIds.value, item.id])
       added++
+    } catch (e) {
+      console.error('WishlistShareView bulk import item failed:', e)
+      failed++
     }
+  }
+  importing.value = false
+  if (failed > 0) {
+    toast(t.value.addedXofY(added, items.value.length))
+  } else {
     toast(t.value.addedAllToWishlist(added))
     router.push({ path: '/', query: { list: 'wishlist' } })
-  } catch (e) {
-    toast(t.value.importFailed + e.message)
-  } finally {
-    importing.value = false
   }
 }
 </script>
@@ -208,10 +234,17 @@ async function doImportAll() {
   padding: 6px 0;
 }
 .wcard-btn:disabled {
-  border-color: #1D9E75;
-  color: #6ecb9a;
+  border-color: var(--success);
+  color: var(--success-soft);
   cursor: default;
   opacity: 0.8;
+}
+
+.share-back-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--amber-light);
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 680px) {

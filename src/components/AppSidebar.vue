@@ -1,5 +1,5 @@
 <template>
-  <aside class="app-sidebar" role="navigation" aria-label="Main navigation">
+  <aside class="app-sidebar">
 
     <!-- ── Quick Stats ─────────────────────────────────────────────────────── -->
     <div class="sidebar-quick-stats">
@@ -24,7 +24,7 @@
           <span class="qs-label">{{ t.badges[nextBadge.id]?.name ?? nextBadge.name }}</span>
           <span class="qs-value">{{ nextBadgePct }}%</span>
         </div>
-        <div class="qs-track" role="progressbar" :aria-valuenow="nextBadgePct" aria-valuemin="0" aria-valuemax="100">
+        <div class="qs-track" role="progressbar" :aria-label="t.badges[nextBadge.id]?.name ?? nextBadge.name" :aria-valuenow="nextBadgePct" aria-valuemin="0" aria-valuemax="100">
           <div class="qs-fill" :style="{ width: nextBadgePct + '%' }"></div>
         </div>
       </template>
@@ -33,19 +33,19 @@
       </div>
 
       <button class="qs-stats-link" @click="statsOpen = true">
-        <BarChart2Icon :size="11" aria-hidden="true" /> View stats &amp; badges →
+        <BarChart2Icon :size="11" aria-hidden="true" /> {{ t.statsAndBadges }} <span aria-hidden="true">→</span>
       </button>
     </div>
 
     <div class="sidebar-divider"></div>
 
     <!-- ── Navigation ──────────────────────────────────────────────────────── -->
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" :aria-label="t.mainNav">
       <button
         class="sidebar-nav-item"
         :class="{ active: activeList === 'journal' }"
         @click="$emit('setList', 'journal')"
-        aria-label="Journal"
+        :aria-current="activeList === 'journal' ? 'page' : undefined"
       >
         <BookOpenIcon :size="15" aria-hidden="true" />
         <span class="sidebar-nav-label">{{ t.journal }}</span>
@@ -55,7 +55,7 @@
         class="sidebar-nav-item"
         :class="{ active: activeList === 'wishlist' }"
         @click="$emit('setList', 'wishlist')"
-        aria-label="Wishlist"
+        :aria-current="activeList === 'wishlist' ? 'page' : undefined"
       >
         <HeartIcon :size="15" aria-hidden="true" />
         <span class="sidebar-nav-label">{{ t.wishlist }}</span>
@@ -65,7 +65,7 @@
         class="sidebar-nav-item"
         :class="{ active: activeList === 'feed' }"
         @click="$emit('setList', 'feed')"
-        aria-label="Community feed"
+        :aria-current="activeList === 'feed' ? 'page' : undefined"
       >
         <UsersIcon :size="15" aria-hidden="true" />
         <span class="sidebar-nav-label">{{ t.feed }}</span>
@@ -77,11 +77,13 @@
         :class="{ active: moreOpen }"
         @click="toggleMore"
         ref="moreBtn"
-        aria-label="More options"
+        :aria-expanded="moreOpen"
+        aria-haspopup="menu"
+        :aria-label="t.moreOptions"
       >
         <MoreHorizontalIcon :size="15" aria-hidden="true" />
-        <span class="sidebar-nav-label">More</span>
-        <span v-if="pendingRequests.length" class="mobile-more-badge" aria-label="notifications">{{ pendingRequests.length }}</span>
+        <span class="sidebar-nav-label">{{ t.more }}</span>
+        <span v-if="pendingRequests.length" class="mobile-more-badge">{{ pendingRequests.length }}<span class="sr-only"> {{ t.pendingShort }}</span></span>
       </button>
     </nav>
 
@@ -97,7 +99,7 @@
       <button class="sidebar-panel-item" @click="subsOpen = true" :aria-label="t.friendsFollowers">
         <UserPlusIcon :size="14" aria-hidden="true" />
         <span>{{ t.friendsFollowers }}</span>
-        <span v-if="pendingRequests.length" class="sidebar-badge" aria-label="pending requests">{{ pendingRequests.length }}</span>
+        <span v-if="pendingRequests.length" class="sidebar-badge">{{ pendingRequests.length }}<span class="sr-only"> {{ t.pendingShort }}</span></span>
       </button>
       <!-- Feature Requests removed from sidebar — accessible via avatar menu -->
     </div>
@@ -107,12 +109,12 @@
   <!-- ── Mobile "More" popover — Teleported to body so it escapes sidebar clipping ── -->
   <Teleport to="body">
     <transition name="more-pop">
-      <div v-if="moreOpen" class="mobile-more-popover" :style="popoverStyle">
-        <button class="mobile-more-item" @click="statsOpen = true; moreOpen = false">
+      <div v-if="moreOpen" class="mobile-more-popover" ref="popoverEl" role="menu" :aria-label="t.moreOptions" :style="popoverStyle" @keydown="onPopoverKeydown">
+        <button class="mobile-more-item" role="menuitem" @click="statsOpen = true; moreOpen = false">
           <BarChart2Icon :size="14" aria-hidden="true" />
           <span>{{ t.statsAndBadges }}</span>
         </button>
-        <button class="mobile-more-item" @click="subsOpen = true; moreOpen = false">
+        <button class="mobile-more-item" role="menuitem" @click="subsOpen = true; moreOpen = false">
           <UserPlusIcon :size="14" aria-hidden="true" />
           <span>{{ t.friendsFollowers }}</span>
           <span v-if="pendingRequests.length" class="mobile-more-count">{{ pendingRequests.length }}</span>
@@ -128,7 +130,6 @@
   <StatsPanel v-if="statsOpen" @close="statsOpen = false" />
   <SubscriptionsPanel v-if="subsOpen" @close="subsOpen = false" />
   <FeatureRequestPanel v-if="featureOpen" @close="featureOpen = false" />
-  <InboxPanel v-if="inboxOpen" @close="inboxOpen = false" />
 </template>
 
 <script setup>
@@ -156,7 +157,6 @@ import { statsOpen, subsOpen, featureOpen } from '../composables/usePanels.js'
 import StatsPanel from './StatsPanel.vue'
 import SubscriptionsPanel from './SubscriptionsPanel.vue'
 import FeatureRequestPanel from './FeatureRequestPanel.vue'
-import InboxPanel from './InboxPanel.vue'
 
 defineProps({ activeList: String })
 defineEmits(['setList'])
@@ -164,9 +164,9 @@ defineEmits(['setList'])
 const { t } = useI18n()
 const { badges, earnedCount } = useBadges()
 
-const inboxOpen    = ref(false)
 const moreOpen     = ref(false)
 const moreBtn      = ref(null)
+const popoverEl    = ref(null)
 const popoverStyle = ref({})
 
 async function toggleMore() {
@@ -175,8 +175,8 @@ async function toggleMore() {
     await nextTick()
     if (moreBtn.value) {
       const rect = moreBtn.value.getBoundingClientRect()
-      // Anchor popover just above the More button
-      const popoverHeight = 132 // 3 items × 44px each
+      // Anchor popover just above the More button (measure actual height)
+      const popoverHeight = popoverEl.value?.offsetHeight || 88
       const spaceAbove = rect.top - 8
       const top = Math.max(8, spaceAbove - popoverHeight)
       // Align right edge of popover with right edge of button, clamped to screen
@@ -188,7 +188,25 @@ async function toggleMore() {
         left: 'auto',
         bottom: 'auto',
       }
+      await nextTick()
+      popoverEl.value?.querySelector('.mobile-more-item')?.focus()
     }
+  }
+}
+
+function onPopoverKeydown(e) {
+  const items = [...(popoverEl.value?.querySelectorAll('.mobile-more-item') || [])]
+  const idx = items.indexOf(document.activeElement)
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    moreOpen.value = false
+    moreBtn.value?.focus()
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    items[(idx + 1) % items.length]?.focus()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    items[(idx - 1 + items.length) % items.length]?.focus()
   }
 }
 
@@ -379,7 +397,7 @@ const nextBadgePct = computed(() => {
 .sidebar-badge {
   margin-left: auto;
   background: var(--amber);
-  color: #fff;
+  color: var(--on-amber);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.52rem;
   font-weight: 700;
@@ -396,6 +414,7 @@ const nextBadgePct = computed(() => {
 @media (max-width: 768px) {
   .app-sidebar {
     position: fixed;
+    top: auto;
     bottom: 0;
     left: 0;
     right: 0;
@@ -455,7 +474,7 @@ const nextBadgePct = computed(() => {
     position: absolute;
     top: 6px; right: calc(50% - 14px);
     background: var(--amber);
-    color: #fff;
+    color: var(--on-amber);
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.45rem;
     font-weight: 700;
@@ -522,7 +541,7 @@ const nextBadgePct = computed(() => {
   .mobile-more-count {
     margin-left: auto;
     background: var(--amber);
-    color: #fff;
+    color: var(--on-amber);
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.5rem;
     font-weight: 700;

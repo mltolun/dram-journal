@@ -14,25 +14,38 @@
         ref="inputEl"
         v-model="query"
         class="cs-input"
+        data-autofocus
         :placeholder="t.catalogueSearchPlaceholder || 'Search whisky or distillery…'"
+        :aria-label="t.catalogueSearchPlaceholder || 'Search whisky or distillery…'"
         autocomplete="off"
         @input="onInput"
       />
-      <button v-if="query" class="cs-clear" @click="onClear"><XIcon :size="12" /></button>
+      <button v-if="query" class="cs-clear" type="button" :aria-label="t.clearSearch" @click="onClear"><XIcon :size="12" aria-hidden="true" /></button>
+    </div>
+
+    <!-- Min-length hint -->
+    <div v-if="query.length === 1" class="cs-state cs-hint" role="status">
+      {{ t.csMinChars }}
     </div>
 
     <!-- Results -->
     <div class="cs-results" v-if="query.length >= 2">
-      <div v-if="searching" class="cs-state">{{ t.searching || 'Searching…' }}</div>
+      <div v-if="searching" class="cs-state" role="status">{{ t.searching || 'Searching…' }}</div>
 
-      <div v-else-if="results.length === 0" class="cs-state cs-empty">
+      <div v-else-if="searchError" class="cs-state cs-error" role="alert">
+        {{ t.catalogueSearchFailed }}
+        <button class="cs-retry" type="button" @click="search(query)">{{ t.tryAgain }}</button>
+      </div>
+
+      <div v-else-if="results.length === 0" class="cs-state cs-empty" role="status">
         {{ t.catalogueNoResults || 'No results found.' }}
       </div>
 
-      <div
+      <button
         v-else
         v-for="item in results"
         :key="item.id"
+        type="button"
         class="cs-item"
         @click="$emit('pick', item)"
       >
@@ -55,8 +68,8 @@
             <span v-if="item.abv">{{ item.abv }}</span>
           </div>
         </div>
-        <span class="cs-arrow">›</span>
-      </div>
+        <span class="cs-arrow" aria-hidden="true">›</span>
+      </button>
     </div>
 
     <!-- Manual entry fallback -->
@@ -92,7 +105,7 @@ const props = defineProps({
 defineEmits(['pick', 'manual'])
 
 const { t } = useI18n()
-const { results, searching, debouncedSearch, search, clear } = useCatalogue()
+const { results, searching, searchError, debouncedSearch, search, clear } = useCatalogue()
 
 const query        = ref('')
 const inputEl      = ref(null)
@@ -140,7 +153,6 @@ function onClear() {
   margin-bottom: 12px;
   font-size: 0.78rem;
   color: var(--amber-light);
-  opacity: 0.85;
 }
 .cs-scan-icon { font-size: 0.9rem; }
 
@@ -172,10 +184,13 @@ function onClear() {
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 0.8rem;
-  opacity: 0.5;
-  padding: 4px;
+  opacity: 0.8;
+  padding: 10px;
+  margin: -6px;
+  display: flex;
+  align-items: center;
 }
-.cs-clear:hover { opacity: 1; }
+.cs-clear:hover { opacity: 1; color: var(--text-primary); }
 
 /* ── Results ── */
 .cs-results {
@@ -191,8 +206,20 @@ function onClear() {
   padding: 20px;
   color: var(--text-secondary);
   font-size: 0.85rem;
-  opacity: 0.6;
 }
+.cs-hint { padding: 12px; font-size: 0.78rem; }
+.cs-error { color: var(--danger); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.cs-retry {
+  background: none;
+  border: 0.5px solid var(--border-hi);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.cs-retry:hover { border-color: var(--amber); color: var(--amber-light); }
 
 /* ── Item ── */
 .cs-item {
@@ -203,6 +230,12 @@ function onClear() {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
 .cs-item:hover { background: var(--bg-card); }
 
@@ -238,13 +271,11 @@ function onClear() {
   margin-top: 2px;
   font-size: 0.72rem;
   color: var(--text-secondary);
-  opacity: 0.7;
 }
-.cs-dot { opacity: 0.4; }
+.cs-dot { opacity: 0.6; }
 .cs-sub {
   font-size: 0.7rem;
   color: var(--text-secondary);
-  opacity: 0.5;
   margin-top: 2px;
 }
 .cs-badge {
@@ -274,7 +305,6 @@ function onClear() {
 .cs-manual-label {
   font-size: 0.8rem;
   color: var(--text-secondary);
-  opacity: 0.6;
 }
 .cs-manual-btn {
   background: none;

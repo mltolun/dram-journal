@@ -1,5 +1,10 @@
 <template>
-  <div v-if="recommendations.length > 0" class="recs-section">
+  <div v-if="recsLoading" class="recs-loading" role="status">{{ t.loading }}</div>
+  <div v-else-if="recsError" class="recs-error" role="alert">
+    {{ t.recsLoadFailed }}
+    <button class="recs-retry" type="button" @click="load">{{ t.tryAgain }}</button>
+  </div>
+  <div v-else-if="recommendations.length > 0" class="recs-section">
 
     <div class="recs-header">
       <div class="recs-title"><SparklesIcon :size="13" style="display:inline;vertical-align:middle;margin-right:5px;" />{{ t.recsTitle }}</div>
@@ -34,8 +39,8 @@
         </div>
 
         <div class="wcard-actions">
-          <button class="wcard-btn" @click="addToWishlist(rec, i)" :disabled="addedIds.has(i)">
-            <CheckIcon v-if="addedIds.has(i)" :size="11" /><HeartIcon v-else :size="11" /> {{ addedIds.has(i) ? t.added : t.addToWishlistBtn }}
+          <button class="wcard-btn" @click="addToWishlist(rec, i)" :disabled="addedIds.has(i) || addingIds.has(i)" :aria-busy="addingIds.has(i)">
+            <CheckIcon v-if="addedIds.has(i)" :size="11" aria-hidden="true" /><HeartIcon v-else :size="11" aria-hidden="true" /> {{ addedIds.has(i) ? t.added : (addingIds.has(i) ? t.adding : t.addToWishlistBtn) }}
           </button>
         </div>
 
@@ -64,6 +69,9 @@ const { t } = useI18n()
 const recommendations = ref([])
 const generatedAt     = ref(null)
 const addedIds        = ref(new Set())
+const addingIds       = ref(new Set())
+const recsLoading     = ref(true)
+const recsError       = ref(false)
 
 const generatedDate = computed(() => {
   if (!generatedAt.value) return ''
@@ -72,21 +80,35 @@ const generatedDate = computed(() => {
   })
 })
 
-onMounted(async () => {
-  if (!currentUser.value) return
-  const { data, error } = await sb
-    .from('recommendations')
-    .select('payload, generated_at')
-    .eq('user_id', currentUser.value.id)
-    .maybeSingle()
+async function load() {
+  recsLoading.value = true
+  recsError.value = false
+  try {
+    if (!currentUser.value) return
+    const { data, error } = await sb
+      .from('recommendations')
+      .select('payload, generated_at')
+      .eq('user_id', currentUser.value.id)
+      .maybeSingle()
 
-  if (!error && data) {
-    recommendations.value = data.payload ?? []
-    generatedAt.value     = data.generated_at
+    if (error) throw error
+    if (data) {
+      recommendations.value = data.payload ?? []
+      generatedAt.value     = data.generated_at
+    }
+  } catch (e) {
+    console.error('recommendations load failed:', e)
+    recsError.value = true
+  } finally {
+    recsLoading.value = false
   }
-})
+}
+
+onMounted(load)
 
 async function addToWishlist(rec, index) {
+  if (addingIds.value.has(index) || addedIds.value.has(index)) return
+  addingIds.value = new Set([...addingIds.value, index])
   try {
     // Use catalogue_id + photo_url already enriched by the generate script.
     // Only fall back to a live lookup when the payload is missing them (e.g.
@@ -120,9 +142,12 @@ async function addToWishlist(rec, index) {
       ...Object.fromEntries(ATTRS.map(a => [a, rec[a] ?? DEFAULTS[a]])),
     })
     addedIds.value = new Set([...addedIds.value, index])
-    toast('✦ ' + rec.name + ' ' + t.value.addedToWishlist(rec.name).replace(rec.name, '').trim())
+    toast(t.value.whiskyAdded(rec.name))
   } catch (e) {
-    toast('⚠ ' + e.message)
+    console.error('add recommendation to wishlist failed:', e)
+    toast('⚠ ' + t.value.actionFailed)
+  } finally {
+    addingIds.value = new Set([...addingIds.value].filter(i => i !== index))
   }
 }
 </script>
@@ -178,6 +203,27 @@ async function addToWishlist(rec, index) {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.recs-loading, .recs-error {
+  font-size: 0.75rem;
+  color: var(--peat-light);
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.recs-error { color: var(--danger); }
+.recs-retry {
+  background: none;
+  border: 0.5px solid var(--border-hi);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.recs-retry:hover { border-color: var(--amber); color: var(--amber-light); }
 .recs-footer {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;

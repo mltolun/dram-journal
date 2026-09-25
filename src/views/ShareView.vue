@@ -1,13 +1,14 @@
 <template>
-  <div v-if="loading" class="share-error">
+  <div v-if="loading" class="share-error" role="status">
     <div class="share-error-icon"><GlassWaterIcon :size="36" /></div>
     <div class="share-error-txt">{{ t.loading }}</div>
   </div>
 
-  <div v-else-if="!whisky" class="share-error">
+  <div v-else-if="loadError || !whisky" class="share-error">
     <div class="share-error-icon"><GlassWaterIcon :size="36" /></div>
-    <div class="share-error-txt">{{ t.dramNotFound }}</div>
-    <RouterLink to="/" style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--amber-light);margin-top:0.5rem;">{{ t.backToJournal }}</RouterLink>
+    <div class="share-error-txt">{{ loadError ? t.shareLoadFailed : t.dramNotFound }}</div>
+    <button v-if="loadError" class="btn-retry" @click="load">{{ t.tryAgain }}</button>
+    <RouterLink to="/" class="share-back-link">{{ t.backToJournal }}</RouterLink>
   </div>
 
   <div v-else>
@@ -64,8 +65,8 @@
 
       <!-- Actions -->
       <div class="share-actions">
-        <button v-if="currentUser" class="btn-t btn-primary" :disabled="importing" @click="doImport">
-          {{ importing ? t.importing : t.addToMyWishlist }}
+        <button v-if="currentUser" class="btn-t btn-primary" :disabled="importing || alreadyHave" @click="doImport">
+          {{ alreadyHave ? t.alreadyInCollection : (importing ? t.importing : t.addToMyWishlist) }}
         </button>
         <RouterLink v-else to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.signInToImport }}</RouterLink>
         <RouterLink to="/" class="btn-t btn-outline" style="text-decoration:none;">{{ t.backToJournalBtn }}</RouterLink>
@@ -80,7 +81,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
 import { currentUser, useAuth } from '../composables/useAuth.js'
-import { useWhiskies } from '../composables/useWhiskies.js'
+import { useWhiskies, whiskies } from '../composables/useWhiskies.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
 import { ATTRS, TYPE_BADGE_STYLE } from '../lib/constants.js'
@@ -95,7 +96,9 @@ const { t } = useI18n()
 const typeBadgeStyle = TYPE_BADGE_STYLE
 const whisky  = ref(null)
 const loading = ref(true)
+const loadError = ref(false)
 const importing = ref(false)
+const alreadyHave = ref(false)
 
 // Prevent search engines from indexing shared dram pages
 const noindexMeta = document.createElement('meta')
@@ -117,17 +120,42 @@ const details = computed(() => [
 
 onMounted(async () => {
   await getSession()
-  const { data, error } = await sb
-    .from('shared_whiskies')
-    .select('payload')
-    .eq('share_id', route.params.id)
-    .single()
-  if (!error && data) whisky.value = data.payload
-  loading.value = false
+  await load()
 })
 
+async function load() {
+  loading.value = true
+  loadError.value = false
+  try {
+    const { data, error } = await sb
+      .from('shared_whiskies')
+      .select('payload')
+      .eq('share_id', route.params.id)
+      .single()
+    if (error) throw error
+    whisky.value = data?.payload ?? null
+    checkDuplicate()
+  } catch (e) {
+    console.error('ShareView load failed:', e)
+    if (!whisky.value) loadError.value = true
+  } finally {
+    loading.value = false
+  }
+}
+
+function checkDuplicate() {
+  if (!whisky.value) return
+  const name = (whisky.value.name || '').toLowerCase().trim()
+  const dist = (whisky.value.distillery || '').toLowerCase().trim()
+  alreadyHave.value = whiskies.value.some(w =>
+    w.list !== 'trash' &&
+    (w.name || '').toLowerCase().trim() === name &&
+    (w.distillery || '').toLowerCase().trim() === dist
+  )
+}
+
 async function doImport() {
-  if (!currentUser.value) return
+  if (!currentUser.value || alreadyHave.value) return
   importing.value = true
   const { id, user_id, created_at, ...fields } = whisky.value
   try {
@@ -135,7 +163,8 @@ async function doImport() {
     toast(t.value.addedToWishlist(whisky.value.name))
     router.push({ path: '/', query: { list: 'wishlist' } })
   } catch (e) {
-    toast(t.value.importFailed + e.message)
+    console.error('ShareView import failed:', e)
+    toast(t.value.importFailed)
   } finally {
     importing.value = false
   }
@@ -155,7 +184,7 @@ async function doImport() {
 .share-brand-bar span { color: var(--amber-light); }
 
 .share-container {
-  width: 70%;
+  width: min(900px, 92%);
   max-width: 900px;
   margin: 40px auto;
   border: 0.5px solid var(--border);
@@ -240,6 +269,19 @@ async function doImport() {
   gap: 8px;
 }
 
+@media (max-width: 900px) {
+  .share-three-col {
+    grid-template-columns: 1fr 1fr;
+  }
+  .share-col-photo {
+    grid-row: span 1;
+  }
+  .share-col-flavour {
+    grid-column: 1 / -1;
+    border-top: 0.5px solid var(--border);
+    padding: 16px 20px;
+  }
+}
 @media (max-width: 700px) {
   .share-container {
     width: 100%;
@@ -268,5 +310,12 @@ async function doImport() {
   }
   .share-col-flavour { padding: 16px; }
   .share-title-bar { padding: 16px; }
+}
+
+.share-back-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--amber-light);
+  margin-top: 0.5rem;
 }
 </style>

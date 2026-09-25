@@ -1,70 +1,80 @@
 <template>
-  <div class="subs-overlay">
+  <div class="subs-overlay" ref="rootEl" role="dialog" aria-modal="true" :aria-label="t.frTitle" @click.self="$emit('close')">
     <div class="subs-panel fr-panel">
 
       <!-- Header -->
       <div class="subs-header">
-        <button class="subs-close" @click="$emit('close')" aria-label="Back">
-          <ArrowLeftIcon :size="14" /> Back
+        <button class="subs-close" :aria-label="t.close" @click="$emit('close')">
+          <ArrowLeftIcon :size="14" aria-hidden="true" /> {{ t.back }}
         </button>
         <div class="subs-title">{{ t.frTitle }}</div>
       </div>
 
       <!-- Submit form -->
       <div class="fr-form-section" :class="{ collapsed: formCollapsed }">
-        <button class="fr-section-toggle" @click="formCollapsed = !formCollapsed">
+        <button class="fr-section-toggle" @click="formCollapsed = !formCollapsed" :aria-expanded="!formCollapsed" aria-controls="fr-submit-form">
           <span class="fr-section-label">{{ t.frSubmitSection }}</span>
-          <span class="fr-toggle-icon">{{ formCollapsed ? '▼' : '▲' }}</span>
+          <span class="fr-toggle-icon" aria-hidden="true">{{ formCollapsed ? '▼' : '▲' }}</span>
         </button>
 
         <transition name="collapse">
-          <div v-if="!formCollapsed" class="fr-form">
+          <div v-if="!formCollapsed" id="fr-submit-form" class="fr-form">
             <!-- Title -->
             <div class="fr-field">
-              <label class="fr-label">{{ t.frTitleLabel }} <span class="fr-required">*</span></label>
+              <label class="fr-label" for="fr-title">{{ t.frTitleLabel }} <span class="fr-required" aria-hidden="true">*</span></label>
               <input
+                id="fr-title"
                 v-model="form.title"
                 class="fr-input"
                 :placeholder="t.frTitlePlaceholder"
                 maxlength="120"
                 :disabled="submitting"
+                :aria-describedby="titleHintVisible ? 'fr-title-hint' : undefined"
               />
+              <div v-if="titleHintVisible" id="fr-title-hint" class="fr-hint">{{ t.frTitleHint }}</div>
               <div class="fr-char-count">{{ form.title.length }}/120</div>
             </div>
 
             <!-- Description -->
             <div class="fr-field">
-              <label class="fr-label">{{ t.frDescLabel }} <span class="fr-required">*</span></label>
-              <div class="fr-label-hint">{{ t.frDescHint }}</div>
+              <label class="fr-label" for="fr-desc">{{ t.frDescLabel }} <span class="fr-required" aria-hidden="true">*</span></label>
+              <div class="fr-label-hint" id="fr-desc-hint">{{ t.frDescHint }}</div>
               <textarea
+                id="fr-desc"
                 v-model="form.description"
                 class="fr-textarea"
                 :placeholder="t.frDescPlaceholder"
+                aria-describedby="fr-desc-hint fr-desc-req"
                 rows="4"
                 :disabled="submitting"
               ></textarea>
+              <div v-if="descHintVisible" id="fr-desc-req" class="fr-hint">{{ t.frDescReq }}</div>
             </div>
 
             <!-- Impact -->
             <div class="fr-field">
-              <label class="fr-label">{{ t.frImpactLabel }} <span class="fr-required">*</span></label>
-              <div class="fr-label-hint">{{ t.frImpactHint }}</div>
+              <label class="fr-label" for="fr-impact">{{ t.frImpactLabel }} <span class="fr-required" aria-hidden="true">*</span></label>
+              <div class="fr-label-hint" id="fr-impact-hint">{{ t.frImpactHint }}</div>
               <textarea
+                id="fr-impact"
                 v-model="form.impact"
                 class="fr-textarea"
                 :placeholder="t.frImpactPlaceholder"
+                aria-describedby="fr-impact-hint fr-impact-req"
                 rows="3"
                 :disabled="submitting"
               ></textarea>
+              <div v-if="impactHintVisible" id="fr-impact-req" class="fr-hint">{{ t.frImpactReq }}</div>
             </div>
 
-            <div v-if="submitError" class="fr-error">{{ submitError }}</div>
-            <div v-if="submitSuccess" class="fr-success">{{ t.frSubmitSuccess }}</div>
+            <div v-if="submitError" class="fr-error" role="alert">{{ submitError }}</div>
+            <div v-if="submitSuccess" class="fr-success" role="status">{{ t.frSubmitSuccess }}</div>
 
             <button
               class="fr-submit-btn"
               @click="doSubmit"
               :disabled="submitting || !canSubmit"
+              :aria-busy="submitting"
             >
               {{ submitting ? t.frSubmitting : t.frSubmitBtn }}
             </button>
@@ -121,7 +131,7 @@
               <div class="fr-item-field-value">{{ req.impact }}</div>
             </div>
 
-            <button class="fr-expand-btn" @click="expanded = expanded === req.id ? null : req.id">
+            <button class="fr-expand-btn" @click="expanded = expanded === req.id ? null : req.id" :aria-expanded="expanded === req.id">
               {{ expanded === req.id ? t.frLess : t.frDetails }}
             </button>
           </div>
@@ -141,8 +151,12 @@ import {
 } from 'lucide-vue-next'
 import { useFeatureRequests, myFeatureRequests } from '../composables/useFeatureRequests.js'
 import { useI18n } from '../composables/useI18n.js'
+import { useDialog } from '../composables/useDialog.js'
 
 const emit = defineEmits(['close'])
+
+const rootEl = ref(null)
+useDialog(rootEl, { onClose: () => emit('close') })
 
 const { submitRequest, loadMyRequests } = useFeatureRequests()
 const { t } = useI18n()
@@ -163,11 +177,14 @@ const loading       = ref(false)
 const expanded      = ref(null)
 const formCollapsed = ref(false)
 
-const canSubmit = computed(() =>
-  form.value.title.trim().length > 3 &&
-  form.value.description.trim().length > 10 &&
-  form.value.impact.trim().length > 5
-)
+const titleValid = computed(() => form.value.title.trim().length > 3)
+const descValid = computed(() => form.value.description.trim().length > 10)
+const impactValid = computed(() => form.value.impact.trim().length > 5)
+const canSubmit = computed(() => titleValid.value && descValid.value && impactValid.value)
+// Show requirement hints only after the user typed something too short
+const titleHintVisible = computed(() => form.value.title.length > 0 && !titleValid.value)
+const descHintVisible = computed(() => form.value.description.length > 0 && !descValid.value)
+const impactHintVisible = computed(() => form.value.impact.length > 0 && !impactValid.value)
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -181,10 +198,9 @@ async function doSubmit() {
     await submitRequest(form.value)
     form.value = { title: '', description: '', impact: '' }
     submitSuccess.value = true
-    formCollapsed.value = true
-    setTimeout(() => { submitSuccess.value = false }, 4000)
   } catch (e) {
-    submitError.value = e.message || 'Failed to submit. Please try again.'
+    console.error('submitRequest failed:', e)
+    submitError.value = t.value.frSubmitFailed
   } finally {
     submitting.value = false
   }
@@ -192,8 +208,13 @@ async function doSubmit() {
 
 onMounted(async () => {
   loading.value = true
-  await loadMyRequests()
-  loading.value = false
+  try {
+    await loadMyRequests()
+  } catch (e) {
+    console.error('loadMyRequests failed:', e)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -342,14 +363,15 @@ onMounted(async () => {
   text-align: right;
   margin-top: 3px;
 }
-.fr-error   { font-size: 0.72rem; color: #e08888; margin-bottom: 10px; }
-.fr-success { font-size: 0.72rem; color: #1D9E75; margin-bottom: 10px; }
+.fr-hint    { font-size: 0.72rem; color: var(--amber-light); margin-top: 4px; }
+.fr-error   { font-size: 0.72rem; color: var(--danger); margin-bottom: 10px; }
+.fr-success { font-size: 0.72rem; color: var(--success); margin-bottom: 10px; }
 
 .fr-submit-btn {
   width: 100%;
   padding: 10px;
   background: var(--amber);
-  color: var(--bg);
+  color: var(--on-amber);
   border: none;
   border-radius: 7px;
   font-family: 'JetBrains Mono', monospace;
@@ -429,10 +451,10 @@ onMounted(async () => {
   padding: 2px 8px;
 }
 .badge--open        { background: rgba(200,130,42,0.15); color: var(--amber-light); }
-.badge--accepted    { background: rgba(100,180,255,0.15); color: #88bef5; }
+.badge--accepted    { background: rgba(100,180,255,0.15); color: var(--info); }
 .badge--in_progress { background: rgba(200,130,42,0.25); color: var(--amber); }
-.badge--done        { background: rgba(29,158,117,0.2);  color: #1D9E75; }
-.badge--declined    { background: rgba(226,75,74,0.12);  color: #e08888; }
+.badge--done        { background: rgba(29,158,117,0.2);  color: var(--success-soft); }
+.badge--declined    { background: var(--danger-soft);  color: var(--danger); }
 
 .fr-item-meta {
   font-family: 'JetBrains Mono', monospace;
@@ -457,7 +479,7 @@ onMounted(async () => {
 .fr-admin-note-label {
   font-style: normal;
   font-weight: 500;
-  color: #1D9E75;
+  color: var(--success);
 }
 
 .fr-item-body {

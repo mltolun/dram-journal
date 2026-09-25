@@ -63,14 +63,14 @@ describe('useSubscriptions', () => {
 
   it('requestFollowByEmail prevents self-follow', async () => {
     const m = await getMod()
-    await expect(m.requestFollowByEmail('me@test.com')).rejects.toThrow('cannot follow yourself')
+    await expect(m.requestFollowByEmail('me@test.com')).rejects.toThrow('SELF')
     expect(mockRpc).not.toHaveBeenCalled()
   })
 
-  it('requestFollowByEmail throws when user not found', async () => {
+  it('requestFollowByEmail throws opaque code when user not found', async () => {
     mockRpc.mockResolvedValue({ data: null, error: null })
     const m = await getMod()
-    await expect(m.requestFollowByEmail('ghost@test.com')).rejects.toThrow('No user found')
+    await expect(m.requestFollowByEmail('ghost@test.com')).rejects.toThrow('NOT_FOUND')
   })
 
   it('loadSubscriptions fetches and classifies subscriptions', async () => {

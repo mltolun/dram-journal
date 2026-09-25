@@ -1,32 +1,28 @@
 <template>
   <div class="tl-view">
     <div class="tl-header">
-      <span class="tl-title">Timeline</span>
-      <div class="tl-ranges">
+      <span class="tl-title">{{ t.timeline }}</span>
+      <div class="tl-ranges" role="group" :aria-label="t.timelineRange">
         <button
           v-for="r in RANGES" :key="r.key"
           class="tl-range-btn"
           :class="{ active: range === r.key }"
+          :aria-pressed="range === r.key"
           @click="setRange(r.key)"
         >{{ r.label }}</button>
       </div>
     </div>
 
     <div class="tl-body">
-      <div v-if="loading" class="tl-loading">
-        <div class="tl-spinner"></div>
-        <span>Loading…</span>
-      </div>
-
-      <div v-else-if="months.length === 0" class="tl-empty">
-        No tasting entries in this period.
+      <div v-if="months.length === 0" class="tl-empty" role="status">
+        {{ t.timelineEmpty }}
       </div>
 
       <div v-else class="tl-months">
         <div v-for="m in months" :key="m.key" class="tl-month-section">
           <div class="tl-month-header">
             <span class="tl-month-label">{{ m.label }}</span>
-            <span class="tl-month-count">{{ m.entries.length }} {{ m.entries.length === 1 ? 'dram' : 'drams' }}</span>
+            <span class="tl-month-count">{{ t.dramCount(m.entries.length) }}</span>
           </div>
           <div class="tl-month-grid">
             <button
@@ -34,7 +30,7 @@
               :key="w.id"
               class="tl-bottle"
               @click="openEntry(w)"
-              :title="w.name"
+              :aria-label="`${w.name}${w.rating ? `, ${t.ratingXof5(w.rating)}` : ''}, ${formatDay(w.date)}`"
             >
               <div class="tl-thumb">
                 <img v-if="w.photo_url" :src="w.photo_url" :alt="w.name" class="tl-img">
@@ -57,33 +53,22 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { GlassWater as GlassWaterIcon, Star as StarIcon } from 'lucide-vue-next'
+import { useI18n } from '../composables/useI18n.js'
 
 const props = defineProps({ entries: { type: Array, default: () => [] } })
 const emit = defineEmits(['open-entry'])
+const { t } = useI18n()
 
-const loading = ref(true)
 const range   = ref('last_6')
 
-const RANGES = [
-  { key: 'last_6',    label: '6 months'  },
-  { key: 'last_12',   label: '12 months' },
-  { key: 'this_year', label: 'This year' },
-]
-
-// Simulate one paint cycle so the parent has rendered before we show content
-import { onMounted } from 'vue'
-onMounted(() => {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => { loading.value = false })
-  })
-})
+const RANGES = computed(() => [
+  { key: 'last_6',    label: t.value.timeline6m  },
+  { key: 'last_12',   label: t.value.timeline12m },
+  { key: 'this_year', label: t.value.timelineYear },
+])
 
 function setRange(key) {
-  loading.value = true
   range.value = key
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => { loading.value = false })
-  })
 }
 
 function getRangeStart(key) {
@@ -166,7 +151,7 @@ function openEntry(w) {
   font-family: 'Inter', sans-serif;
 }
 .tl-range-btn:hover { border-color: var(--border-hi); color: var(--text-primary); }
-.tl-range-btn.active { background: var(--amber); border-color: var(--amber); color: #fff; }
+.tl-range-btn.active { background: var(--amber); border-color: var(--amber); color: var(--on-amber); }
 
 /* Scrollable body */
 .tl-body {
@@ -175,25 +160,7 @@ function openEntry(w) {
   padding: 20px 24px 32px;
 }
 
-.tl-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px 20px;
-  color: var(--peat-light);
-  font-size: 0.75rem;
-}
-.tl-spinner {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--border);
-  border-top-color: var(--amber);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+/* Timeline renders synchronously from props — no loading state needed. */
 
 .tl-empty {
   text-align: center;
