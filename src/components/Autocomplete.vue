@@ -46,8 +46,8 @@
 
 <script setup>
 import { ref, onBeforeUnmount } from 'vue'
-import { sb } from '../lib/supabase.js'
 import { useI18n } from '../composables/useI18n.js'
+import { fetchDistinctValues } from '../composables/useCatalogue.js'
 
 const props = defineProps({ modelValue: String, category: String, placeholder: String, id: String })
 const emit  = defineEmits(['update:modelValue'])
@@ -63,6 +63,7 @@ const results   = ref([])
 const searching = ref(false)
 let   blurTimer   = null
 let   searchTimer = null
+let   searchSeq   = 0  // stale-response guard
 
 // Map category prop to catalogue column
 const CATEGORY_COLUMN = {
@@ -71,24 +72,20 @@ const CATEGORY_COLUMN = {
 }
 
 async function doSearch(q) {
-  const col = CATEGORY_COLUMN[props.category]
-  if (!col || !q || q.length < 2) { results.value = []; return }
+  const col  = CATEGORY_COLUMN[props.category]
+  const term = (q || '').trim()
+  if (!col || term.length < 2) { results.value = []; searching.value = false; return }
 
+  const seq = ++searchSeq
   searching.value = true
   try {
-    const { data } = await sb
-      .from('catalogue')
-      .select(col)
-      .ilike(col, `%${q}%`)
-      .limit(50)
-
-    // Deduplicate and sort
-    const unique = [...new Set((data || []).map(r => r[col]).filter(Boolean))].sort()
-    results.value = unique.slice(0, 12)
+    // Cached, server-side DISTINCT with in-flight dedup (see useCatalogue.js).
+    const values = await fetchDistinctValues(col, term, 12)
+    if (seq === searchSeq) results.value = values
   } catch {
-    results.value = []
+    if (seq === searchSeq) results.value = []
   } finally {
-    searching.value = false
+    if (seq === searchSeq) searching.value = false
   }
 }
 
