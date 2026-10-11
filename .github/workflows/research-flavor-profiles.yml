@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       batch_limit:
-        description: 'Whiskies to research this run (default 250; 3 pages each = 750 of the 1,000 free Fetch URLs/day)'
+        description: 'Whiskies to research this run (default 250; 3 pages each = 750 of the 1,000 free Fetch URLs/day, up to 6 when pages are thin)'
         required: false
         default: '250'
       single_id:

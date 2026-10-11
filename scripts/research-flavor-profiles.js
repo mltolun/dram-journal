@@ -13,7 +13,7 @@
  * Required env:
  *   SUPABASE_URL, SUPABASE_SERVICE_KEY, GEMINI_KEY, TINYFISH_API_KEY
  * Optional env:
- *   BATCH_LIMIT         whiskies per run (default 250; 3 URLs each = 750 of the 1,000/day free Fetch URLs)
+ *   BATCH_LIMIT         whiskies per run (default 250; 3 URLs each = 750 of the 1,000/day free Fetch URLs, up to 6 each when the first pages are thin)
  *   RESEARCH_AFTER_DAYS re-research rows older than this (default 90)
  *   MIN_CONFIDENCE      0-1 threshold to overwrite (default 0.6)
  *   SINGLE_ID           process one catalogue id only
@@ -23,7 +23,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createTinyFishClient, QuotaError } from './lib/tinyfish.js'
 import {
-  buildSearchQuery, filterSources, buildExtractionPrompt, parseExtraction,
+  buildSearchQuery, rankHits, gatherSources, buildExtractionPrompt, parseExtraction,
   decideUpdate, toCatalogueUpdate, toResearchedNoChange,
 } from './lib/flavor.js'
 
@@ -33,7 +33,9 @@ const SUPABASE_SERVICE_KEY = env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = env.GEMINI_KEY
 const TINYFISH_API_KEY     = env.TINYFISH_API_KEY
 const BATCH_LIMIT          = parseInt(env.BATCH_LIMIT || '250', 10)
-const PAGES_PER_WHISKY     = 3   // pages fetched per whisky; keeps us inside the 1,000 URLs/day free Fetch cap
+const PAGES_PER_WHISKY     = 3   // first fetch wave per whisky; keeps us inside the 1,000 URLs/day free Fetch cap
+const MAX_PAGES_PER_WHISKY = 6   // extra waves only when the first pages give fewer than MIN_SOURCES usable texts
+const MIN_SOURCES          = 2
 const RESEARCH_AFTER_DAYS  = parseInt(env.RESEARCH_AFTER_DAYS || '90', 10)
 const MIN_CONFIDENCE       = parseFloat(env.MIN_CONFIDENCE || '0.6')
 const SINGLE_ID            = env.SINGLE_ID ? parseInt(env.SINGLE_ID, 10) : null
@@ -103,9 +105,10 @@ async function save(w, patch) {
 }
 
 async function researchOne(w, nowIso) {
-  const hits = await tinyfish.search(buildSearchQuery(w), { numResults: 6 })
-  const pages = await tinyfish.fetchText(hits.slice(0, PAGES_PER_WHISKY).map((h) => h.url))
-  const sources = filterSources(pages)
+  const hits = rankHits(await tinyfish.search(buildSearchQuery(w), { numResults: 6 }), w)
+  const sources = await gatherSources(hits, (urls) => tinyfish.fetchText(urls), {
+    wave: PAGES_PER_WHISKY, maxPages: MAX_PAGES_PER_WHISKY, minSources: MIN_SOURCES,
+  })
 
   if (sources.length === 0) {
     await save(w, toResearchedNoChange({ confidence: null, sources: [] }, nowIso))

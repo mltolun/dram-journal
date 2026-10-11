@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  SCORE_KEYS, extractJson, buildSearchQuery, filterSources, excerpt, buildExtractionPrompt,
+  SCORE_KEYS, extractJson, buildSearchQuery, filterSources, rankHits, gatherSources, excerpt, buildExtractionPrompt,
   parseExtraction, decideUpdate, toCatalogueUpdate, toResearchedNoChange,
 } from '../../scripts/lib/flavor.js'
 
@@ -34,6 +34,51 @@ describe('filterSources', () => {
     const out = filterSources([page('https://random.blog/1'), page('https://www.whiskyfun.com/2'), page('https://random.blog/3')], { max: 2 })
     expect(out[0].url).toContain('whiskyfun')
     expect(out).toHaveLength(2)
+  })
+})
+
+describe('rankHits', () => {
+  it('puts pages that name this expression ahead of generic guides', () => {
+    const out = rankHits([
+      { url: 'https://whiskyfun.com/guide', title: 'Whisky guide', snippet: 'how to taste' },
+      { url: 'https://blog.test/quiet', title: 'The Quiet Man 12 Year review', snippet: 'Nose: honey' },
+    ], { name: 'The Quiet Man 12 years Single Malt' })
+    expect(out[0].url).toBe('https://blog.test/quiet')
+  })
+
+  it('breaks ties by tasting-site rank and drops non-http urls', () => {
+    const out = rankHits([
+      { url: 'https://shop.test/a', title: 'Haran 12', snippet: '' },
+      { url: 'ftp://x', title: 'Haran 12', snippet: '' },
+      { url: 'https://www.whiskyfun.com/b', title: 'Haran 12', snippet: '' },
+    ], { name: 'Haran 12' })
+    expect(out.map(h => h.url)).toEqual(['https://www.whiskyfun.com/b', 'https://shop.test/a'])
+  })
+})
+
+describe('gatherSources', () => {
+  const hits = Array.from({ length: 6 }, (_, i) => ({ url: `https://s.test/${i + 1}` }))
+  const fetchWith = (thin = []) => vi.fn(async (urls) => urls.map(u => (thin.includes(u) ? page(u, 'tiny') : page(u))))
+
+  it('stops after the first wave when it has enough usable pages', async () => {
+    const fetchPages = fetchWith()
+    const out = await gatherSources(hits, fetchPages, { wave: 3, maxPages: 6, minSources: 2 })
+    expect(fetchPages).toHaveBeenCalledTimes(1)
+    expect(out).toHaveLength(3)
+  })
+
+  it('reads further hits when the first wave is thin', async () => {
+    const fetchPages = fetchWith(['https://s.test/1', 'https://s.test/2'])
+    const out = await gatherSources(hits, fetchPages, { wave: 3, maxPages: 6, minSources: 2 })
+    expect(fetchPages).toHaveBeenCalledTimes(2)
+    expect(out.map(s => s.url)).toEqual(['https://s.test/3', 'https://s.test/4', 'https://s.test/5', 'https://s.test/6'])
+  })
+
+  it('never fetches past maxPages', async () => {
+    const fetchPages = fetchWith(hits.map(h => h.url))
+    const out = await gatherSources(hits, fetchPages, { wave: 3, maxPages: 6, minSources: 2 })
+    expect(out).toEqual([])
+    expect(fetchPages.mock.calls.flatMap(([urls]) => urls)).toHaveLength(6)
   })
 })
 

@@ -59,6 +59,49 @@ export function filterSources(results, { minChars = 400, max = 5 } = {}) {
   return usable.slice(0, max)
 }
 
+const NAME_STOPWORDS = new Set([
+  'the', 'and', 'of', 'single', 'malt', 'whisky', 'whiskey', 'scotch', 'years', 'year', 'old', 'aged',
+])
+
+const stripAccents = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+/** Distinctive words of the bottle name, used to tell expressions apart. */
+export function nameTokens(w) {
+  const words = stripAccents(str(w.name).toLowerCase()).split(/[^a-z0-9]+/)
+  return [...new Set(words.filter((t) => t.length > 1 && !NAME_STOPWORDS.has(t)))]
+}
+
+/** Orders search hits: pages whose title or snippet names this expression first, tasting sites before the rest. */
+export function rankHits(hits, w) {
+  const tokens = nameTokens(w)
+  const matches = (h) => {
+    const text = stripAccents(`${h.title || ''} ${h.snippet || ''}`.toLowerCase())
+    return tokens.filter((t) => text.includes(t)).length
+  }
+  return (hits || [])
+    .filter((h) => /^https?:\/\//i.test(String(h.url || '')))
+    .map((h, i) => ({ h, i, hit: matches(h), site: domainRank(h.url) }))
+    .sort((a, b) => b.hit - a.hit || a.site - b.site || a.i - b.i)
+    .map((x) => x.h)
+}
+
+/**
+ * Fetches hits in waves of `wave` URLs. A later wave runs only while the pages
+ * so far have fewer than `minSources` usable texts, and never past `maxPages` URLs.
+ */
+export async function gatherSources(hits, fetchPages, { wave = 3, maxPages = 6, minSources = 2 } = {}) {
+  const limit = Math.min(hits.length, maxPages)
+  let pages = []
+  let sources = []
+  for (let from = 0; from < limit; from += wave) {
+    const urls = hits.slice(from, Math.min(from + wave, limit)).map((h) => h.url)
+    pages = pages.concat(await fetchPages(urls))
+    sources = filterSources(pages)
+    if (sources.length >= minSources) break
+  }
+  return sources
+}
+
 /** The part of a page most likely to describe the whisky, capped at maxChars. */
 export function excerpt(text, maxChars = 4000) {
   const t = String(text || '')
