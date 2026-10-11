@@ -1,0 +1,54 @@
+name: Research Flavour Profiles
+
+# Re-assesses catalogue flavour profiles from published tasting notes (Exa search
+# + page text, scored by Gemini). Runs daily in batches; oldest research first.
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 02:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      batch_limit:
+        description: 'Whiskies to research this run (default 100)'
+        required: false
+        default: '100'
+      single_id:
+        description: 'Research one catalogue id only (optional)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Print decisions without writing (true/false)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-flavour-profiles
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Research flavour profiles
+        env:
+          SUPABASE_URL:         ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GEMINI_KEY:           ${{ secrets.GEMINI_KEY || secrets.VITE_GEMINI_KEY }}
+          EXA_API_KEY:          ${{ secrets.EXA_API_KEY }}
+          BATCH_LIMIT:          ${{ github.event.inputs.batch_limit || '100' }}
+          SINGLE_ID:            ${{ github.event.inputs.single_id }}
+          DRY_RUN:              ${{ github.event.inputs.dry_run || 'false' }}
+        run: node scripts/research-flavor-profiles.js

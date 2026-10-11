@@ -164,11 +164,12 @@ export async function checkBadges() {
     badgeToast(def.icon, def.name, def.desc)
 
     // Queue email — picked up by the daily process-notifications cron
-    await sb.from('pending_notifications').insert({
+    const { error: notifErr } = await sb.from('pending_notifications').insert({
       type:      'badge_earned',
       to_email:  currentUser.value.email,
       meta:      JSON.stringify({ badge_icon: def.id, badge_name: def.name, badge_desc: def.desc }),
-    }).catch(err => console.warn('badge notification queue failed:', err?.message))
+    })
+    if (notifErr) console.warn('badge notification queue failed:', notifErr.message)
   }
 }
 

@@ -1,7 +1,8 @@
 import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
-import { myFollowing } from './useSubscriptions.js'
+import { myFollowing, useSubscriptions } from './useSubscriptions.js'
 import { currentUser } from './useAuth.js'
+import { FEED_ACTIVITY_TYPES, buildSocialItems } from '../lib/feedMerge.js'
 
 export const feedItems    = ref([])
 export const feedLoading  = ref(false)
@@ -16,11 +17,12 @@ export function useFeed() {
     feedLoading.value = true
     feedError.value = false
     try {
-      // Ensure the social graph is loaded before reading it — otherwise the
-      // social half of the feed is silently empty on first mount.
-      const { loadSubscriptions, subscriptionsLoaded } = await import('./useSubscriptions.js')
-      if (!subscriptionsLoaded.value) {
-        try { await loadSubscriptions() } catch (e) { console.error('useFeed subscriptions error:', e?.message) }
+      // Always refresh the social graph before reading it: the feed used to be
+      // read before follows finished loading (and the import it used did not exist).
+      try {
+        await useSubscriptions().loadSubscriptions()
+      } catch (e) {
+        console.error('useFeed subscriptions error:', e?.message)
       }
       const following = myFollowing.value
 
@@ -38,26 +40,28 @@ export function useFeed() {
        }
        displayNames.value = nameMap
 
-       // ── Timeline: fetch tastings from dram_logs only ──────────────────────
-       // The timeline shows actual tastings (dram_logs). Other activity types
-       // (journal_add, rating, wishlist_add) are stored in activity_feed for
-       // other features (recommendations, notifications) but NOT shown in timeline.
-       const { data: dramData, error: dramError } = await sb
-         .from('dram_logs')
-         .select('id, user_id, whisky_id, whisky_name, whisky_distillery, rating, notes, tasted_at, created_at')
-         .in('user_id', followingIds)
-         .order('tasted_at', { ascending: false })
-         .limit(200)
+       // ── Activity: tastings (dram_logs) + ratings / wishlist adds (activity_feed)
+       const [dramRes, activityRes] = await Promise.all([
+         sb.from('dram_logs')
+           .select('id, user_id, whisky_id, whisky_name, whisky_distillery, rating, notes, tasted_at, created_at')
+           .in('user_id', followingIds)
+           .order('tasted_at', { ascending: false })
+           .limit(200),
+         sb.from('activity_feed')
+           .select('id, user_id, whisky_id, type, whisky_name, whisky_distillery, rating, notes, created_at')
+           .in('user_id', followingIds)
+           .in('type', FEED_ACTIVITY_TYPES)
+           .order('created_at', { ascending: false })
+           .limit(200),
+       ])
 
-       if (dramError) throw dramError
+       if (dramRes.error) throw dramRes.error
+       if (activityRes.error) console.warn('[feed] activity error:', activityRes.error.message)
 
-        // Timeline items: only dram_logs, tagged as social
-        socialItems = (dramData || []).map(item => ({
-          ...item,
-          source:    'social',
-          type:      'dram_logged',
-          created_at: item.tasted_at, // timeline ordered by tasting time
-        })).slice(0, 50)
+       socialItems = buildSocialItems({
+         dramLogs: dramRes.data || [],
+         activity: activityRes.data || [],
+       })
 
         // Batch-fetch photos from catalogue directly by name+distillery.
         // (whiskies table is RLS-protected — we cannot read other users' rows.)
