@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  SCORE_KEYS, buildSearchQuery, filterSources, excerpt, buildExtractionPrompt,
+  SCORE_KEYS, extractJson, buildSearchQuery, filterSources, excerpt, buildExtractionPrompt,
   parseExtraction, decideUpdate, toCatalogueUpdate, toResearchedNoChange,
 } from '../../scripts/lib/flavor.js'
 
@@ -14,9 +14,10 @@ const goodJson = (over = {}) => JSON.stringify({
 
 describe('buildSearchQuery', () => {
   it('quotes the name and adds the distillery when the name lacks it', () => {
-    expect(buildSearchQuery({ name: 'Haran 12 years', distillery: 'Haran' })).toBe('"Haran 12 years" whisky tasting notes nose palate')
-    expect(buildSearchQuery({ name: 'Lagavulin 16', distillery: 'Lagavulin' })).toBe('"Lagavulin 16" whisky tasting notes nose palate')
-    expect(buildSearchQuery({ name: 'Old Pulteney 12', distillery: 'Pulteney' })).toBe('"Old Pulteney 12" whisky tasting notes nose palate')
+    expect(buildSearchQuery({ name: 'Haran 12 years', distillery: 'Haran' })).toBe('Haran 12 years whisky tasting notes nose palate')
+    expect(buildSearchQuery({ name: 'Lagavulin 16', distillery: 'Lagavulin' })).toBe('Lagavulin 16 whisky tasting notes nose palate')
+    expect(buildSearchQuery({ name: 'Old Pulteney 32 years' })).not.toContain('"')
+    expect(buildSearchQuery({ name: 'Old Pulteney 12', distillery: 'Pulteney' })).toBe('Old Pulteney 12 whisky tasting notes nose palate')
   })
 })
 
@@ -53,6 +54,20 @@ describe('buildExtractionPrompt', () => {
     expect(p).toContain('[S2] https://b.test/2')
     expect(p).toMatch(/Use ONLY the SOURCES/)
     expect(p).toMatch(/Do not use your own knowledge/)
+  })
+})
+
+describe('extractJson', () => {
+  it('finds the answer after reasoning that contains braces', () => {
+    const raw = 'Thinking: the set {S1, S2} and {x} are relevant.\n{"found": true, "scores": {"dulzor": 3}}'
+    expect(extractJson(raw)).toEqual({ found: true, scores: { dulzor: 3 } })
+  })
+  it('handles fenced JSON and text after the object', () => {
+    expect(extractJson('```json\n{"found": false}\n```')).toEqual({ found: false })
+    expect(extractJson('{"found": true} done.')).toEqual({ found: true })
+  })
+  it('throws when there is no JSON', () => {
+    expect(() => extractJson('no braces here')).toThrow(/no JSON/)
   })
 })
 

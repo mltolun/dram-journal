@@ -28,7 +28,8 @@ export function buildSearchQuery(w) {
   const name = str(w.name)
   const dist = str(w.distillery)
   const distIsInName = dist && name.toLowerCase().includes(dist.toLowerCase())
-  return [`"${name}"`, dist && !distIsInName ? dist : '', 'whisky tasting notes nose palate']
+  // Unquoted on purpose: TinyFish Search returns 0 hits for quoted phrases.
+  return [name, dist && !distIsInName ? dist : '', 'whisky tasting notes nose palate']
     .filter(Boolean)
     .join(' ')
 }
@@ -53,7 +54,7 @@ export function filterSources(results, { minChars = 400, max = 5 } = {}) {
     seen.add(key)
     usable.push({ url, title: str(r.title), text })
   }
-  // Stable sort: preferred tasting sites first, Exa's relevance order otherwise.
+  // Stable sort: preferred tasting sites first, search relevance order otherwise.
   usable.sort((a, b) => domainRank(a.url) - domainRank(b.url))
   return usable.slice(0, max)
 }
@@ -88,7 +89,7 @@ RULES
 - Use ONLY the SOURCES below. Do not use your own knowledge of this whisky.
 - Only use sources that describe this exact expression (same name and age/cask/bottling). Ignore sources about a different expression.
 - Scores are integers 0-5. dulzor = sweetness; ahumado = smoke or peat; cuerpo = body and mouthfeel weight; frutado = fruitiness; especiado = spice (pepper, ginger, cinnamon, oak spice).
-- 0 = described as absent, 3 = clearly present, 5 = dominant. Use null when the sources say nothing about that dimension.
+- 0 = described as absent (for example "unpeated" means ahumado 0), 3 = clearly present, 5 = dominant. Use null only when the sources say nothing at all about that dimension.
 - confidence from 0 to 1: 0.9 or more when two or more sources agree on this expression, about 0.6 for one clear source, below 0.5 if unsure.
 - sources_used: list only the source ids (S1, S2, …) you actually relied on.
 
@@ -99,11 +100,26 @@ SOURCES
 ${blocks}`
 }
 
+/**
+ * Gemma writes its reasoning before the answer, so the reply can contain other
+ * braces. Take the last balanced {...} that parses: the answer comes last.
+ */
+export function extractJson(raw) {
+  const text = String(raw || '').replace(/```json|```/gi, '')
+  for (let end = text.lastIndexOf('}'); end >= 0; end = text.lastIndexOf('}', end - 1)) {
+    let depth = 0
+    for (let i = end; i >= 0; i--) {
+      if (text[i] === '}') depth++
+      else if (text[i] === '{' && --depth === 0) {
+        try { return JSON.parse(text.slice(i, end + 1)) } catch { break }
+      }
+    }
+  }
+  throw new Error('no JSON object in model response')
+}
+
 export function parseExtraction(raw, sources) {
-  const clean = String(raw || '').replace(/```json|```/gi, '').trim()
-  const match = clean.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('no JSON object in model response')
-  const j = JSON.parse(match[0])
+  const j = extractJson(raw)
 
   const byId = new Map(sources.map((s, i) => [`S${i + 1}`, s]))
   const ids = Array.isArray(j.sources_used) ? j.sources_used : []

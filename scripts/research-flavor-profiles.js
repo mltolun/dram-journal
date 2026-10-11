@@ -3,7 +3,7 @@
  *
  * Re-assesses catalogue flavour profiles from published tasting notes instead
  * of model memory:
- *   1. Exa search for each whisky (one call returns ranked results with page text)
+ *   1. TinyFish Search finds candidate pages; TinyFish Fetch returns their text
  *   2. Gemini scores the profile using ONLY those page excerpts, citing source ids
  *   3. A profile is written only when it cites real sources and is confident enough;
  *      otherwise the existing scores are kept and the row is marked as researched.
@@ -11,9 +11,9 @@
  * Every overwritten profile is copied to catalogue.flavor_previous first.
  *
  * Required env:
- *   SUPABASE_URL, SUPABASE_SERVICE_KEY, GEMINI_KEY, EXA_API_KEY
+ *   SUPABASE_URL, SUPABASE_SERVICE_KEY, GEMINI_KEY, TINYFISH_API_KEY
  * Optional env:
- *   BATCH_LIMIT         whiskies per run (default 100)
+ *   BATCH_LIMIT         whiskies per run (default 150; 5 URLs each = 750 of the 1,000/day free Fetch URLs)
  *   RESEARCH_AFTER_DAYS re-research rows older than this (default 90)
  *   MIN_CONFIDENCE      0-1 threshold to overwrite (default 0.6)
  *   SINGLE_ID           process one catalogue id only
@@ -21,7 +21,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { createExaClient, QuotaError } from './lib/exa.js'
+import { createTinyFishClient, QuotaError } from './lib/tinyfish.js'
 import {
   buildSearchQuery, filterSources, buildExtractionPrompt, parseExtraction,
   decideUpdate, toCatalogueUpdate, toResearchedNoChange,
@@ -31,44 +31,51 @@ const env = process.env
 const SUPABASE_URL         = env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = env.GEMINI_KEY
-const EXA_API_KEY          = env.EXA_API_KEY
-const BATCH_LIMIT          = parseInt(env.BATCH_LIMIT || '100', 10)
+const TINYFISH_API_KEY     = env.TINYFISH_API_KEY
+const BATCH_LIMIT          = parseInt(env.BATCH_LIMIT || '150', 10)
 const RESEARCH_AFTER_DAYS  = parseInt(env.RESEARCH_AFTER_DAYS || '90', 10)
 const MIN_CONFIDENCE       = parseFloat(env.MIN_CONFIDENCE || '0.6')
 const SINGLE_ID            = env.SINGLE_ID ? parseInt(env.SINGLE_ID, 10) : null
 const DRY_RUN              = env.DRY_RUN === 'true'
 
-const GEMINI_MODEL    = 'gemini-3.8-flash'
-const GEMINI_SLEEP_MS = 1500
+const GEMINI_MODEL    = 'gemma-4-26b-a4b-it'   // gemini-3.8-flash allows only 5 RPM on this key
+const GEMINI_SLEEP_MS = 3000   // ~20 requests/min, well inside Gemma's free limits
 
 const COLUMNS = 'id, name, distillery, country, region, type, age, abv, nose, palate, ' +
   'dulzor, ahumado, cuerpo, frutado, especiado, flavor_researched_at'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY || !EXA_API_KEY) {
-  console.error('[error] Missing SUPABASE_URL, SUPABASE_SERVICE_KEY, GEMINI_KEY or EXA_API_KEY')
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GEMINI_KEY || !TINYFISH_API_KEY) {
+  console.error('[error] Missing SUPABASE_URL, SUPABASE_SERVICE_KEY, GEMINI_KEY or TINYFISH_API_KEY')
   process.exit(1)
 }
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-const exa = createExaClient({ apiKey: EXA_API_KEY })
+const tinyfish = createTinyFishClient({ apiKey: TINYFISH_API_KEY })
 
 async function askGemini(prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 1024, responseMimeType: 'application/json' },
-    }),
-    signal: AbortSignal.timeout(60_000),
-  })
-  if (res.status === 429) throw new QuotaError('Gemini rate limit / quota exceeded')
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`)
-  const data = await res.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  // maxOutputTokens covers any reasoning the model writes before the JSON answer.
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+      }),
+      signal: AbortSignal.timeout(120_000),
+    })
+    if (res.status === 429) throw new QuotaError('Gemini rate limit / quota exceeded')
+    if ((res.status === 500 || res.status === 503) && attempt < 3) {
+      await sleep(15_000 * 2 ** attempt)   // "high demand" overloads are usually brief
+      continue
+    }
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`)
+    const data = await res.json()
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  }
 }
 
 async function loadBatch(nowIso) {
@@ -95,8 +102,9 @@ async function save(w, patch) {
 }
 
 async function researchOne(w, nowIso) {
-  const results = await exa.search(buildSearchQuery(w))
-  const sources = filterSources(results)
+  const hits = await tinyfish.search(buildSearchQuery(w), { numResults: 6 })
+  const pages = await tinyfish.fetchText(hits.slice(0, 5).map((h) => h.url))
+  const sources = filterSources(pages)
 
   if (sources.length === 0) {
     await save(w, toResearchedNoChange({ confidence: null, sources: [] }, nowIso))
@@ -145,8 +153,10 @@ async function main() {
       }
       tally.error++
       console.error(`${label}\n    ✗ ${err.message}`)
-      // Mark it so one bad row can't block the queue; it is retried after RESEARCH_AFTER_DAYS.
-      await save(w, toResearchedNoChange(null, new Date().toISOString())).catch(() => {})
+      // Stamp it so one bad row can't block the queue, but back-date the stamp so
+      // it is retried tomorrow instead of after RESEARCH_AFTER_DAYS.
+      const retryAt = new Date(Date.now() - (RESEARCH_AFTER_DAYS - 1) * 86_400_000).toISOString()
+      await save(w, toResearchedNoChange(null, retryAt)).catch(() => {})
     }
   }
 
