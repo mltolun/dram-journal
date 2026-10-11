@@ -31,6 +31,7 @@
 import { ref } from 'vue'
 import { useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
+import { MIN_PASSWORD_LENGTH } from '../lib/constants.js'
 import { useI18n } from '../composables/useI18n.js'
 
 const props = defineProps({ initialTab: { type: String, default: 'login' } })
@@ -65,7 +66,7 @@ async function submit() {
   error.value = ''; success.value = ''
   if (!email.value || !password.value) { error.value = t.value.fillAllFields; return }
   if (tab.value === 'register' && password.value !== password2.value) { error.value = t.value.passwordsNoMatch; return }
-  if (tab.value === 'register' && password.value.length < 6) { error.value = t.value.passwordTooShort; return }
+  if (tab.value === 'register' && password.value.length < MIN_PASSWORD_LENGTH) { error.value = t.value.passwordTooShort; return }
   loading.value = true
   try {
     if (tab.value === 'login') {

@@ -28,6 +28,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth.js'
+import { MIN_PASSWORD_LENGTH } from '../lib/constants.js'
 import { useI18n } from '../composables/useI18n.js'
 
 const { updatePassword, getSession } = useAuth()
@@ -48,7 +49,7 @@ onMounted(async () => {
 
 async function submit() {
   error.value = ''; success.value = ''
-  if (!pass.value || pass.value.length < 6) { error.value = t.value.passwordTooShort; return }
+  if (!pass.value || pass.value.length < MIN_PASSWORD_LENGTH) { error.value = t.value.passwordTooShort; return }
   if (pass.value !== pass2.value) { error.value = t.value.passwordsNoMatch; return }
   saving.value = true
   try {

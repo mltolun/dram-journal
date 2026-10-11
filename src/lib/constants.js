@@ -26,3 +26,6 @@ export const TYPE_BADGE_STYLE = {
   japanese: 'background:rgba(180,150,230,0.15);color:#c4aff0',
   other:    'background:rgba(150,150,150,0.15);color:#aaa',
 }
+
+// Keep in sync with minimum_password_length in supabase/config.toml
+export const MIN_PASSWORD_LENGTH = 10

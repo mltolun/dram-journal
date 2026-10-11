@@ -26,7 +26,7 @@
     <div style="padding:1.5rem 2.5rem;">
       <div class="wl-grid">
         <div v-for="item in items" :key="item.id" class="wl-card">
-          <img v-if="item.photo_url" class="wl-photo" :src="item.photo_url" :alt="item.name">
+          <img v-if="item.photo_url" class="wl-photo" :src="item.photo_url" :alt="item.name" loading="lazy" decoding="async">
           <div class="wl-body">
             <span class="wcard-type" :class="`type-${item.type}`">{{ t.types[item.type] }}</span>
             <div class="wl-distillery">{{ item.distillery || '—' }}</div>
@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Sparkles as SparklesIcon, GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
@@ -67,6 +67,8 @@ import { currentUser, useAuth } from '../composables/useAuth.js'
 import { useWhiskies } from '../composables/useWhiskies.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
+import { pickImportFields, sanitizePhoto } from '../lib/shareImport.js'
+import { useNoindex } from '../composables/useNoindex.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -83,12 +85,7 @@ const importingId = ref(null)
 const importedIds = ref(new Set())
 const sharedAt = ref(null)
 
-// Prevent search engines from indexing shared wishlist pages
-const noindexMeta = document.createElement('meta')
-noindexMeta.name = 'robots'
-noindexMeta.content = 'noindex, nofollow'
-document.head.appendChild(noindexMeta)
-onUnmounted(() => document.head.removeChild(noindexMeta))
+useNoindex()
 
 const sharedDate = computed(() => {
   if (!sharedAt.value) return ''
@@ -104,16 +101,11 @@ async function load() {
   loading.value = true
   loadError.value = false
   try {
-    const { data, error } = await sb
-      .from('shared_wishlists')
-      .select('payload')
-      .eq('share_id', route.params.id)
-      .single()
+    const { data, error } = await sb.rpc('get_shared_wishlist', { p_share_id: String(route.params.id) })
     if (error) throw error
-    if (data?.payload) {
-      items.value = data.payload.items ?? []
-      sharedAt.value = data.payload.shared_at ?? null
-    }
+    if (!data) { loadError.value = true; return }
+    items.value = Array.isArray(data.items) ? data.items.map(i => sanitizePhoto(i)) : []
+    sharedAt.value = data.shared_at ?? null
   } catch (e) {
     console.error('WishlistShareView load failed:', e)
     loadError.value = true
@@ -125,7 +117,7 @@ async function load() {
 async function doImportOne(item) {
   if (!currentUser.value || importedIds.value.has(item.id) || importingId.value) return
   importingId.value = item.id
-  const { id, user_id, created_at, ...fields } = item
+  const fields = pickImportFields(item)
   try {
     await insertWhisky({ id: Date.now(), ...fields, list: 'wishlist' })
     importedIds.value = new Set([...importedIds.value, item.id])
@@ -145,7 +137,7 @@ async function doImportAll() {
   let failed = 0
   for (const item of items.value) {
     if (importedIds.value.has(item.id)) continue
-    const { id, user_id, created_at, ...fields } = item
+    const fields = pickImportFields(item)
     try {
       await insertWhisky({ id: Date.now() + added + failed, ...fields, list: 'wishlist' })
       importedIds.value = new Set([...importedIds.value, item.id])

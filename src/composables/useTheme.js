@@ -1,8 +1,9 @@
+import { storage } from '../lib/storage.js'
 import { ref, watch } from 'vue'
 
 export const THEMES = ['dark', 'light']
 
-const stored = localStorage.getItem('dram-theme')
+const stored = storage.get('dram-theme')
 // migrate anyone who had 'whisky' saved
 const initial = stored === 'whisky' || !THEMES.includes(stored) ? 'dark' : stored
 export const theme = ref(initial)
@@ -15,7 +16,7 @@ applyTheme(theme.value)
 
 watch(theme, (t) => {
   applyTheme(t)
-  localStorage.setItem('dram-theme', t)
+  storage.set('dram-theme', t)
 })
 
 export function useTheme() {

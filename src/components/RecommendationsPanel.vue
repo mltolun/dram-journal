@@ -14,7 +14,7 @@
     <div class="recs-grid">
       <div v-for="(rec, i) in recommendations" :key="i" class="wcard rec-card">
 
-        <img v-if="rec.photo_url" :src="rec.photo_url" :alt="rec.name" class="wcard-photo">
+        <img v-if="rec.photo_url" :src="rec.photo_url" :alt="rec.name" class="wcard-photo" loading="lazy" decoding="async">
 
         <div class="wcard-body">
           <div class="wcard-meta-row">

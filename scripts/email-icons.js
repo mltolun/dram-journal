@@ -1,3 +1,5 @@
+import { escapeHtml } from './lib/html.js'
+
 const ICON_ALIASES = {
   'glass-water': 'glass-water',
   GlassWater: 'glass-water',
@@ -57,5 +59,5 @@ export function emailIconUrl(iconName, appUrl) {
 export function emailIconImg(iconName, appUrl, { size = 24, alt = '' } = {}) {
   const src = emailIconUrl(iconName, appUrl)
   if (!src) return ''
-  return `<img src="${src}" alt="${alt}" width="${size}" height="${size}" style="display:block;width:${size}px;height:${size}px;border:0;outline:none;text-decoration:none;" />`
+  return `<img src="${src}" alt="${escapeHtml(alt)}" width="${size}" height="${size}" style="display:block;width:${size}px;height:${size}px;border:0;outline:none;text-decoration:none;" />`
 }

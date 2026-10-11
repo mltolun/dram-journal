@@ -3,20 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>The Dram Journal</title>
+  <title>The Dram Journal – Whisky Tasting Journal &amp; Collection Tracker</title>
 
-  <meta name="description" content="Your personal whisky tasting journal">
+  <meta name="description" content="Log every dram with nose, palate and ratings, build a whisky wishlist, compare bottles side by side and share tasting notes with friends. Free whisky journal.">
+  <link rel="canonical" href="https://dramjournal.online/">
+  <meta name="theme-color" content="#1C160E">
+  <meta name="color-scheme" content="dark light">
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Dram Journal">
+  <meta property="og:url" content="https://dramjournal.online/">
+  <meta property="og:title" content="The Dram Journal – Whisky Tasting Journal &amp; Collection Tracker">
+  <meta property="og:description" content="Log tastings, rate drams, build a wishlist and share notes with fellow whisky enthusiasts.">
+  <meta property="og:image" content="https://dramjournal.online/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The Dram Journal – your personal whisky tasting journal">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Dram Journal – Whisky Tasting Journal">
+  <meta name="twitter:description" content="Log tastings, rate drams, build a wishlist and share notes with fellow whisky enthusiasts.">
+  <meta name="twitter:image" content="https://dramjournal.online/og.png">
 
   <!-- Icons -->
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+  <link rel="icon" type="image/png" href="/icons/favicon.png">
+  <link rel="apple-touch-icon" href="/icons/favicon.png">
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- The crawlable fallback inside #app stays invisible for the first 1.5 s so
+       real visitors (whose JS replaces it almost immediately) never see a flash;
+       no-JS clients still see it, and crawlers/link bots read it from the HTML. -->
+  <style>
+    .seo-fallback { opacity: 0; animation: seo-fallback-show 0s 1.5s forwards; max-width: 44rem; margin: 0 auto; padding: 4rem 1.5rem; line-height: 1.6; }
+    @keyframes seo-fallback-show { to { opacity: 1; } }
+  </style>
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://dramjournal.online/#website",
+        "url": "https://dramjournal.online/",
+        "name": "The Dram Journal",
+        "inLanguage": ["en", "es"]
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://dramjournal.online/#app",
+        "name": "The Dram Journal",
+        "url": "https://dramjournal.online/",
+        "description": "A personal whisky tasting journal: log tastings, rate drams, keep a wishlist, compare bottles and share notes with friends.",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Any (web browser)",
+        "browserRequirements": "Requires JavaScript",
+        "image": "https://dramjournal.online/og.png",
+        "isPartOf": { "@id": "https://dramjournal.online/#website" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
-  <div id="app"></div>
+  <!-- Crawlable fallback. Vue replaces this when the app mounts; crawlers and
+       no-JS clients (e.g. link-preview bots) still get the page's real content. -->
+  <div id="app">
+    <main class="seo-fallback">
+      <h1>The Dram Journal – your personal whisky tasting journal</h1>
+      <p>Every dram deserves a story. The Dram Journal is a free whisky logbook: track tastings with nose, palate and star ratings, build a wishlist, compare bottles side by side, and share drams with fellow enthusiasts.</p>
+      <h2>What's inside</h2>
+      <ul>
+        <li><strong>Tasting journal</strong> – log every bottle with notes, photos and ratings.</li>
+        <li><strong>Wishlist</strong> – track bottles you want to try and share them with a link.</li>
+        <li><strong>Bottle scanner</strong> – point your camera at a label to auto-fill details.</li>
+        <li><strong>Compare</strong> – put up to three whiskies side by side.</li>
+        <li><strong>Stats &amp; badges</strong> – see the countries, distilleries and styles you've explored.</li>
+        <li><strong>Friends &amp; sharing</strong> – follow other collectors and send recommendations.</li>
+      </ul>
+      <p><a href="/app">Start your journal</a> · <noscript>JavaScript is required to use the app.</noscript></p>
+    </main>
+  </div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,3 @@
+# Cloudflare Pages: SPA fallback so deep links (/app, /share/<id>, …) load index.html.
+# /share/* is handled first by functions/share/[id].js (Open Graph tags for previews).
+/* /index.html 200

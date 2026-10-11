@@ -175,6 +175,8 @@
 </template>
 
 <script setup>
+import { storage } from '../lib/storage.js'
+import { shareUrlFor } from '../lib/links.js'
 import { ref, computed, onMounted, watch } from 'vue'
 import {
   X as XIcon,
@@ -253,11 +255,11 @@ function firstName(email) {
 
 // ── Recently sent ───────────────────────────────────────────────
 function getRecentIds() {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]') } catch { return [] }
+  try { return JSON.parse(storage.get(RECENT_KEY) || '[]') } catch { return [] }
 }
 function pushRecentId(id) {
   const ids = [id, ...getRecentIds().filter(x => x !== id)].slice(0, 4)
-  localStorage.setItem(RECENT_KEY, JSON.stringify(ids))
+  storage.set(RECENT_KEY, JSON.stringify(ids))
 }
 
 const recentFollowers = computed(() => {
@@ -368,7 +370,7 @@ async function ensureShareUrl() {
       shareId = data.share_id
     }
 
-    shareUrl.value = window.location.origin + window.location.pathname + '#/share/' + shareId
+    shareUrl.value = shareUrlFor(shareId)
     tip.value = t.value.linkPublicDram
   } catch (e) {
     console.error('Could not generate share link:', e)

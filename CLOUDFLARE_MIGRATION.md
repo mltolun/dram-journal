@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a **Vue 3 + Vite SPA** with a custom domain, built via GitHub Actions using secrets (`VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY`, `VITE_ADMIN_EMAILS`). The steps below cover everything from account setup to cutting over your domain.
+This project is a **Vue 3 + Vite SPA** with a custom domain, built via GitHub Actions using secrets (`VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY`). The steps below cover everything from account setup to cutting over your domain.
 
 ---
 
@@ -58,7 +58,6 @@ These replace the GitHub Actions secrets. Still on the setup screen (or later in
 |---|---|---|
 | `VITE_SUPABASE_URL` | your Supabase project URL | Production + Preview |
 | `VITE_SUPABASE_KEY` | your Supabase anon/public key | Production + Preview |
-| `VITE_ADMIN_EMAILS` | your admin email list | Production + Preview |
 
 > Mark them as **Encrypted** (the lock icon) since they're secrets.
 
@@ -66,15 +65,12 @@ These replace the GitHub Actions secrets. Still on the setup screen (or later in
 
 ## Step 6 — Fix SPA Routing (Critical for Vue Router)
 
-Cloudflare Pages needs a `_redirects` file to handle client-side routing, otherwise direct URL access to routes like `/entries/123` will return a 404.
-
-Create the file `public/_redirects` with this content:
-
-```
-/* /index.html 200
-```
-
-Vite will copy everything in `public/` to `dist/` automatically, so this will be included in the build output.
+The app now uses real URL paths (`/app`, `/share/<id>`, …) instead of `#/` hashes.
+`public/_redirects` (already in the repo) makes unknown paths fall back to `index.html`,
+`public/_headers` sets the security/caching headers, and `functions/share/[id].js` /
+`functions/wishlist/[id].js` add Open Graph tags for link previews. Nothing to create —
+just make sure `VITE_SUPABASE_URL` and `VITE_SUPABASE_KEY` are set for **Production + Preview**
+(the Functions read them at runtime).
 
 ---
 
@@ -135,7 +131,7 @@ Now that Cloudflare Pages deploys on every push to `main`, your GitHub Actions w
 - [ ] Custom domain loads correctly over HTTPS
 - [ ] Vue Router navigation works (direct URL access, browser back/forward)
 - [ ] Supabase authentication and data loading works (env vars are injected)
-- [ ] Admin emails restriction works (`VITE_ADMIN_EMAILS`)
+- [ ] Admin menu appears for the admin (needs `app_settings.admin_email` — see `docs/AUDIT_FOLLOWUPS.md`)
 - [ ] New pushes to `main` trigger an automatic Cloudflare Pages deploy (check the Pages dashboard)
 
 ---
@@ -155,7 +151,4 @@ Now that Cloudflare Pages deploys on every push to `main`, your GitHub Actions w
 
 ## Code Changes Required in This Repo
 
-The only file changes needed before deploying:
-
-1. **Add** `public/_redirects` (Step 6) — required for Vue Router to work.
-2. **Verify** `vite.config.js` has `base: '/'` (Step 7) — or remove the `VITE_BASE_PATH` env var.
+Already done in the repo: `public/_redirects`, `public/_headers`, `functions/`. Still verify `vite.config.js` has `base: '/'` (Step 7), and follow `docs/AUDIT_FOLLOWUPS.md` (migration first!).

@@ -7,20 +7,23 @@ on:
   # Allow manual trigger from the GitHub Actions tab for testing
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
 
       - name: Install dependencies
-        run: npm install @supabase/supabase-js
+        run: npm ci
 
         # Run script from repo root so node_modules is found
         working-directory: ${{ github.workspace }}
@@ -29,7 +32,7 @@ jobs:
         env:
           SUPABASE_URL:         ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          GEMINI_KEY:           ${{ secrets.VITE_GEMINI_KEY }}
+          GEMINI_KEY:           ${{ secrets.GEMINI_KEY || secrets.VITE_GEMINI_KEY }}
           RESEND_API_KEY:       ${{ secrets.RESEND_API_KEY }}
           EMAIL_FROM:           ${{ secrets.EMAIL_FROM }}
         run: node scripts/generate-recommendations.js

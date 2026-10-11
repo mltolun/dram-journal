@@ -1,6 +1,8 @@
+import { storage } from '../lib/storage.js'
 import { ref } from 'vue'
 import { sb } from '../lib/supabase.js'
 import { useI18n, detectLocale } from './useI18n.js'
+import { appUrl } from '../lib/links.js'
 
 export const currentUser = ref(null)
 
@@ -12,8 +14,8 @@ async function syncLocaleFromUser(user) {
     setLocale(storedLocale)
   } else {
     // No locale in user metadata yet — detect and save it
-    await detectLocale()
-    const detectedLocale = localStorage.getItem('dj_locale')
+    await detectLocale()   // browser-language only; no network call
+    const detectedLocale = storage.get('dj_locale')
     if (detectedLocale && ['en', 'es'].includes(detectedLocale)) {
       sb.auth.updateUser({ data: { locale: detectedLocale } })
     }
@@ -34,29 +36,11 @@ export function useAuth() {
     if (error) throw error
     if (data.user && data.session) {
       currentUser.value = data.user
-      // New user — detect locale from browser/IP and persist to their profile
+      // New user — detect locale from the browser language and persist to their profile
       await detectLocale()
-      const detectedLocale = localStorage.getItem('dj_locale')
+      const detectedLocale = storage.get('dj_locale')
       if (detectedLocale && ['en', 'es'].includes(detectedLocale)) {
         sb.auth.updateUser({ data: { locale: detectedLocale } })
-      }
-      // Auto-follow admin/creator account so new users see activity in Feed
-      const adminEmail = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',')[0]?.trim().toLowerCase()
-      if (adminEmail && adminEmail !== data.user.email?.toLowerCase()) {
-        try {
-          const { data: adminId } = await sb.rpc('get_user_id_by_email', { p_email: adminEmail })
-          if (adminId) {
-            await sb.from('subscriptions').insert({
-              follower_id:     data.user.id,
-              following_id:    adminId,
-              status:          'accepted',
-              follower_email:  data.user.email?.toLowerCase(),
-              following_email: adminEmail,
-            })
-          }
-        } catch (_) {
-          // Non-fatal — don't block signup if this fails
-        }
       }
     }
     return data
@@ -65,12 +49,13 @@ export function useAuth() {
   async function signOut() {
     await sb.auth.signOut()
     currentUser.value = null
+    // Don't leave private tasting drafts behind on a shared device.
+    storage.removeByPrefix('dram-draft-')
   }
 
   async function forgotPassword(email) {
-    const base = window.location.origin + window.location.pathname
     const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: base + '?recovery=1',
+      redirectTo: appUrl('?recovery=1'),
     })
     if (error) throw error
   }

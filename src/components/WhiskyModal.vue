@@ -311,7 +311,7 @@
               @click="onCataloguePick(item); scanMode = false"
             >
               <div class="cs-thumb">
-                <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
+                <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img" loading="lazy" decoding="async">
                 <div v-else class="cs-img-placeholder"><GlassWaterIcon :size="32" /></div>
               </div>
               <div class="cs-info">
@@ -525,6 +525,7 @@
 </template>
 
 <script setup>
+import { storage } from '../lib/storage.js'
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { X as XIcon, Pencil as PencilIcon, Check as CheckIcon, GlassWater as GlassWaterIcon, ShoppingCart as ShoppingCartIcon, Star as StarIcon, Package as PackageIcon, Share2 as Share2Icon, Plus as PlusIcon, ChevronDown as ChevronDownIcon } from 'lucide-vue-next'
 import { useWhiskies } from '../composables/useWhiskies.js'
@@ -654,7 +655,7 @@ function fillForm() {
 
 function restoreDraft() {
   if (!props.editing?.id) return
-  const raw = localStorage.getItem(`dram-draft-${props.editing.id}`)
+  const raw = storage.get(`dram-draft-${props.editing.id}`)
   if (raw) {
     try {
       const draft = JSON.parse(raw)
@@ -758,7 +759,7 @@ watch(() => props.editing, (newVal, oldVal) => {
 
 watch(dramForm, (val) => {
   if (props.editing?.id) {
-    localStorage.setItem(`dram-draft-${props.editing.id}`, JSON.stringify({
+    storage.set(`dram-draft-${props.editing.id}`, JSON.stringify({
       tasted_at: val.tasted_at,
       rating: val.rating,
       notes: val.notes,
@@ -784,7 +785,7 @@ async function saveDram() {
       notes: dramForm.notes?.trim() || null,
     })
 
-    localStorage.removeItem(`dram-draft-${props.editing.id}`)
+    storage.remove(`dram-draft-${props.editing.id}`)
 
     toast(t.value.dramLogged(form.name))
     dramLogOpen.value = false

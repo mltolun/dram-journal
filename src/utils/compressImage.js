@@ -1,8 +1,10 @@
 /**
- * Compress an image File to a JPEG blob, max `maxPx` on longest side.
+ * Compress an image File to a JPEG (default) or WebP blob, max `maxPx` on the
+ * longest side. If the browser can't encode the requested type (older Safari
+ * silently returns PNG for WebP) it falls back to JPEG.
  * Returns { blob, dataUrl, kb }
  */
-export function compressImage(file, maxPx = 600, quality = 0.78) {
+export function compressImage(file, maxPx = 600, quality = 0.78, type = 'image/jpeg') {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
@@ -19,7 +21,7 @@ export function compressImage(file, maxPx = 600, quality = 0.78) {
       const canvas = document.createElement('canvas')
       canvas.width = w; canvas.height = h
       canvas.getContext('2d').drawImage(img, 0, 0, w, h)
-      canvas.toBlob((blob) => {
+      const finish = (blob) => {
         URL.revokeObjectURL(url)
         if (!blob) { reject(new Error('Could not process that image file.')); return }
         const reader = new FileReader()
@@ -30,7 +32,14 @@ export function compressImage(file, maxPx = 600, quality = 0.78) {
           kb: Math.round(blob.size / 1024),
         })
         reader.readAsDataURL(blob)
-      }, 'image/jpeg', quality)
+      }
+      canvas.toBlob((blob) => {
+        if (blob && blob.type !== type && type !== 'image/jpeg') {
+          canvas.toBlob(finish, 'image/jpeg', quality)   // encoder unsupported → JPEG
+        } else {
+          finish(blob)
+        }
+      }, type, quality)
     }
     img.src = url
   })

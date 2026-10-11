@@ -29,6 +29,7 @@
 </template>
 
 <script setup>
+import { wishlistUrlFor } from '../lib/links.js'
 import { ref, onMounted } from 'vue'
 import { X as XIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
@@ -92,7 +93,7 @@ onMounted(async () => {
       shareId = data.share_id
     }
 
-    shareUrl.value = window.location.origin + window.location.pathname + '#/wishlist/' + shareId
+    shareUrl.value = wishlistUrlFor(shareId)
     tip.value = t.value.linkPublicWishlist
   } catch (e) {
     console.error('Could not generate wishlist link:', e)

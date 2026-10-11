@@ -6,32 +6,19 @@ export const featureRequests   = ref([])    // all requests (admin view)
 export const myFeatureRequests = ref([])    // current user's own requests
 export const isAdminUser       = ref(false) // set after loadAdminStatus()
 
-// Case-insensitive list from env var (optional — RLS is the real enforcer)
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
-  .split(',')
-  .map(e => e.trim().toLowerCase())
-  .filter(Boolean)
-
 export function useFeatureRequests() {
 
-  // Sync check used in template v-if — case-insensitive, falls back to
-  // the reactive isAdminUser flag if no env var is configured.
+  // Sync check used in template v-if. The flag is filled by loadAdminStatus()
+  // from a server-side is_admin() RPC — no admin e-mail ships in the JS bundle.
+  // Purely cosmetic: RLS on feature_requests is the real enforcer.
   function isAdmin() {
-    const email = currentUser.value?.email?.toLowerCase()
-    if (!email) return false
-    if (ADMIN_EMAILS.length > 0) return ADMIN_EMAILS.includes(email)
-    return isAdminUser.value
+    return !!currentUser.value && isAdminUser.value
   }
 
-  // Async probe — does a lightweight HEAD query. If RLS allows it → admin.
-  // Called by AdminFeaturePanel on mount so the panel self-validates
-  // without depending on the env var being set correctly.
   async function loadAdminStatus() {
-    const { error } = await sb
-      .from('feature_requests')
-      .select('id', { count: 'exact', head: true })
-
-    isAdminUser.value = !error
+    if (!currentUser.value) { isAdminUser.value = false; return false }
+    const { data, error } = await sb.rpc('is_admin')
+    isAdminUser.value = !error && data === true
     return isAdminUser.value
   }
 

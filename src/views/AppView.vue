@@ -258,6 +258,7 @@
 </template>
 
 <script setup>
+import { storage } from '../lib/storage.js'
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, currentUser } from '../composables/useAuth.js'
@@ -514,7 +515,7 @@ async function initUserData() {
 
 onMounted(async () => {
   // Detect locale from browser/IP for first-time visitors (no-op if already set)
-  if (!localStorage.getItem('dj_locale')) detectLocale()
+  if (!storage.get('dj_locale')) detectLocale()
 
   if (route.query.list === 'wishlist') activeList.value = 'wishlist'
   const session = await getSession()
@@ -666,7 +667,7 @@ function onSaved(w) {
   modalOpen.value = false
   quickLogMode.value = false
   toast(editingWhisky.value ? t.value.whiskyUpdated(w.name) : t.value.whiskyAdded(w.name))
-  if (!editingWhisky.value && (w.list || activeList.value) === 'journal' && localStorage.getItem('dj_no_share_prompt') !== '1') {
+  if (!editingWhisky.value && (w.list || activeList.value) === 'journal' && storage.get('dj_no_share_prompt') !== '1') {
     sharePromptWhisky.value = w
   }
 }

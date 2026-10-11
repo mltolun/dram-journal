@@ -39,6 +39,7 @@ import WishlistShareModal from '../components/WishlistShareModal.vue'
 import App from '../App.vue'
 import AppView from '../views/AppView.vue'
 import LandingView from '../views/LandingView.vue'
+import NotFoundView from '../views/NotFoundView.vue'
 import ResetView from '../views/ResetView.vue'
 import ShareView from '../views/ShareView.vue'
 import WishlistShareView from '../views/WishlistShareView.vue'
@@ -71,6 +72,7 @@ const allComponents = [
   ['App', App],
   ['AppView', AppView],
   ['LandingView', LandingView],
+  ['NotFoundView', NotFoundView],
   ['ResetView', ResetView],
   ['ShareView', ShareView],
   ['WishlistShareView', WishlistShareView],

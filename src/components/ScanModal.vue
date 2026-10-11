@@ -115,7 +115,7 @@
                 @click="cataloguePicked = item"
               >
                 <div class="cs-thumb">
-                  <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
+                  <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img" loading="lazy" decoding="async">
                   <div v-else class="cs-img-placeholder"><GlassWaterIcon :size="32" /></div>
                 </div>
                 <div class="cs-info">
@@ -240,13 +240,10 @@ async function fetchScansToday() {
   }
 }
 
+// The edge function records each scan in scan_log (source of truth for the
+// quota); the client only mirrors it locally so the counter updates instantly.
 async function incrementScans() {
-  try {
-    await sb.from('scan_log').insert({ user_id: currentUser.value.id })
-    scansToday.value += 1
-  } catch (e) {
-    console.error('[Scan] could not record scan in quota log:', e)
-  }
+  scansToday.value += 1
 }
 
 fetchScansToday()
@@ -325,18 +322,8 @@ function openCameraPickerFallback() {
   cameraInput.value?.click()
 }
 
-// ── Prompt ────────────────────────────────────────────────────────────────────
-
-const PROMPT = `Extract whisky info from the bottle image. Respond ONLY with valid JSON, no other text.
-
-Required JSON fields:
-{"name":"","distillery":"","origin":"","type":"","age":"","abv":"","nose":"","palate":"","notes":"","dulzor":0,"ahumado":0,"cuerpo":0,"frutado":0,"especiado":0}
-
-Rules:
-- type: scotch/irish/bourbon/japanese/other
-- dulzor/ahumado/cuerpo/frutado/especiado: integers 0-5
-- If unreadable: name="Unknown"
-- Start with { end with } - nothing else.`
+// The extraction prompt lives server-side (supabase/functions/_shared/gemini-guard.ts)
+// so the proxy can't be used as a general-purpose Gemini endpoint.
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
@@ -367,7 +354,7 @@ async function callGemma() {
 
   const { text } = await edgeCall({
     action: 'generate-inline', model: 'gemma-4-26b-a4b-it',
-    imageB64: b64, imageMime: imageMime.value, prompt: PROMPT,
+    imageB64: b64, imageMime: imageMime.value,
   })
   return text || ''
 }
@@ -375,7 +362,7 @@ async function callGemma() {
 async function callGeminiFlashLite() {
   const { text } = await edgeCall({
     action: 'generate-inline', model: 'gemini-3.1-flash-lite-preview',
-    imageB64: imageB64.value, imageMime: imageMime.value, prompt: PROMPT,
+    imageB64: imageB64.value, imageMime: imageMime.value,
   })
   return text || ''
 }

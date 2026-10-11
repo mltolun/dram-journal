@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GlassWater as GlassWaterIcon } from 'lucide-vue-next'
 import { sb } from '../lib/supabase.js'
@@ -85,6 +85,8 @@ import { useWhiskies, whiskies } from '../composables/useWhiskies.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from '../composables/useI18n.js'
 import { ATTRS, TYPE_BADGE_STYLE } from '../lib/constants.js'
+import { pickImportFields, sanitizePhoto } from '../lib/shareImport.js'
+import { useNoindex } from '../composables/useNoindex.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -100,12 +102,7 @@ const loadError = ref(false)
 const importing = ref(false)
 const alreadyHave = ref(false)
 
-// Prevent search engines from indexing shared dram pages
-const noindexMeta = document.createElement('meta')
-noindexMeta.name = 'robots'
-noindexMeta.content = 'noindex, nofollow'
-document.head.appendChild(noindexMeta)
-onUnmounted(() => document.head.removeChild(noindexMeta))
+useNoindex()
 
 const details = computed(() => [
   { label: t.value.shareDetailLabels.distillery, val: whisky.value?.distillery },
@@ -127,13 +124,10 @@ async function load() {
   loading.value = true
   loadError.value = false
   try {
-    const { data, error } = await sb
-      .from('shared_whiskies')
-      .select('payload')
-      .eq('share_id', route.params.id)
-      .single()
+    // SECURITY DEFINER RPC: returns one share by id (owner ids stripped).
+    const { data, error } = await sb.rpc('get_shared_whisky', { p_share_id: String(route.params.id) })
     if (error) throw error
-    whisky.value = data?.payload ?? null
+    whisky.value = sanitizePhoto(data ?? null)
     checkDuplicate()
   } catch (e) {
     console.error('ShareView load failed:', e)
@@ -157,7 +151,7 @@ function checkDuplicate() {
 async function doImport() {
   if (!currentUser.value || alreadyHave.value) return
   importing.value = true
-  const { id, user_id, created_at, ...fields } = whisky.value
+  const fields = pickImportFields(whisky.value)
   try {
     await insertWhisky({ id: Date.now(), ...fields, list: 'wishlist' })
     toast(t.value.addedToWishlist(whisky.value.name))

@@ -1,5 +1,9 @@
 User-agent: *
-Disallow: /#/share/
-Disallow: /#/wishlist/
-Disallow: /#/app
-Disallow: /#/reset
+Allow: /
+# Private, per-user screens. Shared dram/wishlist pages are deliberately NOT
+# disallowed here: link-preview bots (Twitter/Slack) obey robots.txt and need
+# to fetch them for previews. Those pages send "X-Robots-Tag: noindex" instead.
+Disallow: /app
+Disallow: /reset
+
+Sitemap: https://dramjournal.online/sitemap.xml

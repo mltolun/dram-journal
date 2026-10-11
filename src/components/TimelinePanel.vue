@@ -33,7 +33,7 @@
               :aria-label="`${w.name}${w.rating ? `, ${t.ratingXof5(w.rating)}` : ''}, ${formatDay(w.date)}`"
             >
               <div class="tl-thumb">
-                <img v-if="w.photo_url" :src="w.photo_url" :alt="w.name" class="tl-img">
+                <img v-if="w.photo_url" :src="w.photo_url" :alt="w.name" class="tl-img" loading="lazy" decoding="async">
                 <div v-else class="tl-img-ph"><GlassWaterIcon :size="24" /></div>
               </div>
               <div class="tl-bottle-name">{{ w.name }}</div>

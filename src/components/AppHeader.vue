@@ -140,7 +140,7 @@ const menuEl     = ref(null)
 const inboxOpen  = ref(false)
 const adminOpen  = ref(false)
 
-const { isAdmin: isAdminFn } = useFeatureRequests()
+const { isAdmin: isAdminFn, loadAdminStatus } = useFeatureRequests()
 
 const isAdmin = computed(() => isAdminFn())
 
@@ -162,6 +162,7 @@ onMounted(() => {
   document.addEventListener('visibilitychange', onVisibilityChange)
   loadSubscriptions()
   loadInbox()
+  loadAdminStatus().catch(() => {})
   pollInterval = setInterval(loadInbox, 2 * 60 * 1000)
 })
 onBeforeUnmount(() => {

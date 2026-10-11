@@ -359,7 +359,7 @@ onBeforeUnmount(() => {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   overflow-x: hidden;
 }
 
@@ -463,7 +463,7 @@ onBeforeUnmount(() => {
 
 /* ── HERO ── */
 .l-hero {
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;

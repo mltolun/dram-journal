@@ -39,6 +39,7 @@
 </template>
 
 <script setup>
+import { storage } from '../lib/storage.js'
 import { ref } from 'vue'
 import { X as XIcon, Send as SendIcon } from 'lucide-vue-next'
 import { useI18n } from '../composables/useI18n.js'
@@ -54,15 +55,15 @@ const { t } = useI18n()
 const rootEl = ref(null)
 useDialog(rootEl, { onClose: () => emit('close') })
 
-const dontAsk = ref(localStorage.getItem('dj_no_share_prompt') === '1')
+const dontAsk = ref(storage.get('dj_no_share_prompt') === '1')
 
 function dismiss() {
-  if (dontAsk.value) localStorage.setItem('dj_no_share_prompt', '1')
+  if (dontAsk.value) storage.set('dj_no_share_prompt', '1')
   emit('close')
 }
 
 function share() {
-  if (dontAsk.value) localStorage.setItem('dj_no_share_prompt', '1')
+  if (dontAsk.value) storage.set('dj_no_share_prompt', '1')
   emit('share')
 }
 </script>

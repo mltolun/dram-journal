@@ -1,3 +1,18 @@
+# Auth settings. Push to the hosted project with `supabase config push`
+# (review the diff first) or mirror them in Dashboard → Authentication.
+[auth]
+site_url = "https://dramjournal.online"
+additional_redirect_urls = ["https://dramjournal.online/**", "http://localhost:5173/**"]
+minimum_password_length = 10
+
+[auth.rate_limit]
+sign_in_sign_ups = 30
+token_refresh = 150
+
+[auth.email]
+double_confirm_changes = true
+enable_confirmations = true
+
 
 [functions.scrape-whisky]
 enabled = true

@@ -15,6 +15,7 @@
  */
 
 import { emailIcon, emailIconImg } from './email-icons.js'
+import { escapeHtml } from './lib/html.js'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const EMAIL_FROM     = process.env.EMAIL_FROM || 'The Dram Journal <hello@dramjournal.online>'
@@ -245,7 +246,7 @@ function streakWarningHtml({ streak, daysLeft, badge }) {
               <td valign="top" style="padding-right:8px;">${emailIconImg(badge.icon, APP_URL, { size: 16, alt: badge.name })}</td>
               <td style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${CREAM};line-height:1.5;">
                 ${_s.streakAlsoBody(badge.rem, badge.rem > 1 ? 's' : '')}
-                <span style="color:${AMBER_LIGHT};">${badge.name}</span>
+                <span style="color:${AMBER_LIGHT};">${escapeHtml(badge.name)}</span>
               </td>
             </tr>
           </table>
@@ -330,7 +331,7 @@ function badgeProximityHtml({ badge }) {
         <div style="margin-bottom:14px;">${iconImg}</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:8px;">
-          ${badge.name}
+          ${escapeHtml(badge.name)}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                     line-height:1.6;margin-bottom:16px;">
@@ -401,8 +402,8 @@ function lapsedHtml({ friendActivity, stats, daysSince }) {
   const actRows = friendActivity && friendActivity.length > 0
     ? friendActivity.slice(0, 6).map(a => {
         const detail = a.type === 'rating'
-          ? `${a.whisky_name}${a.whisky_distillery ? ' · ' + a.whisky_distillery : ''} — ${a.rating}/5`
-          : `${a.whisky_name}${a.whisky_distillery ? ' · ' + a.whisky_distillery : ''}`
+          ? `${escapeHtml(a.whisky_name)}${a.whisky_distillery ? ' · ' + escapeHtml(a.whisky_distillery) : ''} — ${escapeHtml(a.rating)}/5`
+          : `${escapeHtml(a.whisky_name)}${a.whisky_distillery ? ' · ' + escapeHtml(a.whisky_distillery) : ''}`
         return `
         <tr>
           <td style="padding:7px 0;border-bottom:1px solid rgba(200,130,42,0.08);">

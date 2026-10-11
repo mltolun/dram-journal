@@ -10,6 +10,8 @@
  *   EMAIL_FROM     — sender address e.g. "Dram Journal <hello@yourdomain.com>"
  */
 
+import { escapeHtml, safeImageUrl, photoHostsFromEnv } from './lib/html.js'
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const EMAIL_FROM     = process.env.EMAIL_FROM || 'The Dram Journal <hello@dramjournal.online>'
 
@@ -208,16 +210,16 @@ function recCard(rec) {
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:11px;
                     color:${PEAT_LIGHT};margin-bottom:2px;">
-          ${rec.distillery || ''}
+          ${escapeHtml(rec.distillery)}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:18px;font-weight:400;
                     color:${CREAM};line-height:1.2;margin-bottom:4px;">
-          ${rec.name}
+          ${escapeHtml(rec.name)}
         </div>
         <div style="margin-bottom:14px;">
-          ${rec.age   ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${CREAM_DARK};">${rec.age}</span>` : ''}
+          ${rec.age   ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${CREAM_DARK};">${escapeHtml(rec.age)}</span>` : ''}
           ${rec.age && rec.price ? `<span style="color:${PEAT_LIGHT};margin:0 6px;">·</span>` : ''}
-          ${rec.price ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${AMBER_LIGHT};">${rec.price}</span>` : ''}
+          ${rec.price ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${AMBER_LIGHT};">${escapeHtml(rec.price)}</span>` : ''}
         </div>
         <table cellpadding="0" cellspacing="0" border="0" width="100%"
                style="margin-bottom:14px;">
@@ -227,7 +229,7 @@ function recCard(rec) {
         <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;
                     color:${PEAT_LIGHT};line-height:1.55;border-top:1px solid rgba(200,130,42,0.2);
                     padding-top:12px;">
-          ${rec.reason}
+          ${escapeHtml(rec.reason)}
         </div>` : ''}
       </td>
     </tr>
@@ -298,7 +300,7 @@ function flavorTagsHtml(event, locale = 'en') {
     `<span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;
                   letter-spacing:0.06em;color:${AMBER};background:rgba(200,130,42,0.1);
                   border:0.5px solid rgba(200,130,42,0.3);border-radius:20px;
-                  padding:2px 7px;margin-right:4px;">${tag}</span>`
+                  padding:2px 7px;margin-right:4px;">${escapeHtml(tag)}</span>`
   ).join('')
   return `<div style="margin-top:8px;">${pills}</div>`
 }
@@ -312,17 +314,18 @@ function activityCard(event, locale = 'en') {
   const quoteHtml = quote
     ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:${PEAT_LIGHT};
                    line-height:1.55;border-left:2px solid rgba(200,130,42,0.35);
-                   padding-left:10px;margin:6px 0;">"${quote}"</div>`
+                   padding-left:10px;margin:6px 0;">"${escapeHtml(quote)}"</div>`
     : ''
 
   const ratingHtml = event.rating
     ? `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
-                    color:${AMBER_LIGHT};">&#9733; ${event.rating}.0</span>`
+                    color:${AMBER_LIGHT};">&#9733; ${escapeHtml(event.rating)}.0</span>`
     : ''
 
-  const imgHtml = event.photo_url
+  const photoSrc = safeImageUrl(event.photo_url, photoHostsFromEnv())
+  const imgHtml = photoSrc
     ? `<td width="80" style="padding:0;vertical-align:top;">
-         <img src="${event.photo_url}" alt="${event.whisky_name || ''}"
+         <img src="${photoSrc}" alt="${escapeHtml(event.whisky_name)}"
               width="80" height="110"
               style="width:80px;height:110px;object-fit:cover;display:block;
                      border-radius:8px 0 0 8px;" />
@@ -343,11 +346,11 @@ function activityCard(event, locale = 'en') {
             <td>
               <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;font-weight:600;
                           color:${AMBER};line-height:1.2;margin-bottom:2px;">
-                ${event.whisky_name || ''}
+                ${escapeHtml(event.whisky_name)}
               </div>
               ${event.distillery ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;
                           font-style:italic;color:${PEAT_LIGHT};margin-bottom:6px;">
-                ${event.distillery}</div>` : ''}
+                ${escapeHtml(event.distillery)}</div>` : ''}
             </td>
             <td align="right" valign="top" style="white-space:nowrap;padding-left:8px;">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;
@@ -373,7 +376,7 @@ function activityUserBlock(userGroup, locale = 'en') {
       <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
                   color:${AMBER_LIGHT};margin-bottom:8px;padding-bottom:4px;
                   border-bottom:1px solid rgba(200,130,42,0.18);">
-        ${userGroup.authorName}
+        ${escapeHtml(userGroup.authorName)}
       </div>
       ${cards}
     </td>

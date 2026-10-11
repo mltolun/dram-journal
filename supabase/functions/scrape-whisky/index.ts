@@ -1,29 +1,41 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { UnsafeTargetError, parseSafeUrl, safeFetchText } from '../_shared/net-guard.ts'
+import { allowedOrigins, corsHeadersFor } from '../_shared/gemini-guard.ts'
 
 // scrape-whisky edge function.
 //
-// Authenticates the caller, validates the target URL (SSRF-safe), scrapes
-// whisky details from the page, checks for duplicates, and inserts the
-// result into the `catalogue` table using the service role key.
+// Authenticates the caller (admins only), validates the target URL (SSRF-safe:
+// host allow-list, DNS re-check, manual redirect re-validation, size cap),
+// scrapes whisky details, checks for duplicates, and inserts the result into
+// the `catalogue` table using the service role key.
 //
 // Expects: { "url": "https://..." }
 // Returns: { success: true, name, duplicate } | { error }
 //
 // Required secrets: SUPABASE_URL, SUPABASE_SERVICE_KEY
-// Optional: GEMINI_KEY (enables flavour-profile generation)
+// Required: SCRAPE_ADMIN_EMAILS (comma list; empty = everyone denied)
+// Optional: SCRAPE_ALLOWED_HOSTS (default "distilld.io"), ALLOWED_ORIGINS,
+//           GEMINI_KEY (enables flavour-profile generation)
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+const ORIGINS = allowedOrigins(Deno.env.get('ALLOWED_ORIGINS'))
+
+const ADMIN_EMAILS = (Deno.env.get('SCRAPE_ADMIN_EMAILS') || '')
+  .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
+
+const ALLOWED_HOSTS = (Deno.env.get('SCRAPE_ALLOWED_HOSTS') || 'distilld.io')
+  .split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)
 
 const FETCH_TIMEOUT_MS = 15_000
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req.headers.get('Origin'), ORIGINS)
+  const json = (data: unknown, status = 200) =>
+    new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   try {
     const authHeader = req.headers.get('Authorization')
@@ -42,25 +54,43 @@ Deno.serve(async (req) => {
       return json({ error: 'Unauthorized' }, 401)
     }
 
-    const body = await req.json()
+    // Writes to the shared catalogue use the service role, so only admins.
+    if (!user.email || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      return json({ error: 'Forbidden' }, 403)
+    }
+
+    const body = await req.json().catch(() => null)
     const url  = body?.url
 
     if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
       return json({ error: 'Missing or invalid url' }, 400)
     }
 
-    // ── SSRF guard: block localhost / private / link-local hosts ──────────
-    if (!isSafeTarget(url)) {
-      return json({ error: 'URL must be a public http(s) address' }, 400)
+    // ── Scrape (SSRF-safe fetch) ───────────────────────────────────────────
+    try {
+      parseSafeUrl(url, ALLOWED_HOSTS)
+    } catch (e) {
+      return json({ error: e instanceof UnsafeTargetError ? e.message : 'Invalid url' }, 400)
     }
 
-    // ── Scrape ─────────────────────────────────────────────────────────────
-    const html = await fetchHtml(url)
-    const scraped = scrape(html, url)
+    const { html, finalUrl } = await safeFetchText(
+      url,
+      {
+        resolveDns: (host, type) => Deno.resolveDns(host, type),
+        fetchFn: (u, init) => fetch(u, init),
+      },
+      {
+        allowedHosts: ALLOWED_HOSTS,
+        timeoutMs: FETCH_TIMEOUT_MS,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+      },
+    )
+    const scraped = scrape(html, finalUrl)
 
     if (!scraped.name) {
       return json({ error: 'Could not extract a whisky name from that page' }, 422)
     }
+    scraped.name = scraped.name.slice(0, 200)
 
     const service = createClient(
       Deno.env.get('SUPABASE_URL'),
@@ -88,34 +118,18 @@ Deno.serve(async (req) => {
     // ── Insert ─────────────────────────────────────────────────────────────
     const { error: insertError } = await service.from('catalogue').insert(scraped)
     if (insertError) {
-      return json({ error: `Insert failed: ${insertError.message}` }, 500)
+      console.error('catalogue insert failed:', insertError.message)
+      return json({ error: 'Insert failed' }, 500)
     }
 
     return json({ success: true, duplicate: false, name: scraped.name })
 
   } catch (err) {
     console.error('scrape-whisky error:', err)
-    return json({ error: err.message || 'Internal server error' }, 500)
+    if (err instanceof UnsafeTargetError) return json({ error: err.message }, 400)
+    return json({ error: 'Internal server error' }, 500)
   }
 })
-
-// ── URL safety ────────────────────────────────────────────────────────────────
-
-function isSafeTarget(url) {
-  try {
-    const u = new URL(url)
-    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false
-    const host = u.hostname.toLowerCase()
-    if (host === 'localhost' || host.endsWith('.localhost')) return false
-    if (/^127\./.test(host) || host === '::1') return false
-    if (host.startsWith('169.254.')) return false
-    if (host.startsWith('10.') || host.startsWith('192.168.')) return false
-    if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return false
-    return true
-  } catch {
-    return false
-  }
-}
 
 // ── HTML helpers ─────────────────────────────────────────────────────────────
 
@@ -179,19 +193,6 @@ function priceBandFrom(price) {
 
 // ── Scrape ────────────────────────────────────────────────────────────────────
 
-async function fetchHtml(url) {
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-    },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    redirect: 'follow',
-  })
-
-  if (!res.ok) throw new Error(`Page fetch failed (HTTP ${res.status})`)
-  return res.text()
-}
-
 function scrape(html, url) {
   let rawName = attr(html, 'property="og:title"') || ''
   if (!rawName) {
@@ -248,7 +249,7 @@ async function checkExisting(service, name) {
   const { data } = await service
     .from('catalogue')
     .select('id, name')
-    .ilike('name', `%${name}%`)
+    .ilike('name', `%${name.replace(/[\\%_]/g, '\\$&')}%`)
     .limit(1)
   return data?.[0] ?? null
 }
@@ -308,11 +309,4 @@ Respond ONLY with a JSON object, no markdown, no explanation:
     frutado:   clamp(parsed.frutado),
     especiado: clamp(parsed.especiado),
   }
-}
-
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
 }

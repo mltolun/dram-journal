@@ -232,7 +232,7 @@ const nextBadgePct = computed(() => {
   border-right: 0.5px solid var(--border);
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100vh; height: 100dvh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

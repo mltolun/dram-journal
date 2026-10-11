@@ -14,12 +14,16 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { emailIcon, emailIconImg } from './email-icons.js'
+import { escapeHtml } from './lib/html.js'
 
 const SUPABASE_URL         = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
 const RESEND_API_KEY       = process.env.RESEND_API_KEY
 const EMAIL_FROM           = process.env.EMAIL_FROM || 'The Dram Journal <hello@dramjournal.online>'
 const APP_URL              = 'https://dramjournal.online'
+// Optional: when set, feature-request e-mails are only sent for messages whose
+// sender is one of these admins (defence in depth on top of the DB trigger).
+const ADMIN_EMAILS         = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
 
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: { persistSession: false }
@@ -27,14 +31,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
 
 // ── HTML escape ───────────────────────────────────────────────────────────────
 
-function he(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
+const he = escapeHtml
 
 // ── Colour palette ────────────────────────────────────────────────────────────
 
@@ -223,7 +220,7 @@ function followRequestHtml(fromEmail) {
           ${_s.followReqHeadline}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
-          ${_s.followReqBody(name)}
+          ${_s.followReqBody(he(name))}
         </div>
       </td>
     </tr>
@@ -265,7 +262,7 @@ function followAcceptedHtml(fromEmail) {
           ${_s.followAccHeadline}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
-          ${_s.followAccBody(name)}
+          ${_s.followAccBody(he(name))}
         </div>
       </td>
     </tr>
@@ -308,7 +305,7 @@ function directMessageHtml(fromEmail, whiskyName, distillery, message) {
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};
                     line-height:1.6;margin-bottom:16px;">
-          ${_s.dmIntro(name)}
+          ${_s.dmIntro(he(name))}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:20px;
                     font-weight:400;color:${CREAM};line-height:1.2;margin-bottom:4px;">
@@ -359,10 +356,10 @@ function badgeEarnedHtml(badgeIcon, badgeName, badgeDesc) {
         <div style="margin-bottom:14px;">${iconImg}</div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:22px;
                     font-weight:600;color:${CREAM};line-height:1.2;margin-bottom:8px;">
-          ${badgeName}
+          ${he(badgeName)}
         </div>
         <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:${PEAT_LIGHT};line-height:1.6;">
-          ${badgeDesc}
+          ${he(badgeDesc)}
         </div>
       </td>
     </tr>
@@ -586,6 +583,11 @@ async function main() {
     for (const msg of frMessages) {
       _s = STRINGS[localeByEmail[msg.recipient_email] || 'en'] ?? STRINGS.en
       const p = msg.whisky_payload
+      if (ADMIN_EMAILS.length && !ADMIN_EMAILS.includes(String(msg.sender_email || '').toLowerCase())) {
+        console.warn(`   ⚠ Skipping feature-request e-mail ${msg.id}: sender is not an admin`)
+        await sb.from('direct_messages').update({ whisky_payload: { ...p, email_sent: 'blocked' } }).eq('id', msg.id)
+        continue
+      }
       try {
         await sendEmail(
           msg.recipient_email,

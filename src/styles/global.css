@@ -1,4 +1,4 @@
-/* Fonts are loaded once via the <link> in index.html (preconnect included). */
+/* Fonts are self-hosted via src/styles/fonts.css (imported in main.js). */
 
 /* ── DEFAULT THEME (dark) ── */
 :root {
@@ -96,7 +96,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   transition: background 0.25s, color 0.25s;
   -webkit-font-smoothing: antialiased;
 }
@@ -150,7 +150,7 @@ body {
 /* ── DASHBOARD LAYOUT ── */
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   align-items: stretch;
 }
 .main-content {

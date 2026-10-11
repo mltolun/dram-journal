@@ -50,7 +50,7 @@
         @click="$emit('pick', item)"
       >
         <div class="cs-thumb">
-          <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img">
+          <img v-if="item.photo_url" :src="item.photo_url" :alt="item.name" class="cs-img" loading="lazy" decoding="async">
           <div v-else class="cs-img-placeholder"><GlassWaterIcon :size="28" /></div>
         </div>
         <div class="cs-info">

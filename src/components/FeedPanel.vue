@@ -77,7 +77,7 @@
           <div v-else class="feed-item">
             <!-- Left: bottle image -->
             <div class="feed-card-img">
-              <img v-if="item.photo_url" :src="item.photo_url" :alt="item.whisky_name" class="feed-card-img-el">
+              <img v-if="item.photo_url" :src="item.photo_url" :alt="item.whisky_name" class="feed-card-img-el" loading="lazy" decoding="async">
               <div v-else class="feed-card-img-ph"><GlassWaterIcon :size="32" /></div>
             </div>
             <!-- Right: content -->
