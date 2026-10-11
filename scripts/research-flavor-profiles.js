@@ -13,7 +13,7 @@
  * Required env:
  *   SUPABASE_URL, SUPABASE_SERVICE_KEY, GEMINI_KEY, TINYFISH_API_KEY
  * Optional env:
- *   BATCH_LIMIT         whiskies per run (default 150; 5 URLs each = 750 of the 1,000/day free Fetch URLs)
+ *   BATCH_LIMIT         whiskies per run (default 250; 3 URLs each = 750 of the 1,000/day free Fetch URLs)
  *   RESEARCH_AFTER_DAYS re-research rows older than this (default 90)
  *   MIN_CONFIDENCE      0-1 threshold to overwrite (default 0.6)
  *   SINGLE_ID           process one catalogue id only
@@ -32,7 +32,8 @@ const SUPABASE_URL         = env.SUPABASE_URL
 const SUPABASE_SERVICE_KEY = env.SUPABASE_SERVICE_KEY
 const GEMINI_KEY           = env.GEMINI_KEY
 const TINYFISH_API_KEY     = env.TINYFISH_API_KEY
-const BATCH_LIMIT          = parseInt(env.BATCH_LIMIT || '150', 10)
+const BATCH_LIMIT          = parseInt(env.BATCH_LIMIT || '250', 10)
+const PAGES_PER_WHISKY     = 3   // pages fetched per whisky; keeps us inside the 1,000 URLs/day free Fetch cap
 const RESEARCH_AFTER_DAYS  = parseInt(env.RESEARCH_AFTER_DAYS || '90', 10)
 const MIN_CONFIDENCE       = parseFloat(env.MIN_CONFIDENCE || '0.6')
 const SINGLE_ID            = env.SINGLE_ID ? parseInt(env.SINGLE_ID, 10) : null
@@ -103,7 +104,7 @@ async function save(w, patch) {
 
 async function researchOne(w, nowIso) {
   const hits = await tinyfish.search(buildSearchQuery(w), { numResults: 6 })
-  const pages = await tinyfish.fetchText(hits.slice(0, 5).map((h) => h.url))
+  const pages = await tinyfish.fetchText(hits.slice(0, PAGES_PER_WHISKY).map((h) => h.url))
   const sources = filterSources(pages)
 
   if (sources.length === 0) {

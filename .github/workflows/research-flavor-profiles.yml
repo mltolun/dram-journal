@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       batch_limit:
-        description: 'Whiskies to research this run (default 150, max 200 for the daily free Fetch cap)'
+        description: 'Whiskies to research this run (default 250; 3 pages each = 750 of the 1,000 free Fetch URLs/day)'
         required: false
-        default: '150'
+        default: '250'
       single_id:
         description: 'Research one catalogue id only (optional)'
         required: false
@@ -49,7 +49,7 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           GEMINI_KEY:           ${{ secrets.GEMINI_KEY || secrets.VITE_GEMINI_KEY }}
           TINYFISH_API_KEY:     ${{ secrets.TINYFISH_API_KEY }}
-          BATCH_LIMIT:          ${{ github.event.inputs.batch_limit || '150' }}
+          BATCH_LIMIT:          ${{ github.event.inputs.batch_limit || '250' }}
           SINGLE_ID:            ${{ github.event.inputs.single_id }}
           DRY_RUN:              ${{ github.event.inputs.dry_run || 'false' }}
         run: node scripts/research-flavor-profiles.js
